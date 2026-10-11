@@ -159,9 +159,16 @@ class ReviewResult(DTO):
 
 
 class ChunkDTO(DTO):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
+
     chunk_id: str = Field(min_length=1)
     version_id: str = Field(min_length=1)
+    ordinal: int = Field(ge=0)
+    # Exact source text (citation target); embedding_text adds only heading context.
     text: str = Field(min_length=1)
+    text_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    embedding_text: str = Field(min_length=1)
+    heading_path: list[str] = Field(default_factory=list)
     token_count: int = Field(gt=0)
     source_segment_ids: list[str] = Field(min_length=1)
     locator: Locator
@@ -304,6 +311,12 @@ class CredentialRecord(DTO):
 
 class SearchProvider(Protocol):
     def search(self, query: str, limit: int) -> list[SearchHitDTO]: ...
+
+
+class Tokenizer(Protocol):
+    def count_tokens(self, texts: list[str]) -> list[int]: ...
+
+    def token_offsets(self, text: str) -> list[tuple[int, int]]: ...
 
 
 class EmbeddingProvider(Protocol):

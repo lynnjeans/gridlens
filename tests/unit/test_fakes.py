@@ -39,7 +39,10 @@ def test_fake_answer_and_whitelist_vector_store():
         ChunkDTO(
             chunk_id=f"c{i}",
             version_id=f"v{i}",
+            ordinal=0,
             text="Synthetic application stage.",
+            text_sha256="0" * 64,
+            embedding_text="Synthetic application stage.",
             token_count=3,
             source_segment_ids=["p1"],
             locator=Locator(kind="html", paragraph_index=1),

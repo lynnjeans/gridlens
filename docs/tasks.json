@@ -765,7 +765,7 @@
       "id": "T15",
       "title": "实现确定性 token 分块",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D4",
       "depends_on": [
         "T02",
@@ -775,7 +775,12 @@
       "kind": "implementation",
       "scope_paths": [
         "gridlens/documents/chunking.py",
-        "tests/unit/test_chunking.py"
+        "gridlens/contracts.py",
+        "gridlens/providers/local_embeddings.py",
+        "gridlens/providers/fakes.py",
+        "tests/unit/test_chunking.py",
+        "tests/unit/test_fakes.py",
+        "tests/local_model/test_local_chunking_smoke.py"
       ],
       "objective": "将已审核正文切成带稳定定位的可重建片段。",
       "steps": [
@@ -802,12 +807,19 @@
         "AC-06"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/unit/test_chunking.py: 14 passed（FakeTokenizer）；覆盖短段装箱、不跨章节/PDF 页、预算内保序、长段精确子串窗口与 5-token overlap、中英文长段按页溯源、全部非空段落被覆盖、ID 确定性及版本/配置/模型 revision/tokenizer revision/query prefix/normalization 改变 fingerprint、超长标题只从 embedding 输入省略、非法配置与空输入。",
+        "tests/local_model/test_local_chunking_smoke.py（禁网，真实 BGE tokenizer，350/50）：1 passed；英文/中文长 PDF 页各分为多个窗口，共 15 块，最大 350 tokens，token_count 与真实计数一致，全部块成功 embedding。local_model 组合计 3 passed。",
+        "完整离线回归：154 passed, 4 deselected；Ruff、format 与 pip check 通过。",
+        "接口变化：ChunkDTO 新增 ordinal、text_sha256、embedding_text、heading_path；新增 Tokenizer 协议、LocalEmbeddingProvider.identity()/token_offsets()、FakeTokenizer。检索问题超长拒绝沿用 T16 的 EMBEDDING_INPUT_TOO_LONG。尚未接入入库（T18）。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
-        "human": "not_required"
-      }
+        "human": "not_required",
+        "local_model": "passed"
+      },
+      "completed_at": "2026-10-11"
     },
     {
       "id": "T16",
@@ -1862,7 +1874,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T15"
+      "T17"
     ],
     "completed_tasks": [
       "T01",
@@ -1879,6 +1891,7 @@
       "T12",
       "T13",
       "T14",
+      "T15",
       "T16",
       "T33"
     ],
@@ -1890,7 +1903,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 140,
+      "offline_tests_passed": 154,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

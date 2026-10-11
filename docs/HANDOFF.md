@@ -21,7 +21,7 @@
 
 ## 2. 当前完成状态
 
-36 项任务中 **16 项 done，20 项 todo**。T01–T14、T16、T33 已完成并通过离线验证；当前没有遗留的失败检查。
+36 项任务中 **17 项 done，19 项 todo**。T01–T16、T33 已完成并通过离线验证；当前没有遗留的失败检查。
 
 | 已完成 | 当前能力 | 主要文件 |
 | --- | --- | --- |
@@ -40,6 +40,7 @@
 | T13 | 审核 hash/正文校验、approve/reject/revoke/reopen 状态机与事务事件 | `gridlens/services/review.py` |
 | T14 | Review 页面：捕获、正文预览、元数据修正、hash 绑定/过期提示、Approve/Reject/Revoke/Reopen 与历史 | `gridlens/ui/review.py`、`providers/fakes.py` |
 | T16 | 固定 revision 的本地 BGE embedding（仅本地加载、长度预检、16 批、归一化/维度校验）与显式 `prepare-model` | `gridlens/providers/local_embeddings.py`、`cli.py` |
+| T15 | 按页/章节装箱、长段 offset 窗口的确定性 token 分块，index_fingerprint 与 chunk_id | `gridlens/documents/chunking.py` |
 | T33 | 稳定 host ID、按注册隔离的受保护原子凭证存储 | `gridlens/auth/host.py`、`credentials.py` |
 
 所有其他任务待实施，包括：真实搜索联调、抓取/解析服务、批准/拒绝操作、
@@ -53,12 +54,12 @@ Knowledge Base 和 Ask 的主要操作仍不可用。凭证存储实现不等于
 
 | 命令 | 结果 |
 | --- | --- |
-| `.venv/bin/python -m pytest -q` | 140 passed，3 deselected（live/local_model），7.0s |
+| `.venv/bin/python -m pytest -q` | 154 passed，4 deselected（live/local_model），7.0s |
 | `.venv/bin/ruff check .` | All checks passed |
-| `.venv/bin/ruff format --check .` | 62 files already formatted |
+| `.venv/bin/ruff format --check .` | 65 files already formatted |
 | `.venv/bin/python -m pip check` | No broken requirements found |
 | `.venv/bin/python -m gridlens.cli doctor` | fixture；搜索 key 未配置；OAuth not_implemented；模型 prepared `5c38ec7c405e` |
-| `.venv/bin/python -m pytest -m local_model -q` | 2 passed（禁网；需本机已 prepare-model） |
+| `.venv/bin/python -m pytest -m local_model -q` | 3 passed（禁网；需本机已 prepare-model） |
 
 Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件。
 基础阶段还验证了干净环境安装 wheel、包内迁移资源加载和四页真实浏览器导航。
@@ -71,7 +72,7 @@ Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件�
 ## 4. 仓库与运行状态
 
 - `origin`：`https://github.com/lynnjeans/gridlens.git`。
-- 本地分支：`master`；T13、T14、T16 已按用户要求提交并推送到 `origin/master`。
+- 本地分支：`master`；T13–T16 已按用户要求提交并推送到 `origin/master`。
   后续 Git 操作前先检查 `git status` 与 `git log origin/master..`。
 - 没有 PR 或部署。其他电脑可以从 GitHub 仓库 clone 当前实现；输出目录中的
   源码交接 ZIP 仍可用于离线交接。
@@ -86,7 +87,7 @@ Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件�
 GitHub 地址和分支信息已在本文明确记录。解压后复用已有应用目录，
 避免覆盖另一份更新的 checkout。
 
-## 5. 下一项工作：T15
+## 5. 下一项工作：T17
 
 T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 
@@ -95,8 +96,8 @@ T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 3. **T08 Discover UI 已完成**：表单、状态、rerun 幂等、手动来源和 Review 选择通过 UI 测试。
 
 T09–T14 的获取、解析、不可变快照、审核状态机和 Review 页面已完成。
-T16 本地 embedding 已完成。接下来 T15 用该模型 tokenizer 做确定性分块（`LocalEmbeddingProvider.count_tokens`），
-随后 T17 Chroma，再到 T18 入库。
+T16 本地 embedding 与 T15 确定性分块已完成。接下来 T17 Chroma 向量存储适配器
+（需安装 `vectors` extra，属于下载，先征得用户同意），然后 T18 入库与原子发布。
 T18 接好后在 Review 批准成功处触发一次入库。
 T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的共享文件
 进行未经安排的并发编辑。本交接不要求或启动多代理。
@@ -128,10 +129,10 @@ T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的�
 ## 7. 可复制的接手提示词
 
 ```text
-请接手已有 GridLens 项目，完成 T15 确定性 token 分块。
+请接手已有 GridLens 项目，完成 T17 Chroma 向量存储适配器。
 先读取根 AGENTS.md、docs/HANDOFF.md、docs/tasks.json 和对应任务卡，
 再检查真实代码及开发规格相关章节。
-T01–T14、T16、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
+T01–T16、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
 按依赖顺序实现并验证，保持 fixture/live 隔离、有限调用预算和 UI rerun 幂等。
 抓取与解析先用离线 HTTP/DNS fixture 完成；真实任意网站不作为单元验收条件。
 不要索要聊天中的密钥，不自动批准资料，不虚构研究评估，不增加 P1。

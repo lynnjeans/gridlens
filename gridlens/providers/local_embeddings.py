@@ -167,10 +167,10 @@ class LocalEmbeddingProvider:
     def revision(self) -> str:
         return self.manifest.revision
 
-    def fingerprint(self) -> str:
-        """Identity of everything that changes vectors; documents and queries share it."""
+    def identity(self) -> dict:
+        """Everything that changes vectors; documents and queries share it."""
         m = self.manifest
-        identity = {
+        return {
             "model_id": m.model_id,
             "revision": m.revision,
             "tokenizer_revision": m.tokenizer_revision,
@@ -181,7 +181,9 @@ class LocalEmbeddingProvider:
             "normalize": m.normalize,
             "device": self.settings.embedding_device,
         }
-        canonical = json.dumps(identity, sort_keys=True, separators=(",", ":"))
+
+    def fingerprint(self) -> str:
+        canonical = json.dumps(self.identity(), sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(canonical.encode()).hexdigest()
 
     def count_tokens(self, texts: list[str]) -> list[int]:
@@ -191,6 +193,20 @@ class LocalEmbeddingProvider:
             "input_ids"
         ]
         return [len(ids) for ids in encoded]
+
+    def token_offsets(self, text: str) -> list[tuple[int, int]]:
+        """Character spans of the text's tokens, without special tokens."""
+        tokenizer = self._load().tokenizer
+        if not getattr(tokenizer, "is_fast", False):
+            raise AppError("LOCAL_MODEL_MISSING", "The model tokenizer cannot report offsets.")
+        encoded = tokenizer(
+            text,
+            add_special_tokens=False,
+            truncation=False,
+            return_offsets_mapping=True,
+            verbose=False,
+        )
+        return [(int(start), int(end)) for start, end in encoded["offset_mapping"]]
 
     def embed(self, texts: list[str], role: Literal["document", "query"]) -> EmbeddingBatch:
         if role not in {"document", "query"}:

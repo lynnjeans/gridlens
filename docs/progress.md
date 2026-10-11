@@ -190,6 +190,31 @@ resolved sentence-transformers 6.1.0 metadata and failed before saving a file. N
 login, Chroma or ingestion was run. At the user's request T16 was committed and pushed
 to `origin/master`. Next task: T15 chunking.
 
+## T15 — Deterministic token chunking
+
+Status: **implemented and verified offline and with the real local tokenizer**.
+`gridlens/documents/chunking.py` (`segment-pack-v1`) groups consecutive segments by PDF
+file page or HTML heading path, packs whole segments (blank-line joined) while the
+embedding input — heading context + text, counted with special tokens by the model
+tokenizer — fits `CHUNK_TOKENS`, and splits only a single over-budget segment into token
+windows with `CHUNK_OVERLAP`. Windows are cut at tokenizer character offsets, so each
+chunk `text` is an exact source substring (citation target); `embedding_text` adds only
+the heading context. Over-long headings are left out of the embedding input but kept in
+`heading_path`. Chunks never cross a page, section, document or version.
+`index_fingerprint` hashes the embedding identity (model, revision, tokenizer revision,
+dimensions, limit, prefixes, normalization, device), chunker version, size and overlap;
+`chunk_id` hashes version, fingerprint, ordinal and text SHA-256 as canonical JSON.
+
+Interface changes: `ChunkDTO` gained `ordinal`, `text_sha256`, `embedding_text`,
+`heading_path` (whitespace preserved); new `Tokenizer` protocol; `LocalEmbeddingProvider`
+gained `identity()` and `token_offsets()`; fixture `FakeTokenizer` and fake identity.
+
+Checks: `tests/unit/test_chunking.py` **14 passed**. `pytest -m local_model` (IP sockets
+blocked) **3 passed**, including the real BGE tokenizer at 350/50 on English and Chinese
+long pages: 15 chunks, max 350 tokens, counts matching the real tokenizer, all embedded.
+Full offline regression **154 passed, 4 deselected**; Ruff, format and pip check passed.
+Not yet wired into ingestion (T18). At the user's request T15 was committed and pushed. Next task: T17 Chroma.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

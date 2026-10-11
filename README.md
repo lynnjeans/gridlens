@@ -9,8 +9,8 @@ milestone is implemented: the local web UI can search through Tavily when config
 store deduplicated candidate sources, select a source for review, and manually add a
 public URL as a pending lead. Bounded capture, HTML/PDF extraction, immutable snapshots
 and review-state rules are connected to the Review page (capture, preview, metadata
-correction, approve/reject/revoke/reopen). Pinned local BGE embeddings are implemented
-but not yet used for indexing. Indexing, ChatGPT OAuth
+correction, approve/reject/revoke/reopen). Pinned local BGE embeddings and deterministic token
+chunking are implemented but not yet used for indexing. Indexing, ChatGPT OAuth
 and real Q&A are **not connected yet**. No grid calculation or pandapower/OpenDSS is included.
 
 ## Run locally
@@ -73,7 +73,7 @@ commands and resolved environment details are in `docs/progress.md`. Chroma is d
 the optional `vectors` extra and will be locked when T17 is implemented.
 
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
-Next development milestone: T15 (token chunking). The current
+Next development milestone: T17 (Chroma vector store). The current
 source can be obtained from the configured GitHub repository.
 
 Read `docs/01_DEVELOPMENT_SPEC.md`, `docs/tasks.json` and `docs/progress.md` for

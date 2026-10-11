@@ -43,3 +43,5 @@ T01–T05、T33 完成，42项离线测试通过；四页本地浏览器导航�
 完成 T14：Review 页面接通捕获、正文预览、元数据修正（重算 hash）、hash 绑定与过期重新加载、Approve/Reject/Revoke/Reopen 和审核历史；fixture 模式使用合成文档获取器。8 项 AppTest 与 7 项审核集成测试通过；完整回归 123 passed、1 live deselected。批准后入库待 T18。
 
 完成 T16：固定 revision 的本地 bge-small-en-v1.5 embedding（仅本地加载、长度预检、16 批、归一化与维度校验）和显式 `prepare-model`；`models` extra 拆为 `embeddings`/`vectors`，锁定 sentence-transformers 6.1.0。17 项单元测试与 2 项禁网真实模型 smoke 通过（revision `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`）；完整回归 140 passed、3 deselected。
+
+完成 T15：确定性 token 分块（按页/章节装箱、长段按 tokenizer offset 切窗、原文精确子串、index_fingerprint/chunk_id）；ChunkDTO 增加 ordinal、text_sha256、embedding_text、heading_path。14 项单元测试与真实 BGE tokenizer 禁网 smoke 通过；完整回归 154 passed、4 deselected。

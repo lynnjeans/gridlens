@@ -2,6 +2,7 @@
 
 import hashlib
 import math
+import re
 from typing import Literal
 
 from gridlens.contracts import (
@@ -77,9 +78,27 @@ class FakeDocumentFetcher:
         )
 
 
+FAKE_TOKEN = re.compile(r"[\u3400-\u9fff]|(?:(?![\u3400-\u9fff])\w)+|[^\w\s]")
+
+
+class FakeTokenizer:
+    """Deterministic word/CJK-character tokenizer with two special tokens."""
+
+    special_tokens = 2
+
+    def count_tokens(self, texts: list[str]) -> list[int]:
+        return [len(FAKE_TOKEN.findall(text)) + self.special_tokens for text in texts]
+
+    def token_offsets(self, text: str) -> list[tuple[int, int]]:
+        return [match.span() for match in FAKE_TOKEN.finditer(text)]
+
+
 class FakeEmbeddingProvider:
     model_id = "synthetic-hash-16"
     revision = "fixture-v1"
+
+    def identity(self) -> dict:
+        return {"model_id": self.model_id, "revision": self.revision, "dimensions": 16}
 
     def __init__(self, fault: str | None = None):
         self.fault = fault

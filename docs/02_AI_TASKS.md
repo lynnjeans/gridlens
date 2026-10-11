@@ -649,7 +649,7 @@
 
 ## T15 — 实现确定性 token 分块
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D4 / implementation
 **依赖：** T02, T12, T16
 **PRD 对应：** AC-03, AC-04, AC-06
@@ -660,7 +660,8 @@
 ### 文件范围
 
 - `gridlens/documents/chunking.py`
-- `tests/unit/test_chunking.py`
+- `gridlens/contracts.py`（ChunkDTO 字段、Tokenizer 协议）、`gridlens/providers/local_embeddings.py`（identity/token_offsets）、`gridlens/providers/fakes.py`（FakeTokenizer）
+- `tests/unit/test_chunking.py`、`tests/local_model/test_local_chunking_smoke.py`
 
 ### 实现步骤
 
@@ -684,9 +685,9 @@
 
 - 不调研高级语义 chunker，不用字符数冒充 token 数。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, local_model=passed, live=not_required, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/unit/test_chunking.py` 14 项通过（短文、长段窗口与 overlap、跨页/章节、中英文、覆盖、确定性与 fingerprint 变化、非法配置）。禁网真实 BGE tokenizer（350/50）smoke 1 项通过：15 块、最大 350 tokens、全部成功 embedding。完整回归 154 passed、4 deselected；Ruff/format/pip check 通过。尚未接入入库（T18）。
 
 ## T16 — 实现本地 embedding 与模型准备
 

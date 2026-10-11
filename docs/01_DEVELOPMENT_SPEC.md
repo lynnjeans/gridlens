@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T14、T16、T33 完成；分块、入库、授权和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T16、T33 完成；向量存储、入库、授权和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -300,7 +300,7 @@ class VectorStore(Protocol):
 | `SearchHitDTO` | title、url、snippet、provider_rank、publisher?、published_at?、source_type=`unknown`、jurisdiction=`unknown`、metadata_evidence |
 | `ParsedSegment` | segment_id、text、heading_path、locator、warnings |
 | `Locator` | kind=`pdf/html`；PDF 用 file_page ≥1；HTML 用 section_title?、paragraph_index ≥1；印刷页码可为空 |
-| `ChunkDTO` | chunk_id、version_id、text、token_count、source_segment_ids、locator、index_fingerprint |
+| `ChunkDTO` | chunk_id、version_id、ordinal、text（原文精确子串，引用目标）、text_sha256、embedding_text（标题上下文 + text，实际模型输入）、heading_path、token_count（embedding_text 含 special tokens）、source_segment_ids、locator、index_fingerprint |
 | `EmbeddingBatch` | vectors、model_id、revision、dimensions、role、local_token_count、latency_ms；不含 API 计费 usage，vectors 与 inputs 一一对应且均为有限数字 |
 | `VectorHit` | chunk_id、distance；distance 不展示为可信度 |
 | `RetrievalContext` | chunks、eligible_version_ids、filters、index_fingerprint、diagnostics |
@@ -342,7 +342,7 @@ Approve 成功后 UI 可自动发起一次同步入库操作；失败只改 inge
 
 ### 7.1 分块的确定性
 
-先按 ParsedSegment 的页/章节边界切，再在段落间装箱至 350 tokens。单个长段落才切 token 窗口，overlap 50；不跨 PDF 页、文档或版本。每块保存对应 segment IDs 与 locator；尾块为空则不产生记录，标题与正文的组织规则固定到 chunker_version。
+先按 ParsedSegment 的页/章节边界切，再在段落间装箱至 350 tokens。单个长段落才切 token 窗口，overlap 50；不跨 PDF 页、文档或版本。每块保存对应 segment IDs 与 locator；尾块为空则不产生记录，标题与正文的组织规则固定到 chunker_version。实现（`segment-pack-v1`）：按 PDF 页或 HTML heading_path 分组，整段以空行拼接装箱；embedding_text = `标题路径（" > " 连接）+ 空行 + text`，计数含 special tokens 不超 CHUNK_TOKENS；长段按 tokenizer 字符 offset 切窗，text 为原文精确子串；标题上下文超过预算一半时只从 embedding 输入省略。Tokenizer 协议：`count_tokens(texts)`、`token_offsets(text)`。
 
 `index_fingerprint = SHA256(canonical_json(model_id, model_revision, dimensions, tokenizer_revision, query_prefix_policy, normalization, chunker_version, size, overlap))`；`chunk_id = SHA256(version_id + index_fingerprint + ordinal + text_sha256)`。以规范 JSON 编码、固定字段顺序/分隔规则计算，避免字符串拼接歧义。配置改变时拒绝继续写旧集合，返回 `INDEX_CONFIG_MISMATCH`；MVP 不实现自动跨模型迁移，也不静默删除原索引。
 

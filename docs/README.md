@@ -2,7 +2,7 @@
 
 日期：2026-10-11。GridLens 为暂用名；改名不影响技术与任务结构。
 
-本包把已有 Seen Ventures AI Research Assistant 两周 PRD 转成可执行的开发规格和 36 个 AI 开发任务。应用现已完成 T01–T14、T16、T33，其余20项待实施；实际证据见 progress.md。
+本包把已有 Seen Ventures AI Research Assistant 两周 PRD 转成可执行的开发规格和 36 个 AI 开发任务。应用现已完成 T01–T16、T33，其余19项待实施；实际证据见 progress.md。
 
 ## 文件与阅读顺序
 
@@ -19,7 +19,7 @@
 
 ## 现在如何开始
 
-当前是接手已有项目：先读 `HANDOFF.md` 和应用根 `AGENTS.md`。T01–T14、T16、T33 已完成，**从 T15 确定性分块继续**，不要重建项目。可直接使用 HANDOFF 第 7 节提示词。
+当前是接手已有项目：先读 `HANDOFF.md` 和应用根 `AGENTS.md`。T01–T16、T33 已完成，**从 T17 Chroma 向量存储继续**，不要重建项目。可直接使用 HANDOFF 第 7 节提示词。
 
 应用位于父工作区的独立 `gridlens/` 目录；当前实现已提交并推送到 GitHub `master`，可以通过仓库 clone，也可使用源码交接包。下一步按依赖实现 PDF → 快照/审核 → 入库 → 引用问答 → 缺口/导出 → 真实评估；OAuth T34 可从已完成凭证基础继续。
 
