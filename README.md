@@ -11,7 +11,7 @@ public URL as a pending lead. Bounded capture, HTML/PDF extraction, immutable sn
 and review-state rules are connected to the Review page (capture, preview, metadata
 correction, approve/reject/revoke/reopen). Approving a version on the Review page indexes it
 (deterministic chunking, pinned local BGE embeddings, local Chroma) and publishes it as
-Ready/Active only after a complete, verified index; live indexing needs `prepare-model`. Retrieval, ChatGPT OAuth
+Ready/Active only after a complete, verified index; live indexing needs `prepare-model`. Retrieval, ChatGPT generation
 and real Q&A are **not connected yet**. No grid calculation or pandapower/OpenDSS is included.
 
 ## Run locally
@@ -55,7 +55,16 @@ synthetic tests cannot prove research accuracy or real subscription access.
 Future generation uses the official **Sign in with ChatGPT** plan-usage flow, with
 the user's consent. It does not need an OpenAI platform API key. Tokens must live
 outside this repository in an owner-only user configuration directory; the first
-milestone implements storage but does not request or create a real session.
+milestone implemented storage. Sign-in is now implemented (loopback PKCE, verified ID token,
+issued client ID) and can be run explicitly in live mode:
+
+```bash
+APP_MODE=live .venv/bin/python -m gridlens.cli login
+```
+
+It opens the official page in your browser; you sign in and approve GridLens yourself.
+Tokens are stored only in the owner-only `AUTH_DIR` (default `~/.config/gridlens`).
+A real sign-in has not been verified by the developers yet.
 Source discovery uses a separate Tavily search key. Embeddings use a pinned local
 `BAAI/bge-small-en-v1.5` model on CPU. Download it once, explicitly (about 134 MB, into
 the git-ignored `models/` or `LOCAL_MODEL_DIR`):

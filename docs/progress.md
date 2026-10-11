@@ -273,6 +273,38 @@ Recovering processing runs left by a crash is T28. At the user's request T18 was
 committed and pushed.
 Next task: T20 approved-only retrieval (T34 OAuth is behind its D2 schedule).
 
+## T34 — OAuth login and callback validation (awaiting real sign-in)
+
+Status: **implemented and verified offline; real sign-in not run** (task `awaiting_input`).
+Official sources re-checked 2026-10-11: the Sign in with ChatGPT sign-in, token
+reference and errors pages, and `https://auth.openai.com/.well-known/openid-configuration`
+(issuer, authorize/token endpoints, `jwks_uri` `/.well-known/jwks.json`, RS256, S256).
+
+`gridlens/auth/oauth.py`: `CallbackListener` binds `127.0.0.1` (OS-chosen port) on
+`/auth/callback`, accepts one callback and never logs request URLs. `OAuthLogin.begin`
+creates a fresh state/nonce/PKCE verifier per attempt (S256, 5-minute expiry) and builds
+the authorize URL: first registration with `dynamic_agent_client` + `agent_name_hint`
+and the stable `ext_agent_host_id`; returning sign-in with the issued client ID plus
+`id_token_hint`/`login_hint`. `complete` consumes the attempt once, checks expiry and
+state (constant time) before anything else, stops on callback errors without exchanging,
+requires an issued client ID on registration (never storing `dynamic_agent_client`) and
+rejects a different one on return, exchanges the code with the issued ID, identical
+redirect URI, verifier and resource (no secret), verifies the ID token with PyJWT against
+the JWKS (RS256, issuer, audience = issued ID, exp, nonce), and for returning sign-in
+requires the original subject. Only then are credentials saved. Following the official
+errors guidance, a missing `chatgpt.tokens.use.direct` keeps the sign-in with
+`plan_usage_enabled=False` (the spec previously said reject). `run_browser_login` starts
+the listener before opening the browser and always closes it (timeout → `OAUTH_TIMEOUT`).
+CLI: `gridlens login [--account REG]`, live mode only, prints a redacted summary.
+
+Checks: `tests/unit/test_oauth.py` **22 passed** (test-generated RSA keys, mocked token
+endpoint, synthetic fixture JWKS). One listener test uses `enable_socket` restricted by
+`allow_hosts(["127.0.0.1"])`; all other tests keep IP sockets blocked. Full offline
+regression **198 passed, 6 deselected**; `local_model` 4 passed; Ruff, format and pip
+check passed. Not run: real browser sign-in — the user chose to run it later with
+`APP_MODE=live .venv/bin/python -m gridlens.cli login` (or `APP_MODE=live GRIDLENS_LIVE_LOGIN=1 .venv/bin/python -m pytest -m live -k login -s`). The account sidebar is T36. At the user's request the T34 offline implementation was
+committed and pushed.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

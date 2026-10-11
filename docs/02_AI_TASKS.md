@@ -1451,7 +1451,7 @@
 
 ## T34 — 实现OAuth登录和callback校验
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / awaiting_input（离线完成，等待本人真实登录）
 **日程/类别：** D2 / implementation
 **依赖：** T33, T04
 **PRD 对应：** AC-09, AC-10
@@ -1462,6 +1462,7 @@
 ### 文件范围
 
 - `gridlens/auth/oauth.py`
+- `gridlens/cli.py`（`login`，仅 live 模式）
 - `tests/unit/test_oauth.py`
 - `tests/live/test_login.py`
 
@@ -1487,9 +1488,9 @@
 
 - 不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。
 
-**验证状态：** offline=not_run, live=not_run, human=not_required
+**验证状态：** offline=passed, live=not_run, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** 已核对官方 sign-in/token/errors 文档与 OIDC discovery。`tests/unit/test_oauth.py` 22 项通过（错误 state/nonce/签名/aud/iss/过期、scope、issued-ID 错配、重复与过期 callback、拒绝授权与交换失败不保存、返回登录身份核对、loopback listener 成功/超时关闭）。完整回归 198 passed、6 deselected。按官方指引，缺少 plan scope 时保留登录但禁用 plan usage。**未运行真实登录**：需本人执行 `APP_MODE=live .venv/bin/python -m gridlens.cli login` 或 `APP_MODE=live GRIDLENS_LIVE_LOGIN=1 .venv/bin/python -m pytest -m live -k login -s`，只记录脱敏结果。
 
 ## T35 — 实现刷新、账户切换与退出
 

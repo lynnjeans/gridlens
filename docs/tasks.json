@@ -1738,7 +1738,7 @@
       "id": "T34",
       "title": "实现OAuth登录和callback校验",
       "priority": "P0",
-      "status": "todo",
+      "status": "awaiting_input",
       "day": "D2",
       "depends_on": [
         "T33",
@@ -1747,6 +1747,7 @@
       "kind": "implementation",
       "scope_paths": [
         "gridlens/auth/oauth.py",
+        "gridlens/cli.py",
         "tests/unit/test_oauth.py",
         "tests/live/test_login.py"
       ],
@@ -1774,12 +1775,19 @@
         "AC-10"
       ],
       "required_inputs": "mock无账户；真实联调需本人在官方浏览器页面完成登录与授权。",
-      "evidence": [],
+      "evidence": [
+        "2026-10-11 核对官方文档：sign-in、token reference、errors-and-recovery 页面与 https://auth.openai.com/.well-known/openid-configuration（issuer、authorize/token 端点、jwks_uri、RS256、S256 与规格一致）。",
+        "tests/unit/test_oauth.py: 22 passed；覆盖首次注册 authorize 参数（dynamic_agent_client、agent_name_hint、ext_agent_host_id、scope、resource、S256）、每次随机 state/nonce/verifier、仅 127.0.0.1 /auth/callback、交换参数精确（issued ID、同一 redirect URI、verifier、resource、无 secret）、错误 state、access_denied/其他错误不交换、缺 issued ID 或返回 dynamic_agent_client、重复与过期 callback、7 种无效 ID token（nonce/aud/dynamic aud/iss/过期/他钥签名/未知 kid）、invalid_grant 与不完整响应、返回登录复用 issued ID 与 id_token_hint/login_hint、client 不符与账户不符不替换凭证、合成 fixture JWKS 验签、真实 loopback listener 成功与超时后关闭（仅允许 127.0.0.1）、CLI 在 fixture 模式拒绝。",
+        "完整离线回归：198 passed, 6 deselected；local_model 4 passed；Ruff、format 与 pip check 通过。",
+        "与规格差异：按官方 errors-and-recovery 指引，缺少 chatgpt.tokens.use.direct 时保留登录但 plan_usage_enabled=False（规格原写拒绝）。",
+        "未运行：真实浏览器登录（用户选择稍后本人执行）。账户侧栏 UI 属于 T36。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_run",
         "human": "not_required"
-      }
+      },
+      "awaiting": "用户本人在合资格 ChatGPT 账户完成一次真实登录：APP_MODE=live .venv/bin/python -m gridlens.cli login（或 APP_MODE=live GRIDLENS_LIVE_LOGIN=1 .venv/bin/python -m pytest -m live -k login -s），确认 plan scope 已授予；仅记录脱敏结果。"
     },
     {
       "id": "T35",
@@ -1893,7 +1901,8 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T20"
+      "T20",
+      "T35"
     ],
     "completed_tasks": [
       "T01",
@@ -1924,13 +1933,16 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 176,
+      "offline_tests_passed": 198,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",
       "live": "not_run",
       "human_research_acceptance": "not_run",
       "local_model": "passed"
-    }
+    },
+    "awaiting_input": [
+      "T34"
+    ]
   }
 }

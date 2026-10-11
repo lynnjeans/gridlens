@@ -21,7 +21,8 @@
 
 ## 2. 当前完成状态
 
-36 项任务中 **19 项 done，17 项 todo**。T01–T18、T33 已完成并通过离线验证；当前没有遗留的失败检查。
+36 项任务中 **19 项 done，1 项 awaiting_input，16 项 todo**。T01–T18、T33 已完成并通过离线验证；
+T34 离线完成、等待本人真实登录。当前没有遗留的失败检查。
 
 | 已完成 | 当前能力 | 主要文件 |
 | --- | --- | --- |
@@ -43,6 +44,7 @@
 | T15 | 按页/章节装箱、长段 offset 窗口的确定性 token 分块，index_fingerprint 与 chunk_id | `gridlens/documents/chunking.py` |
 | T17 | 本地持久 Chroma：按 fingerprint 的 cosine 集合、显式向量、白名单查询、按版本删除、配置不符报错 | `gridlens/providers/chroma_store.py` |
 | T18 | 入库流水线：处理锁、分块、批量 embedding/upsert、ID 集合核对、发布前复查审核、单事务替换 Active；Review 批准后入库与重试 | `gridlens/services/ingestion.py`、`bootstrap.py`、`ui/review.py` |
+| T34（awaiting_input） | loopback PKCE 登录、callback/state/nonce/JWKS/issued-ID 校验，全部通过才保存；`gridlens login` | `gridlens/auth/oauth.py`、`cli.py` |
 | T33 | 稳定 host ID、按注册隔离的受保护原子凭证存储 | `gridlens/auth/host.py`、`credentials.py` |
 
 所有其他任务待实施，包括：真实搜索联调、抓取/解析服务、批准/拒绝操作、
@@ -57,11 +59,11 @@ Knowledge Base 和 Ask 的主要操作仍不可用。凭证存储实现不等于
 
 | 命令 | 结果 |
 | --- | --- |
-| `.venv/bin/python -m pytest -q` | 176 passed，5 deselected（live/local_model），8.4s |
+| `.venv/bin/python -m pytest -q` | 198 passed，6 deselected（live/local_model），9.5s |
 | `.venv/bin/ruff check .` | All checks passed |
-| `.venv/bin/ruff format --check .` | 70 files already formatted |
+| `.venv/bin/ruff format --check .` | 73 files already formatted |
 | `.venv/bin/python -m pip check` | No broken requirements found |
-| `.venv/bin/python -m gridlens.cli doctor` | fixture；搜索 key 未配置；OAuth not_implemented；模型 prepared `5c38ec7c405e` |
+| `.venv/bin/python -m gridlens.cli doctor` | fixture；搜索 key 未配置；oauth_login live_cli_only_not_verified；模型 prepared `5c38ec7c405e` |
 | `.venv/bin/python -m pytest -m local_model -q` | 4 passed（禁网；需本机已 prepare-model；含 live 装配端到端入库） |
 
 Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件。
@@ -75,7 +77,7 @@ Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件�
 ## 4. 仓库与运行状态
 
 - `origin`：`https://github.com/lynnjeans/gridlens.git`。
-- 本地分支：`master`；T13–T18 已按用户要求提交并推送到 `origin/master`。
+- 本地分支：`master`；T13–T18 与 T34（离线实现）已按用户要求提交并推送到 `origin/master`。
   后续 Git 操作前先检查 `git status` 与 `git log origin/master..`。
 - 没有 PR 或部署。其他电脑可以从 GitHub 仓库 clone 当前实现；输出目录中的
   源码交接 ZIP 仍可用于离线交接。
@@ -90,7 +92,7 @@ Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件�
 GitHub 地址和分支信息已在本文明确记录。解压后复用已有应用目录，
 避免覆盖另一份更新的 checkout。
 
-## 5. 下一项工作：T20
+## 5. 下一项工作：T34 真实登录（用户）与 T20 / T35
 
 T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 
@@ -99,9 +101,9 @@ T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 3. **T08 Discover UI 已完成**：表单、状态、rerun 幂等、手动来源和 Review 选择通过 UI 测试。
 
 T09–T14 的获取、解析、不可变快照、审核状态机和 Review 页面已完成。
-T15–T18 已完成：批准的版本可以入库并以 Ready/Active 发布。接下来 T20 仅限批准版本的检索
-（SQLite 资格白名单 → Chroma 查询 → SQLite 取权威正文，进入上下文前复查资格），随后 T19 Knowledge Base 页面。
-注意：T34 OAuth（排期 D2）尚未开始，它是 T21 生成的关键路径（T34 → T35 → T36 → T21）。
+T34 OAuth 登录离线已完成，等待用户本人运行 `APP_MODE=live .venv/bin/python -m gridlens.cli login` 完成真实登录并确认 plan scope
+（只记录脱敏结果，AI 不代为登录）。可并行继续：T20 仅限批准版本的检索；或 T35 刷新/切换/退出
+（离线可实现，真实验证依赖 T34 登录）。关键路径：T34 → T35 → T36 → T21。
 T18 接好后在 Review 批准成功处触发一次入库。
 T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的共享文件
 进行未经安排的并发编辑。本交接不要求或启动多代理。
@@ -134,7 +136,7 @@ T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的�
 ## 7. 可复制的接手提示词
 
 ```text
-请接手已有 GridLens 项目，完成 T20 仅限批准版本的检索。
+请接手已有 GridLens 项目，完成 T20 仅限批准版本的检索（T34 等待用户真实登录）。
 先读取根 AGENTS.md、docs/HANDOFF.md、docs/tasks.json 和对应任务卡，
 再检查真实代码及开发规格相关章节。
 T01–T18、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
