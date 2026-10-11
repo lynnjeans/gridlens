@@ -21,7 +21,7 @@
 
 ## 2. 当前完成状态
 
-36 项任务中 **17 项 done，19 项 todo**。T01–T16、T33 已完成并通过离线验证；当前没有遗留的失败检查。
+36 项任务中 **18 项 done，18 项 todo**。T01–T17、T33 已完成并通过离线验证；当前没有遗留的失败检查。
 
 | 已完成 | 当前能力 | 主要文件 |
 | --- | --- | --- |
@@ -41,6 +41,7 @@
 | T14 | Review 页面：捕获、正文预览、元数据修正、hash 绑定/过期提示、Approve/Reject/Revoke/Reopen 与历史 | `gridlens/ui/review.py`、`providers/fakes.py` |
 | T16 | 固定 revision 的本地 BGE embedding（仅本地加载、长度预检、16 批、归一化/维度校验）与显式 `prepare-model` | `gridlens/providers/local_embeddings.py`、`cli.py` |
 | T15 | 按页/章节装箱、长段 offset 窗口的确定性 token 分块，index_fingerprint 与 chunk_id | `gridlens/documents/chunking.py` |
+| T17 | 本地持久 Chroma：按 fingerprint 的 cosine 集合、显式向量、白名单查询、按版本删除、配置不符报错 | `gridlens/providers/chroma_store.py` |
 | T33 | 稳定 host ID、按注册隔离的受保护原子凭证存储 | `gridlens/auth/host.py`、`credentials.py` |
 
 所有其他任务待实施，包括：真实搜索联调、抓取/解析服务、批准/拒绝操作、
@@ -54,9 +55,9 @@ Knowledge Base 和 Ask 的主要操作仍不可用。凭证存储实现不等于
 
 | 命令 | 结果 |
 | --- | --- |
-| `.venv/bin/python -m pytest -q` | 154 passed，4 deselected（live/local_model），7.0s |
+| `.venv/bin/python -m pytest -q` | 163 passed，4 deselected（live/local_model），8.0s |
 | `.venv/bin/ruff check .` | All checks passed |
-| `.venv/bin/ruff format --check .` | 65 files already formatted |
+| `.venv/bin/ruff format --check .` | 67 files already formatted |
 | `.venv/bin/python -m pip check` | No broken requirements found |
 | `.venv/bin/python -m gridlens.cli doctor` | fixture；搜索 key 未配置；OAuth not_implemented；模型 prepared `5c38ec7c405e` |
 | `.venv/bin/python -m pytest -m local_model -q` | 3 passed（禁网；需本机已 prepare-model） |
@@ -72,7 +73,7 @@ Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件�
 ## 4. 仓库与运行状态
 
 - `origin`：`https://github.com/lynnjeans/gridlens.git`。
-- 本地分支：`master`；T13–T16 已按用户要求提交并推送到 `origin/master`。
+- 本地分支：`master`；T13–T17 已按用户要求提交并推送到 `origin/master`。
   后续 Git 操作前先检查 `git status` 与 `git log origin/master..`。
 - 没有 PR 或部署。其他电脑可以从 GitHub 仓库 clone 当前实现；输出目录中的
   源码交接 ZIP 仍可用于离线交接。
@@ -87,7 +88,7 @@ Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件�
 GitHub 地址和分支信息已在本文明确记录。解压后复用已有应用目录，
 避免覆盖另一份更新的 checkout。
 
-## 5. 下一项工作：T17
+## 5. 下一项工作：T18
 
 T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 
@@ -96,8 +97,9 @@ T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 3. **T08 Discover UI 已完成**：表单、状态、rerun 幂等、手动来源和 Review 选择通过 UI 测试。
 
 T09–T14 的获取、解析、不可变快照、审核状态机和 Review 页面已完成。
-T16 本地 embedding 与 T15 确定性分块已完成。接下来 T17 Chroma 向量存储适配器
-（需安装 `vectors` extra，属于下载，先征得用户同意），然后 T18 入库与原子发布。
+T15 分块、T16 本地 embedding、T17 Chroma 适配器已完成。接下来 T18 入库流水线与原子发布：
+接入 bootstrap（live 用 LocalEmbeddingProvider + ChromaVectorStore，fixture 用 fake），
+按规格 7.3 顺序处理锁、分块、embedding、ID 集合核对与 SQLite 原子发布，并在 Review 批准后触发一次入库。
 T18 接好后在 Review 批准成功处触发一次入库。
 T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的共享文件
 进行未经安排的并发编辑。本交接不要求或启动多代理。
@@ -115,7 +117,7 @@ T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的�
 - 若新增缓存，保持 OAuth/search secrets 不进入 UI session/cache keys；
   审核和检索资格不能因缓存而过期。以后对 fake 向量状态的生命周期作显式设计。
 - core/dev/auth/embeddings 依赖已安装并锁定（sentence-transformers 6.1.0、torch 2.14.1）；
-  `vectors` extra（Chroma）仍未安装，T17 时锁定。模型缓存在 git 忽略的 `models/`，
+  `vectors` extra（chromadb 1.5.9）已安装并锁定；Chroma 默认 ONNX 模型不得使用或下载。模型缓存在 git 忽略的 `models/`，
   新机器需运行 `gridlens prepare-model`（下载约 134 MB）后才能跑 local_model 检查。
   `models/gridlens-model.json` 记录 revision `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`。
 - 本地 BGE 默认英文 384 维、350/50 分块；按其实际 tokenizer 计数，
@@ -129,10 +131,10 @@ T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的�
 ## 7. 可复制的接手提示词
 
 ```text
-请接手已有 GridLens 项目，完成 T17 Chroma 向量存储适配器。
+请接手已有 GridLens 项目，完成 T18 入库流水线与原子发布。
 先读取根 AGENTS.md、docs/HANDOFF.md、docs/tasks.json 和对应任务卡，
 再检查真实代码及开发规格相关章节。
-T01–T16、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
+T01–T17、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
 按依赖顺序实现并验证，保持 fixture/live 隔离、有限调用预算和 UI rerun 幂等。
 抓取与解析先用离线 HTTP/DNS fixture 完成；真实任意网站不作为单元验收条件。
 不要索要聊天中的密钥，不自动批准资料，不虚构研究评估，不增加 P1。

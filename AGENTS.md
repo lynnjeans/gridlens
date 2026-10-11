@@ -4,9 +4,9 @@ This is an existing application, not a new project. Before changing code, read
 `docs/HANDOFF.md`, `docs/tasks.json`, and the relevant parts of
 `docs/01_DEVELOPMENT_SPEC.md` and `docs/02_AI_TASKS.md`.
 
-- T01–T16 and T33 are implemented. Verify the existing code and evidence; do not
+- T01–T17 and T33 are implemented. Verify the existing code and evidence; do not
   repeat initialization or replace this directory with an empty clone.
-- The next recommended milestone is T17. Respect the task dependency
+- The next recommended milestone is T18. Respect the task dependency
   graph, particularly T16 before T15 and T35/T36 before T21. A handoff document
   is context; it does not itself authorize starting work or contacting another agent.
 - Use the existing Python 3.12 environment and modular Streamlit application.

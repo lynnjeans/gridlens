@@ -884,7 +884,7 @@
       "id": "T17",
       "title": "实现 Chroma 向量存储适配器",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D4",
       "depends_on": [
         "T02",
@@ -894,7 +894,9 @@
       "kind": "implementation",
       "scope_paths": [
         "gridlens/providers/chroma_store.py",
-        "tests/integration/test_vector_store.py"
+        "tests/integration/test_vector_store.py",
+        "pyproject.toml",
+        "requirements.lock"
       ],
       "objective": "提供可持久化、可白名单查询且幂等的向量存储。",
       "steps": [
@@ -920,12 +922,18 @@
         "AC-09"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "经用户批准从 PyPI 安装 vectors extra：chromadb 1.5.9 及 38 个新依赖（onnxruntime 1.31.0、grpcio 1.84.0 等），requirements.lock 仅新增、既有锁定不变；pip check 通过。",
+        "tests/integration/test_vector_store.py: 9 passed（临时真实 Chroma PersistentClient，禁网）；覆盖同 ID upsert 幂等、重开持久化、cosine 距离、$in 白名单过滤、空/空串白名单返回空、删除只影响目标版本、metadata 仅 version_id/ordinal/index_fingerprint 且不存正文、指纹/维度不符 INDEX_CONFIG_MISMATCH、非法写入、构造时不打开 Chroma；默认 embedding function 被 monkeypatch 为禁止调用。",
+        "未生成 ~/.cache/chroma（无默认 ONNX 模型下载）；匿名遥测关闭；导入 bootstrap 不加载 chromadb。",
+        "完整离线回归：163 passed, 4 deselected；local_model 3 passed；Ruff、format 与 pip check 通过。尚未接入 bootstrap/入库（T18）。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
         "human": "not_required"
-      }
+      },
+      "completed_at": "2026-10-11"
     },
     {
       "id": "T18",
@@ -1874,7 +1882,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T17"
+      "T18"
     ],
     "completed_tasks": [
       "T01",
@@ -1893,6 +1901,7 @@
       "T14",
       "T15",
       "T16",
+      "T17",
       "T33"
     ],
     "repository": {
@@ -1903,7 +1912,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 154,
+      "offline_tests_passed": 163,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

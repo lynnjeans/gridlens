@@ -4,7 +4,7 @@
 
 ## 1. 接手当前实现
 
-先读 `HANDOFF.md`、应用根 `AGENTS.md` 和当前 tasks.json。T01–T16、T33 已完成；下一步 **T17 Chroma 向量存储适配器**。先核对代码与验证证据，再执行用户指定范围，不重复初始化。
+先读 `HANDOFF.md`、应用根 `AGENTS.md` 和当前 tasks.json。T01–T17、T33 已完成；下一步 **T18 入库流水线与原子发布**。先核对代码与验证证据，再执行用户指定范围，不重复初始化。
 
 文档已经完成基本页面和流程设计，第一轮开发无需另开完整 UI 设计项目。可以在 T05 调整页面布局，但不要因此更换整个技术方案。
 
@@ -21,15 +21,15 @@ GitHub 远端不是本地开发的必要依赖。仓库名称、所属账户、�
 
 默认顺序执行，避免多个开发过程同时修改 schema、contracts 和同一服务。需要并行开发时，由用户另行明确任务分工与共享接口边界；本计划不要求运行多代理。
 
-## 3. 可直接复制：接手 T17
+## 3. 可直接复制：接手 T18
 
 ```text
-请接手已有 GridLens，只执行 T17：实现 Chroma 向量存储适配器。
-先读根 AGENTS.md、docs/HANDOFF.md、docs/tasks.json、T17 任务卡和开发规格相关章节。
-T01–T16、T33 已完成，不重建目录或覆盖本地代码。
-安装 vectors extra 前先征得用户同意；核对 Chroma 官方文档，显式传入向量、关闭默认 embedding function。
+请接手已有 GridLens，只执行 T18：实现入库流水线与原子发布。
+先读根 AGENTS.md、docs/HANDOFF.md、docs/tasks.json、T18 任务卡和开发规格 7.3 节。
+T01–T17、T33 已完成，复用 chunking、LocalEmbeddingProvider 与 ChromaVectorStore，不重建目录。
+按处理锁、分块、embedding、ID 集合核对、再检查审核 hash、SQLite 原子发布的顺序实现。
 同步任务 JSON、任务卡、progress.md 和 HANDOFF.md；记录实际验证结果与限制。
-本次范围仅 T17，不包含 push、部署、来源批准或创建新的远端仓库。
+本次范围仅 T18，不包含 push、部署、来源批准或创建新的远端仓库。
 完成后说明下一依赖已满足的任务，不自动开始范围之外的工作。
 ```
 
@@ -58,8 +58,8 @@ docs/02_AI_TASKS.md 中 T08 的依赖、输入、文件范围和验收条件。
 适合已经确认技术方案、希望 AI 连续做几张任务卡的情况。
 
 ```text
-请按 GridLens 开发文档，完成 T17 Chroma 向量存储适配器。
-先读 HANDOFF.md；T01–T16、T33 已完成，不重复初始化。
+请按 GridLens 开发文档，完成 T18 入库流水线与原子发布。
+先读 HANDOFF.md；T01–T17、T33 已完成，不重复初始化。
 
 按依赖顺序逐项实现，每项先检查现有代码和任务输入，完成后运行对应验证，
 记录证据，再继续下一项。已授权范围内无需逐项向我确认。

@@ -215,6 +215,30 @@ long pages: 15 chunks, max 350 tokens, counts matching the real tokenizer, all e
 Full offline regression **154 passed, 4 deselected**; Ruff, format and pip check passed.
 Not yet wired into ingestion (T18). At the user's request T15 was committed and pushed. Next task: T17 Chroma.
 
+## T17 — Chroma vector store adapter
+
+Status: **implemented and verified offline with a real temporary Chroma**.
+`ChromaVectorStore` opens a `PersistentClient` lazily (never on construction or UI rerun)
+with anonymized telemetry off, one cosine collection per index fingerprint
+(`gridlens-` + 48 hex), and a custom embedding function that refuses to embed, so Chroma's
+default ONNX model is never used or downloaded. Vectors are always passed explicitly.
+Metadata holds only `version_id`, `ordinal`, `index_fingerprint`; no chunk text is stored.
+Queries require a non-empty version whitelist (`$in`), return nothing for an empty one,
+and re-check each hit's version. Fingerprint, dimension or space mismatches raise
+`INDEX_CONFIG_MISMATCH`; Chroma errors map to `VECTOR_STORE_FAILED`. Writes reject count
+mismatch, duplicate IDs and non-finite values and use the client's max batch size.
+
+With the user's approval: `vectors` extra installed. `uv pip compile ... --extra
+embeddings --extra vectors` added chromadb 1.5.9 and 38 new packages (onnxruntime
+1.31.0, grpcio 1.84.0, kubernetes 37.0.1, opentelemetry 1.45.1, ...); existing pins
+unchanged; `uv pip install -r requirements.lock`; pip check passed.
+
+`tests/integration/test_vector_store.py`: **9 passed** (temporary real Chroma, IP sockets
+blocked, default embedding function patched to fail if called). No `~/.cache/chroma` was
+created. Full offline regression **163 passed, 4 deselected**; `local_model` 3 passed;
+Ruff, format and pip check passed. Not yet wired into bootstrap or ingestion (T18).
+At the user's request T17 was committed and pushed. Next task: T18 ingestion and atomic publication.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

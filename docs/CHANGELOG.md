@@ -45,3 +45,5 @@ T01–T05、T33 完成，42项离线测试通过；四页本地浏览器导航�
 完成 T16：固定 revision 的本地 bge-small-en-v1.5 embedding（仅本地加载、长度预检、16 批、归一化与维度校验）和显式 `prepare-model`；`models` extra 拆为 `embeddings`/`vectors`，锁定 sentence-transformers 6.1.0。17 项单元测试与 2 项禁网真实模型 smoke 通过（revision `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`）；完整回归 140 passed、3 deselected。
 
 完成 T15：确定性 token 分块（按页/章节装箱、长段按 tokenizer offset 切窗、原文精确子串、index_fingerprint/chunk_id）；ChunkDTO 增加 ordinal、text_sha256、embedding_text、heading_path。14 项单元测试与真实 BGE tokenizer 禁网 smoke 通过；完整回归 154 passed、4 deselected。
+
+完成 T17：本地持久 Chroma 向量存储适配器（按 fingerprint 的 cosine 集合、显式向量、拒绝默认 embedding function、白名单查询、按版本删除、配置不符报错）；锁定 chromadb 1.5.9。9 项真实临时 Chroma 集成测试通过；完整回归 163 passed、4 deselected。

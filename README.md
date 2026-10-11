@@ -9,8 +9,8 @@ milestone is implemented: the local web UI can search through Tavily when config
 store deduplicated candidate sources, select a source for review, and manually add a
 public URL as a pending lead. Bounded capture, HTML/PDF extraction, immutable snapshots
 and review-state rules are connected to the Review page (capture, preview, metadata
-correction, approve/reject/revoke/reopen). Pinned local BGE embeddings and deterministic token
-chunking are implemented but not yet used for indexing. Indexing, ChatGPT OAuth
+correction, approve/reject/revoke/reopen). Pinned local BGE embeddings, deterministic token
+chunking and a local Chroma index adapter are implemented but not yet wired into ingestion. Indexing, ChatGPT OAuth
 and real Q&A are **not connected yet**. No grid calculation or pandapower/OpenDSS is included.
 
 ## Run locally
@@ -67,13 +67,14 @@ python -m pytest -m local_model -q
 Normal runs only load local files; nothing is downloaded automatically. The command
 prints the resolved commit, which can be pinned as `EMBEDDING_REVISION` in `.env`.
 
-`requirements.lock` pins the installed core/dev/auth/embeddings dependencies on Python
+`requirements.lock` pins the installed core/dev/auth/embeddings/vectors dependencies on Python
 3.12 (resolved on macOS; includes torch). `requirements.lock` is generated from `pyproject.toml` with uv pip compile;
-commands and resolved environment details are in `docs/progress.md`. Chroma is declared in
-the optional `vectors` extra and will be locked when T17 is implemented.
+commands and resolved environment details are in `docs/progress.md`. Chroma (`vectors` extra,
+chromadb 1.5.9) is locked too; it runs locally with telemetry off and never uses its default
+embedding model.
 
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
-Next development milestone: T17 (Chroma vector store). The current
+Next development milestone: T18 (ingestion and atomic publication). The current
 source can be obtained from the configured GitHub repository.
 
 Read `docs/01_DEVELOPMENT_SPEC.md`, `docs/tasks.json` and `docs/progress.md` for

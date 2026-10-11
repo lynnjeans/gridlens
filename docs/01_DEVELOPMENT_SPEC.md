@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T16、T33 完成；向量存储、入库、授权和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T17、T33 完成；入库、检索、授权和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -351,6 +351,8 @@ Approve 成功后 UI 可自动发起一次同步入库操作；失败只改 inge
 embedding 以最多 16 个块一批在本地推理；空字符串先过滤，长度含 special tokens 先校验，数量、revision、维度、有限数值全部校验。文档 role=document、问题 role=query，不静默截断输入。写入 Chroma 使用确定性 IDs 和 upsert。显式传入 embeddings/query_embeddings，关闭默认 embedding function，使用 cosine 与归一化向量，防止后台使用另一个模型。
 
 集合名绑定 index_fingerprint；metadata 只存 `version_id/source_id/ordinal/index_fingerprint` 等标识，检索结果拿到 chunk ID 后从 SQLite 获取权威正文。Chroma metadata 不是审核权限系统。
+
+实现（chromadb 1.5.9，2026-10-11 核对文档）：`ChromaVectorStore(path, index_fingerprint, dimensions)` 懒打开 `PersistentClient`（`anonymized_telemetry=False`），集合名 `gridlens-` + fingerprint 前 48 位，`configuration={"hnsw": {"space": "cosine"}}`，自定义拒绝嵌入的 embedding function 取代默认 ONNX 模型；集合 metadata 记录 fingerprint 与维度，不符报 `INDEX_CONFIG_MISMATCH`；其余 Chroma 异常映射为 `VECTOR_STORE_FAILED`。
 
 Chroma 本地持久化适合本项目的本地开发场景；`$in` 可用于 version ID 白名单过滤。[Chroma client](https://docs.trychroma.com/reference/python/client)、[Metadata filtering](https://docs.trychroma.com/docs/querying-collections/metadata-filtering)。
 

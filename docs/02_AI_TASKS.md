@@ -734,7 +734,7 @@
 
 ## T17 — 实现 Chroma 向量存储适配器
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D4 / implementation
 **依赖：** T02, T03, T04
 **PRD 对应：** AC-03, AC-04, AC-09
@@ -746,6 +746,7 @@
 
 - `gridlens/providers/chroma_store.py`
 - `tests/integration/test_vector_store.py`
+- `pyproject.toml`/`requirements.lock`（vectors extra：chromadb 1.5.9）
 
 ### 实现步骤
 
@@ -768,9 +769,9 @@
 
 - 不使用 Chroma Cloud，不开发多租户。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_required, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** 经用户批准安装 chromadb 1.5.9（38 个新依赖，既有锁定不变）。`tests/integration/test_vector_store.py` 9 项通过（临时真实 Chroma、禁网）：幂等 upsert、重开持久化、cosine、白名单过滤、空白名单返回空、按版本删除、仅标识 metadata、配置不符报错、非法写入、懒加载；默认 embedding function 禁止调用，未生成 ~/.cache/chroma。完整回归 163 passed、4 deselected；Ruff/format/pip check 通过。尚未接入入库（T18）。
 
 ## T18 — 实现入库流水线与原子发布
 
