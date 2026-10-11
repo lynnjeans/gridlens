@@ -127,7 +127,7 @@ def test_history_rechecks_source_status(tmp_path):
     app = submit(ask_app(tmp_path))
     app_container.review.revoke(version, "Researcher", "Withdrawn")
     app.run()
-    assert any("no longer approved" in w.value for w in app.warning)
+    assert any("approval was revoked" in w.value for w in app.warning)
 
 
 def test_input_validation(tmp_path):

@@ -58,6 +58,52 @@ class ReviewService:
                 raise AppError("REVIEW_STATE_CHANGED", "The review state changed; reload it.")
         return self._result(self._version(version_id), changed=True)
 
+    def revise_metadata(self, version_id: str, correction: MetadataCorrection) -> ReviewResult:
+        """Corrects an approved version by creating a new pending version of the same text.
+
+        The approved version stays live until the new one is approved and indexed; approval
+        is never inherited.
+        """
+        row = self._version(version_id)
+        if row["review_status"] == "pending":
+            raise AppError("REVIEW_STATE_INVALID", "Edit a pending version's metadata directly.")
+        segments = self._validate_snapshot(row)
+        metadata = {**json.loads(row["metadata_json"]), **correction.model_dump()}
+        digest = snapshot_digest(segments, metadata, metadata["parser_version"])
+        if digest == row["snapshot_sha256"]:
+            raise AppError("REVIEW_STATE_INVALID", "The metadata did not change.")
+        new_id = str(uuid4())
+        with self.db.transaction() as connection:
+            if connection.execute(
+                "SELECT 1 FROM document_versions WHERE source_id=? AND snapshot_sha256=?",
+                (row["source_id"], digest),
+            ).fetchone():
+                raise AppError(
+                    "VERSION_DUPLICATE", "Another version already has this content and metadata."
+                )
+            connection.execute(
+                "INSERT INTO document_versions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    new_id,
+                    row["source_id"],
+                    row["raw_sha256"],
+                    digest,
+                    row["raw_path"],
+                    row["segments_path"],
+                    canonical_json(metadata).decode(),
+                    metadata["published_at"],
+                    row["fetched_at"],
+                    row["extraction_notes_json"],
+                    "pending",
+                    "not_started",
+                    "candidate",
+                    None,
+                    None,
+                    now(),
+                ),
+            )
+        return self._result(self._version(new_id), changed=True)
+
     def approve(self, version_id: str, expected_hash: str, reviewer: str) -> ReviewResult:
         reviewer = self._reviewer(reviewer)
         row = self._version(version_id)

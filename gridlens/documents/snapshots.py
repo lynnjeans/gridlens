@@ -26,6 +26,8 @@ REVIEWED_METADATA_KEYS = (
     "final_url",
     "content_type",
 )
+# Human-reviewed labels carried into refreshed snapshots (URLs/type come from the fetch).
+REVIEWED_LABEL_KEYS = ("title", "publisher", "published_at", "jurisdiction", "source_type")
 AtomicWriter = Callable[[Path, bytes], None]
 
 
@@ -85,6 +87,11 @@ class SnapshotService:
             "final_url": fetched.final_url,
             "content_type": fetched.content_type,
         }
+        if previous := self.sources.latest_version(source_id):
+            # A refresh keeps the reviewer's metadata, so identical content is a no-op and
+            # only changed content (or a deliberate metadata revision) needs a new review.
+            reviewed = json.loads(previous["metadata_json"])
+            metadata.update({key: reviewed.get(key) for key in REVIEWED_LABEL_KEYS})
         serial_segments = [segment.model_dump(mode="json") for segment in segments]
         parser_version = PARSER_VERSIONS[fetched.content_type]
         snapshot_sha256 = snapshot_digest(segments, metadata, parser_version)

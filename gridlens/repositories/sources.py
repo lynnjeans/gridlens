@@ -126,6 +126,15 @@ class SourceRepository:
                     return value
         return None
 
+    def latest_version(self, source_id: str) -> dict | None:
+        with self.db.connect() as c:
+            row = c.execute(
+                "SELECT * FROM document_versions WHERE source_id=? "
+                "ORDER BY created_at DESC, rowid DESC LIMIT 1",
+                (source_id,),
+            ).fetchone()
+            return dict(row) if row else None
+
     def get_version(self, version_id: str) -> dict | None:
         with self.db.connect() as c:
             row = c.execute("SELECT * FROM document_versions WHERE id=?", (version_id,)).fetchone()

@@ -525,6 +525,27 @@ pushed, the full run actually had 1 collection error (the UI test was named
 chain did not stop on it; the file was renamed and re-verified in the next commit. Committed and pushed (user's "Auto"
 instruction). Next: T26 refresh and historical citation status.
 
+## T26 — Refresh, version updates and historical citation status (2026-10-12)
+
+Status: **implemented and verified offline**. Refresh ("Refresh from source" in the
+Knowledge Base) recaptures the source: the snapshot now carries forward the reviewer's
+metadata from the latest version (title, publisher, date, region, type), so unchanged
+content is a no-op and only changed content creates a new pending candidate with no
+inherited approval. **Behavior change:** an unreviewed change to the source table's labels
+no longer creates a version; the T12 test was updated accordingly. Approved metadata is
+corrected through `ReviewService.revise_metadata`, which adds a pending version with the
+same files and a new hash while the approved version keeps serving. The live version shows
+"update awaiting review" until the new one is approved and indexed (T18 then supersedes the
+old one). Revoke commits in SQLite first, then `IngestionService.purge_vectors` tries to
+delete the vectors; failure is reported and harmless because eligibility comes only from
+SQLite, and revoking never restores an older version. Historical answers keep their text,
+quotes and locations; `citations.source_statuses` recomputes current / superseded /
+revoked / not_current on every view and Ask labels each citation.
+
+Checks: `tests/integration/test_version_lifecycle.py` **3 passed**, Knowledge Base refresh
+UI test added; full offline regression **306 passed, 8 deselected**; Ruff, format and pip
+check passed. Committed and pushed (user's "Auto" instruction). Next: T27 export.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

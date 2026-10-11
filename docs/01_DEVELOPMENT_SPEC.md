@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T22–T25、T33 完成，T34–T36、T21 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T22–T26、T33 完成，T34–T36、T21 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -464,6 +464,8 @@ ReviewService 在最早实现时就支持 revoke 并即时改变资格；后续 
 Refresh 抓取新快照，相同 hash 为 no-op；不同 hash 建 Candidate。旧版本在新版本 Ready 之前继续有效，UI 显示待审核更新；新版本 Ready 发布过程按第 7.3 节执行。
 
 Revoke 先提交 SQLite，再尝试删除向量，删除失败也不允许再次检索。历史 QA 不改写原文；每次读取历史回答计算来源是否 revoked/superseded，展示状态标签。历史答案不作为新问题检索内容。
+
+实现（2026-10-12）：重新抓取沿用最近版本的已审核元数据（REVIEWED_LABEL_KEYS），未审核 Source 标签变化不产生新版本；已批准版本的元数据修正经 `ReviewService.revise_metadata` 生成新 pending 版本（同原文与段落文件、新 hash）；`IngestionService.purge_vectors` 尽力删除撤销版本向量；`citations.source_statuses` 读取时计算 current/superseded/revoked/not_current。
 
 ### 9.3 Markdown 导出
 

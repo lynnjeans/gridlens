@@ -3,8 +3,9 @@ import json
 import streamlit as st
 
 from gridlens.bootstrap import Container
+from gridlens.contracts import MetadataCorrection
 from gridlens.errors import AppError
-from gridlens.ui.common import empty_state, index_version, show_error
+from gridlens.ui.common import empty_state, index_version, revoke_version, show_error
 
 
 def _status(version: dict, run: dict | None, searchable: bool) -> str:
@@ -19,7 +20,9 @@ def _status(version: dict, run: dict | None, searchable: bool) -> str:
     if review == "revoked":
         return "Approval revoked · not searchable"
     if searchable:
-        return "Searchable"
+        return "Searchable" + (
+            " · update awaiting review" if version.get("_pending_update") else ""
+        )
     if ingestion == "processing":
         stage = run["stage"] if run else "starting"
         return f"Approved · indexing ({stage})"
@@ -81,15 +84,75 @@ def _detail(container: Container, version: dict, run: dict | None, searchable: b
             revoke = st.form_submit_button("Revoke approval")
         if revoke:
             try:
-                container.review.revoke(version_id, reviewer, reason)
+                message = revoke_version(container, version_id, reviewer, reason)
             except AppError as error:
                 show_error(error)
             else:
-                st.session_state["kb_notice"] = (
-                    "success",
-                    "Approval revoked. This version is no longer searchable.",
-                )
+                st.session_state["kb_notice"] = ("success", message)
                 st.rerun()
+        _revise_form(container, version, meta)
+    _refresh_button(container, version)
+
+
+def _refresh_button(container: Container, version: dict):
+    """Manual refresh: same snapshot is a no-op; changed content becomes a pending version."""
+    if st.button("Refresh from source", key=f"kb-refresh-{version['id']}"):
+        try:
+            preview = container.snapshots.capture(version["source_id"])
+        except AppError as error:
+            show_error(error)
+            return
+        st.session_state["kb_notice"] = (
+            ("success", "The source is unchanged; no new version was created.")
+            if preview.reused
+            else (
+                "warning",
+                "The source changed. A new version is waiting for review; the current "
+                "version stays searchable until the new one is approved and indexed.",
+            )
+        )
+        st.rerun()
+
+
+def _revise_form(container: Container, version: dict, meta: dict):
+    with st.expander("Propose corrected metadata"):
+        st.caption("Creates a new version for review; this version stays live until then.")
+        with st.form(f"kb-revise-{version['id']}"):
+            title = st.text_input("Title", value=meta.get("title") or "")
+            publisher = st.text_input("Publisher", value=meta.get("publisher") or "")
+            published = st.text_input("Published date", value=meta.get("published_at") or "")
+            regions = ["NZ", "US", "GLOBAL", "UNKNOWN"]
+            types = ["policy", "technical", "paper", "industry_report", "product", "unknown"]
+            region = st.selectbox(
+                "Jurisdiction", regions, index=regions.index(meta.get("jurisdiction", "UNKNOWN"))
+            )
+            source_type = st.selectbox(
+                "Source type", types, index=types.index(meta.get("source_type", "unknown"))
+            )
+            submitted = st.form_submit_button("Create version for review")
+        if submitted:
+            try:
+                container.review.revise_metadata(
+                    version["id"],
+                    MetadataCorrection(
+                        title=title,
+                        publisher=publisher,
+                        published_at=published,
+                        jurisdiction=region,
+                        source_type=source_type,
+                    ),
+                )
+            except (AppError, ValueError) as error:
+                if isinstance(error, AppError):
+                    show_error(error)
+                else:
+                    st.error("A title is required.")
+                return
+            st.session_state["kb_notice"] = (
+                "warning",
+                "A corrected version is waiting for review on the Review page.",
+            )
+            st.rerun()
 
 
 def render(container: Container):
@@ -110,6 +173,15 @@ def render(container: Container):
         else set()
     )
     runs = container.research.latest_ingestion_runs()
+    # Flag live versions whose source has a newer version not yet published.
+    newer = {}
+    for v in versions:
+        if v["version_status"] == "candidate" and v["review_status"] in {"pending", "approved"}:
+            newer.setdefault(v["source_id"], v["created_at"])
+    for v in versions:
+        v["_pending_update"] = (
+            v["version_status"] == "active" and newer.get(v["source_id"], "") > v["created_at"]
+        )
     rows = []
     for version in versions:
         meta = json.loads(version["metadata_json"])

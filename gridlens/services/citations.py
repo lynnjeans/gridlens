@@ -3,6 +3,7 @@
 import re
 
 from gridlens.contracts import AnswerDraft, RetrievalContext
+from gridlens.db import Database
 
 _SPACE = re.compile(r"\s+")
 
@@ -35,3 +36,32 @@ def citation_problems(draft: AnswerDraft, context: RetrievalContext) -> list[str
                     f"claim {claim.claim_id}: quote is not verbatim text of {evidence.chunk_id}"
                 )
     return problems
+
+
+def source_statuses(db: Database, version_ids: list[str], fingerprint: str | None) -> dict:
+    """Current status of cited versions, computed on every read of a historical answer."""
+    if not version_ids:
+        return {}
+    placeholders = ",".join("?" for _ in version_ids)
+    with db.connect() as c:
+        rows = c.execute(
+            f"SELECT * FROM document_versions WHERE id IN ({placeholders})", tuple(version_ids)
+        ).fetchall()
+    statuses = {}
+    for row in rows:
+        if row["review_status"] == "revoked":
+            status = "revoked"
+        elif row["version_status"] == "superseded":
+            status = "superseded"
+        elif (
+            row["review_status"] == "approved"
+            and row["ingestion_status"] == "ready"
+            and row["version_status"] == "active"
+            and row["approved_snapshot_sha256"] == row["snapshot_sha256"]
+            and (fingerprint is None or row["index_fingerprint"] == fingerprint)
+        ):
+            status = "current"
+        else:
+            status = "not_current"
+        statuses[row["id"]] = status
+    return statuses

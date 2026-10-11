@@ -1112,7 +1112,7 @@
 
 ## T26 — 补齐刷新版本与历史引用状态
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D6 / implementation
 **依赖：** T19, T23
 **PRD 对应：** AC-02, AC-06, AC-09
@@ -1122,10 +1122,10 @@
 
 ### 文件范围
 
-- `gridlens/ui/knowledge_base.py`
-- `gridlens/services/review.py`
-- `gridlens/services/citations.py`
-- `tests/integration/test_version_lifecycle.py`
+- `gridlens/ui/knowledge_base.py`（Refresh、待审核更新标记、修正元数据）、`gridlens/ui/review.py`、`gridlens/ui/ask.py`、`gridlens/ui/common.py`
+- `gridlens/services/review.py`（revise_metadata）、`gridlens/services/citations.py`（source_statuses）、`gridlens/services/ingestion.py`（purge_vectors）
+- `gridlens/documents/snapshots.py`、`gridlens/repositories/sources.py`（沿用已审核元数据）
+- `tests/integration/test_version_lifecycle.py`、`tests/integration/test_snapshots.py`、`tests/ui/test_knowledge_base.py`
 
 ### 实现步骤
 
@@ -1148,9 +1148,9 @@
 
 - 不做自动监测更新或可视化 diff。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_required, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/integration/test_version_lifecycle.py` 3 项（v1→v2→revoke 全周期、清理失败、批准后修正与 hash 篡改）与 KB Refresh UI 测试通过。行为变更：刷新沿用已审核元数据，T12 测试相应更新。完整回归 306 passed、8 deselected。
 
 ## T27 — 实现 Markdown research log 导出
 

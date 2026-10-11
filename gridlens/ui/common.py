@@ -68,6 +68,15 @@ def show_error(error: AppError):
     st.error(messages.get(error.code, "The operation could not be completed."))
 
 
+def revoke_version(container: Container, version_id: str, reviewer: str, reason) -> str:
+    """Revokes in SQLite first (immediate), then tries to delete vectors; never the reverse."""
+    container.review.revoke(version_id, reviewer, reason)
+    message = "Approval revoked. This version is no longer searchable."
+    if container.ingestion is not None and not container.ingestion.purge_vectors(version_id):
+        message += " Its index entries could not be removed now; they are ignored anyway."
+    return message
+
+
 def index_version(container: Container, version_id: str, key_prefix: str) -> tuple[str, str]:
     """Runs one indexing operation for a click; returns (message, kind). Never undoes approval."""
     if container.ingestion is None:

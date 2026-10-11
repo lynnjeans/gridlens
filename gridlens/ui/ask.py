@@ -6,6 +6,7 @@ import streamlit as st
 from gridlens.bootstrap import Container
 from gridlens.contracts import AnswerEnvelope, RetrievalFilters
 from gridlens.errors import AppError
+from gridlens.services.citations import source_statuses
 from gridlens.ui.common import empty_state, show_error
 
 REGIONS = {
@@ -65,7 +66,7 @@ def _location(locator: dict) -> str:
     return " › ".join(str(p) for p in parts if p)
 
 
-def _show_answer(envelope: AnswerEnvelope, eligible: set[str]):
+def _show_answer(envelope: AnswerEnvelope, statuses: dict[str, str]):
     if envelope.mode == "fixture":
         st.caption("Synthetic development answer — not real grid research.")
     if envelope.execution_status == "failed":
@@ -122,24 +123,25 @@ def _show_answer(envelope: AnswerEnvelope, eligible: set[str]):
                 )
             )
             st.caption("Supports claim(s): " + ", ".join(citation["claim_ids"]))
-            if source.get("version_id") not in eligible:
-                st.warning(
-                    "This source version is no longer approved and current; treat this "
-                    "citation as historical."
-                )
+            status = statuses.get(source.get("version_id"), "not_current")
+            if status != "current":
+                st.warning(STATUS_LABELS[status])
             if source.get("original_url"):
                 st.link_button("Open original", source["original_url"])
 
 
-def _eligible(container: Container) -> set[str]:
-    if container.ingestion is None:
-        return set()
-    return {
-        v["id"]
-        for v in container.research.eligible_versions(
-            container.ingestion.fingerprint, jurisdiction=None
-        )
-    }
+STATUS_LABELS = {
+    "revoked": "Historical: this source's approval was revoked after the answer.",
+    "superseded": "Historical: a newer version of this source has replaced it.",
+    "not_current": "Historical: this source version is not currently searchable.",
+}
+
+
+def _statuses(container: Container, envelope: AnswerEnvelope) -> dict[str, str]:
+    """Recomputed on every view; the stored quote and location are never rewritten."""
+    fingerprint = container.ingestion.fingerprint if container.ingestion else None
+    ids = sorted({c["source"].get("version_id") for c in envelope.citations})
+    return source_statuses(container.db, ids, fingerprint)
 
 
 def _ask_tab(container: Container):
@@ -203,7 +205,7 @@ def _ask_tab(container: Container):
     filters = json.loads(record["filters_json"])
     st.caption(f"Region {filters.get('region')} · asked {record['created_at'][:19]} UTC")
     envelope = service.replay(chosen)  # stored result; never a new model call
-    _show_answer(envelope, _eligible(container))
+    _show_answer(envelope, _statuses(container, envelope))
 
 
 REASONS = {

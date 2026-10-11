@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from gridlens.bootstrap import Container
 from gridlens.contracts import MetadataCorrection
 from gridlens.errors import AppError
-from gridlens.ui.common import empty_state, index_version, show_error
+from gridlens.ui.common import empty_state, index_version, revoke_version, show_error
 
 STATUS_ORDER = {"pending": 0, "rejected": 1, "revoked": 2, "approved": 3}
 JURISDICTIONS = ["NZ", "US", "GLOBAL", "UNKNOWN"]
@@ -168,7 +168,10 @@ def _closed_actions(container, version_id, row, reviewer):
         submitted = st.form_submit_button(label)
     if submitted:
         try:
-            getattr(container.review, action)(version_id, reviewer, reason)
+            if action == "revoke":
+                done = revoke_version(container, version_id, reviewer, reason)
+            else:
+                container.review.reopen(version_id, reviewer, reason)
         except AppError as error:
             show_error(error)
         else:

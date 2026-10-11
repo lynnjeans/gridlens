@@ -102,7 +102,7 @@ def test_pdf_capture_dispatch_preserves_physical_pages(db, tmp_path, fixtures_di
     assert row["raw_path"].endswith("raw.pdf")
 
 
-def test_content_or_reviewed_metadata_change_creates_new_pending_version(db, tmp_path):
+def test_content_change_creates_new_pending_version_but_source_labels_do_not(db, tmp_path):
     source_id = source(db)
     snapshots = service(
         db,
@@ -118,17 +118,20 @@ def test_content_or_reviewed_metadata_change_creates_new_pending_version(db, tmp
     first = snapshots.capture(source_id)
     second = snapshots.capture(source_id)
     assert second.snapshot_sha256 != first.snapshot_sha256
+    # An unreviewed change to the source's labels does not create a new version: refreshes
+    # carry the reviewed metadata forward (T26). Metadata changes go through review.
     with db.transaction() as connection:
         connection.execute(
             "UPDATE sources SET publisher='Corrected publisher' WHERE id=?", (source_id,)
         )
     third = snapshots.capture(source_id)
-    assert third.snapshot_sha256 != second.snapshot_sha256
+    assert third.reused and third.snapshot_sha256 == second.snapshot_sha256
+    assert third.metadata["publisher"] == second.metadata["publisher"]
     with db.connect() as connection:
         rows = connection.execute(
             "SELECT review_status, version_status FROM document_versions"
         ).fetchall()
-    assert [tuple(row) for row in rows] == [("pending", "candidate")] * 3
+    assert [tuple(row) for row in rows] == [("pending", "candidate")] * 2
 
 
 def test_write_failure_removes_partial_files_and_database_row(db, tmp_path):

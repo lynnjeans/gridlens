@@ -222,3 +222,44 @@ def test_revoke_requires_reviewer_and_matches_retrieval_eligibility(tmp_path):
 def test_empty_knowledge_base(tmp_path):
     app = kb_app(tmp_path)
     assert any("empty" in i.value for i in app.info)
+
+
+def test_refresh_is_noop_or_creates_pending_update(tmp_path):
+    seed, ids = seeded(tmp_path)
+    # The kb page builds its own container; give its snapshot service the same fetcher.
+    setup_body = "<main><p>Grid connection text for searchable.</p></main>"
+    script_setup = (
+        "import hashlib\n"
+        "from gridlens.contracts import FetchedDocument\n"
+        "class F:\n"
+        "    def fetch(self, url):\n"
+        "        body = st.session_state.get('body', '').encode()\n"
+        "        return FetchedDocument(requested_url=url, final_url=url,\n"
+        "            content_type='text/html', body=body,\n"
+        "            raw_sha256=hashlib.sha256(body).hexdigest(),\n"
+        "            fetched_at='2026-10-12T00:00:00+00:00', redirect_count=0)\n"
+        "c.snapshots.fetcher = F()\n"
+    )
+    script = (
+        "from pathlib import Path\n"
+        "import streamlit as st\n"
+        "from gridlens.config import Settings\n"
+        "from gridlens.bootstrap import build_container\n"
+        "from gridlens.ui.knowledge_base import render\n"
+        f"c=build_container(Settings(project_root=Path({str(tmp_path)!r})))\n"
+        f"st.session_state.setdefault('kb_version_id', {ids['searchable']!r})\n"
+        f"st.session_state.setdefault('body', {setup_body!r})\n" + script_setup + "render(c)\n"
+    )
+    app = AppTest.from_string(script).run()
+    button(app, "Refresh from source").click().run()
+    assert any("unchanged" in s.value for s in app.success)
+    count = len(rows(tmp_path, "SELECT id FROM document_versions"))
+
+    app.session_state["body"] = "<main><p>Grid connection text, revised.</p></main>"
+    button(app, "Refresh from source").click().run()
+    assert any("waiting for review" in w.value for w in app.warning)
+    assert len(rows(tmp_path, "SELECT id FROM document_versions")) == count + 1
+    statuses = [
+        r["Status"] for r in app.dataframe[0].value.to_dict("records") if r["Title"] == "searchable"
+    ]
+    assert "Searchable · update awaiting review" in statuses

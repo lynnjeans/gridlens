@@ -74,6 +74,14 @@ class IngestionService:
             self._fail(version_id, run_id, "INGESTION_FAILED")
             raise AppError("INGESTION_FAILED", "Indexing failed unexpectedly.") from None
 
+    def purge_vectors(self, version_id: str) -> bool:
+        """Best-effort cleanup after revocation; eligibility never depends on it."""
+        try:
+            self.vectors.delete_version(version_id)
+        except Exception:
+            return False
+        return True
+
     def _start(self, version_id: str, operation_key: str):
         with self.db.transaction() as c:
             existing = c.execute(
