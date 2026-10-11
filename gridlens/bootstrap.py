@@ -28,6 +28,7 @@ from gridlens.repositories.research import ResearchRepository
 from gridlens.repositories.sources import SourceRepository
 from gridlens.services.answers import AnswerService
 from gridlens.services.discovery import DiscoveryService
+from gridlens.services.export import ExportService
 from gridlens.services.gaps import GapService
 from gridlens.services.ingestion import IngestionService
 from gridlens.services.retrieval import RetrievalService
@@ -56,6 +57,7 @@ class Container:
     retrieval: RetrievalService | None
     answer_service: AnswerService | None
     gaps: GapService
+    export: ExportService
 
 
 def build_container(settings: Settings) -> Container:
@@ -135,6 +137,9 @@ def build_container(settings: Settings) -> Container:
         ingestion=ingestion,
         retrieval=retrieval,
         gaps=gaps,
+        export=ExportService(
+            db, mode=settings.mode, index_fingerprint=ingestion.fingerprint if ingestion else None
+        ),
         answer_service=(
             AnswerService(
                 db,

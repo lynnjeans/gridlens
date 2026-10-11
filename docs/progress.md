@@ -546,6 +546,29 @@ Checks: `tests/integration/test_version_lifecycle.py` **3 passed**, Knowledge Ba
 UI test added; full offline regression **306 passed, 8 deselected**; Ruff, format and pip
 check passed. Committed and pushed (user's "Auto" instruction). Next: T27 export.
 
+## T27 — Markdown research log export (2026-10-12)
+
+Status: **implemented and verified offline; human readability check not run**.
+`gridlens/services/export.py` `ExportService.export(ExportSelection)` produces UTF-8
+Markdown with UTC and Pacific/Auckland time, mode (plus a synthetic-data warning in
+fixture mode) and a "no generated conclusions" note. Selected sources are split into
+current approved sources (with review events and notes), historical/not-current sources
+(title, link, status only) and leads awaiting review (no document text). Selected answers
+list claims with `[n]` markers, limitations, missing evidence and numbered citations with
+locations and the source status at export time; quotes appear only for current or
+superseded (labelled) sources; answers citing revoked sources are labelled historical,
+their revoked quotes are omitted, and — a tightening found by testing — any claim whose
+only sources are revoked/not current is omitted too, because claim wording can reproduce
+the source. Open gaps (and selected gaps) are listed. All values are escaped (Markdown
+punctuation; `<`/`>`/`&` as entities); only HTTP(S) URLs become links; no snapshot
+paths, credentials or provider payloads are read. The Knowledge Base page has an export
+form (sources, answers, open gaps) with "Prepare export" and a Markdown download.
+
+Checks: `tests/integration/test_export.py` **6 passed**; full offline regression **312
+passed, 8 deselected**; Ruff, format and pip check passed. I generated and read a sample
+fixture export; the card's human check of an exported file was not run. Committed and
+pushed (user's "Auto" instruction). Next: T28 recovery, limits and run records.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

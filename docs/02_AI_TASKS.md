@@ -1154,7 +1154,7 @@
 
 ## T27 — 实现 Markdown research log 导出
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D8 / implementation
 **依赖：** T24, T26
 **PRD 对应：** AC-08
@@ -1189,9 +1189,9 @@
 
 - 不自动生成未经核实的 research note 结论。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_required, human=not_run（人工打开导出文件未执行）
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/integration/test_export.py` 6 项通过（恶意 Markdown/HTML、Pending/Rejected 正文、撤销 quote 与仅依赖撤销来源的 claim 省略、superseded 标注、状态随数据库、非 HTTP(S) URL、中文 UTF-8）。AI 阅读过样例导出；人工打开检查未执行。完整回归 312 passed、8 deselected。
 
 ## T28 — 实现中断恢复、调用限额与运行记录
 

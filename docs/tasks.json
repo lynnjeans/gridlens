@@ -1451,7 +1451,7 @@
       "id": "T27",
       "title": "实现 Markdown research log 导出",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D8",
       "depends_on": [
         "T24",
@@ -1461,6 +1461,7 @@
       "scope_paths": [
         "gridlens/services/export.py",
         "gridlens/ui/knowledge_base.py",
+        "gridlens/bootstrap.py",
         "tests/integration/test_export.py"
       ],
       "objective": "将可追溯研究记录导出供团队整理笔记。",
@@ -1485,12 +1486,18 @@
         "AC-08"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/integration/test_export.py: 6 passed：恶意 HTML/Markdown 标题与问题被转义（无 <script>/<img>/<b>、无 javascript: 链接目标、# 与 | 不形成标题/表格、章节结构固定）；Pending/Rejected 正文不导出；撤销来源的 quote 与仅依赖撤销来源的 claim 文本被省略并标注历史答案；superseded 保留原 quote 并标注；引用链接指向对应元数据且状态随导出时数据库变化；审核备注导出；非 HTTP(S) URL 不成链接；无快照路径/凭证字样；中文 UTF-8 往返；仅缺口/空选择。",
+        "安全收紧：导出时若某 claim 的所有引用来源均已撤销或非当前，claim 文本也省略（防止通过 claim 复现撤销来源正文）。",
+        "AI 自行生成并阅读了一份 fixture 导出样例确认可读；按卡片要求的人工打开检查（human）未执行。",
+        "完整离线回归：312 passed, 8 deselected；Ruff、format 与 pip check 通过。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
-        "human": "not_required"
-      }
+        "human": "not_run"
+      },
+      "completed_at": "2026-10-12"
     },
     {
       "id": "T28",
@@ -1989,7 +1996,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T27"
+      "T28"
     ],
     "completed_tasks": [
       "T01",
@@ -2017,6 +2024,7 @@
       "T24",
       "T25",
       "T26",
+      "T27",
       "T33"
     ],
     "repository": {
@@ -2027,7 +2035,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 306,
+      "offline_tests_passed": 312,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

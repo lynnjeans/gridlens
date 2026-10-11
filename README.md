@@ -91,7 +91,8 @@ embedding model.
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
 The Ask page answers from approved sources with verified, numbered citations (fixture
 mode end to end; live mode needs sign-in and a selected model). Next development
-milestone: T27 (Markdown research log export). Sources can be refreshed; historical
+milestone: T28 (recovery, limits and run records). The Knowledge Base page exports a
+Markdown research log. Sources can be refreshed; historical
 answers show whether their cited versions were superseded or revoked. Knowledge gaps are recorded,
 deduplicated, reviewable in the Gaps tab, and can prefill Discover. In live mode the sidebar
 offers Continue with ChatGPT, account and model pickers (from your account's own catalog),

@@ -5,6 +5,7 @@ import streamlit as st
 from gridlens.bootstrap import Container
 from gridlens.contracts import MetadataCorrection
 from gridlens.errors import AppError
+from gridlens.services.export import ExportSelection
 from gridlens.ui.common import empty_state, index_version, revoke_version, show_error
 
 
@@ -222,3 +223,43 @@ def render(container: Container):
         st.rerun()
     version = next(v for v in versions if v["id"] == version_id)
     _detail(container, version, runs.get(version_id), version_id in searchable, reviewer)
+    st.divider()
+    _export(container, versions, labels)
+
+
+def _export(container: Container, versions: list[dict], labels: dict[str, str]):
+    st.subheader("Export research log")
+    st.caption(
+        "Markdown with selected sources, answers and gaps. Pending or rejected leads never "
+        "include document text; revoked sources lose their quotes."
+    )
+    answers = container.qa.list_answers()
+    with st.form("kb-export"):
+        chosen_versions = st.multiselect(
+            "Sources",
+            list(labels),
+            default=sorted(v["id"] for v in versions if v["review_status"] == "approved"),
+            format_func=labels.__getitem__,
+        )
+        qa_labels = {a["id"]: f"{a['question'][:70]} · {a['execution_status']}" for a in answers}
+        chosen_qa = st.multiselect(
+            "Questions and answers",
+            list(qa_labels),
+            default=list(qa_labels),
+            format_func=qa_labels.__getitem__,
+        )
+        open_gaps = st.checkbox("Include open knowledge gaps", value=True)
+        prepare = st.form_submit_button("Prepare export")
+    if prepare:
+        st.session_state["kb_export"] = container.export.export(
+            ExportSelection(
+                version_ids=chosen_versions, qa_ids=chosen_qa, include_open_gaps=open_gaps
+            )
+        )
+    if markdown := st.session_state.get("kb_export"):
+        st.download_button(
+            "Download Markdown",
+            markdown.encode("utf-8"),
+            file_name="gridlens-research-log.md",
+            mime="text/markdown",
+        )
