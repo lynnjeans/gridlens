@@ -2,7 +2,10 @@
 
 from dataclasses import dataclass
 
+from gridlens.auth.catalog import ModelCatalog
 from gridlens.auth.credentials import FileCredentialStore
+from gridlens.auth.oauth import OAuthLogin
+from gridlens.auth.sessions import SessionManager
 from gridlens.config import Settings
 from gridlens.contracts import AnswerProvider, EmbeddingProvider, SearchProvider, VectorStore
 from gridlens.db import Database
@@ -37,6 +40,9 @@ class Container:
     research: ResearchRepository
     qa: QARepository
     credentials: FileCredentialStore
+    oauth: OAuthLogin
+    sessions: SessionManager
+    catalog: ModelCatalog
     search: SearchProvider | None
     embeddings: EmbeddingProvider | None
     answers: AnswerProvider | None
@@ -87,13 +93,19 @@ def build_container(settings: Settings) -> Container:
         if ingestion
         else None
     )
+    credentials = FileCredentialStore(settings.auth_dir)
+    sessions = SessionManager(credentials)
     return Container(
         settings=settings,
         db=db,
         sources=source_repository,
         research=research,
         qa=QARepository(db),
-        credentials=FileCredentialStore(settings.auth_dir),
+        credentials=credentials,
+        # Constructed only; nothing contacts ChatGPT until the user acts in live mode.
+        oauth=OAuthLogin(credentials),
+        sessions=sessions,
+        catalog=ModelCatalog(sessions),
         search=search,
         embeddings=embeddings,
         answers=FakeAnswerProvider() if is_fixture else None,

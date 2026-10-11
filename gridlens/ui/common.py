@@ -15,12 +15,11 @@ def sidebar(container: Container):
         else:
             st.info("Live mode · local workspace")
         st.divider()
-        st.subheader("ChatGPT connection")
-        st.caption("Sign-in will be available after the authorization tasks are complete.")
-        st.button("Continue with ChatGPT", disabled=True, use_container_width=True)
-        st.link_button("View ChatGPT usage", "https://chatgpt.com/settings/usage")
+        from gridlens.ui.account import render_account
+
+        render_account(container)
         st.divider()
-        st.caption("Review milestone · searches and captures run only when you ask")
+        st.caption("Searches, captures and sign-in run only when you ask")
 
 
 def empty_state(message: str):

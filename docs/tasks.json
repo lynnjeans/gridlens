@@ -1870,7 +1870,7 @@
       "id": "T36",
       "title": "接通账户侧栏和可用模型目录",
       "priority": "P0",
-      "status": "todo",
+      "status": "awaiting_input",
       "day": "D4",
       "depends_on": [
         "T05",
@@ -1881,6 +1881,7 @@
         "gridlens/auth/catalog.py",
         "gridlens/ui/account.py",
         "gridlens/ui/common.py",
+        "gridlens/bootstrap.py",
         "tests/unit/test_catalog.py",
         "tests/ui/test_account.py"
       ],
@@ -1907,12 +1908,19 @@
         "AC-10"
       ],
       "required_inputs": "mock无账户；真实catalog需要T35可用OAuth会话。",
-      "evidence": [],
+      "evidence": [
+        "2026-10-12 核对官方 models-and-inference：GET https://api.openai.com/v1/models，仅 Bearer；models 数组按服务器顺序保留 visibility=list；显示 display_name、请求传 slug；换账户刷新。",
+        "tests/unit/test_catalog.py: 8 passed（过滤/保序/去重/display 回退、Bearer、空目录、401/403/429/5xx 映射、格式错误、过期 handle 不请求、请求期间换账户丢弃结果）。",
+        "tests/ui/test_account.py: 5 passed（fixture 模式登录按钮禁用；live 无账户提供 Continue with ChatGPT 且不请求；每次账户选择只请求一次目录、rerun 不重复、换账户清空旧模型并以新账户 token 读取、页面无 token；缺少 plan scope 时不请求目录且提示重新授权；退出清除 tokens 并回到登录，远端撤销未确认时明确提示）。",
+        "完整离线回归：245 passed, 7 deselected；local_model 4 passed；Ruff、format 与 pip check 通过。",
+        "未运行：真实账户目录读取与选择（等待 T34 登录）。登录在 Streamlit 进程中阻塞等待本机 loopback callback（最多 5 分钟），tokens 不进入 session_state。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_run",
         "human": "not_required"
-      }
+      },
+      "awaiting": "T34 本人真实登录后，在 live 模式侧栏读取真实模型目录并完成一次选择，仅记录脱敏结果（模型数量与是否完成选择）。"
     }
   ],
   "updated_at": "2026-10-12",
@@ -1933,7 +1941,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T36"
+      "T21"
     ],
     "completed_tasks": [
       "T01",
@@ -1966,7 +1974,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 232,
+      "offline_tests_passed": 245,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",
@@ -1976,7 +1984,8 @@
     },
     "awaiting_input": [
       "T34",
-      "T35"
+      "T35",
+      "T36"
     ]
   }
 }
