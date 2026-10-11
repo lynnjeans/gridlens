@@ -594,6 +594,32 @@ Checks: `tests/integration/test_recovery.py` **8 passed** (a real child process 
 lock); full offline regression **320 passed, 8 deselected**; Ruff, format and pip check
 passed. Committed and pushed (user's "Auto" instruction). Next: T29 evaluation tooling.
 
+## T29 — Question bank and evaluation tooling (2026-10-12)
+
+Status: **implemented and verified offline; no gold or human scores exist (by design)**.
+`evals/questions.json` holds R01–R15 copied verbatim from PRD §15.2 (a test compares each
+row with the PRD) with splits: R01–R08 formal, evidence expected; R09–R12 formal,
+insufficient evidence expected; R13–R15 discussion only. `evals/gold.json` is an empty,
+human-only template; no gold content was written.
+
+`gridlens evaluate --mode fixture|live` (must match `APP_MODE`; live needs a selected
+signed-in account and `--model` from its catalog) asks R01–R12 once each with per-run
+operation keys and writes `artifacts/evals/<run>/report.json` (corpus fingerprint of the
+eligible versions and snapshots, index fingerprint, model, output mode, prompt version,
+retrieval and chunk parameters, per-case results and failures) plus a blank
+`reviews.json`. `gridlens evaluate-score --run DIR` applies PRD §15.3: retrieval hit
+(automatic, needs human gold passages, ≥7/8), answer quality (human 0/1/2, ≥7/8 twos),
+insufficient-evidence handling (human, 4/4), citation coverage (human, 100%), citation
+support (human, ≥90%) and citation traceability (automatic locatability, 100%, explicitly
+not semantic support), each with numerator and denominator. Missing gold, missing or
+invalid scores and zero denominators give `awaiting_input`; fixture runs are always
+`fixture_only_not_acceptance`; reviewers are listed and self-review must be disclosed.
+
+Checks: `tests/unit/test_evaluation.py` **14 passed**; a real fixture `evaluate` +
+`evaluate-score` run on this machine printed the fixture warning and left every metric
+`awaiting_input`. Full offline regression **334 passed, 8 deselected**; Ruff, format and
+pip check passed. Committed and pushed (user's "Auto" instruction). Next: T30.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

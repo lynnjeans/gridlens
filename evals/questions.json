@@ -1,0 +1,169 @@
+{
+  "source": "docs/00_PRD.md §15.2 (copied verbatim; do not edit questions without recording why)",
+  "formal_ids": [
+    "R01",
+    "R02",
+    "R03",
+    "R04",
+    "R05",
+    "R06",
+    "R07",
+    "R08",
+    "R09",
+    "R10",
+    "R11",
+    "R12"
+  ],
+  "cases": [
+    {
+      "id": "R01",
+      "question": "How does a large customer get connected to the grid in New Zealand?",
+      "expected_behavior": "按资料覆盖范围解释流程，区分 transmission 与 distribution 路径，避免声称所有公司流程完全相同",
+      "split": "formal_supported",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R02",
+      "question": "Who is involved in the connection process, and what does each party do?",
+      "expected_behavior": "引用机构职责或流程文件，区分申请方、电网/配电方及其他资料明确的参与者",
+      "split": "formal_supported",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R03",
+      "question": "What steps or constraints can delay a large-load connection?",
+      "expected_behavior": "仅列出有来源支持的环节，区分可能原因与经过测量的延误",
+      "split": "formal_supported",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R04",
+      "question": "What public capacity information is available from NZ network companies, and in what format?",
+      "expected_behavior": "列举已审核入口或说明文档、数据格式、日期及限制，不把地图入口等同于完整可分析数据",
+      "split": "formal_supported",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R05",
+      "question": "What does hosting capacity mean in the sources we have reviewed?",
+      "expected_behavior": "保留原文定义和适用场景，区分新增负荷与发电接入资料",
+      "split": "formal_supported",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R06",
+      "question": "How do firm and flexible connections differ in the reviewed material?",
+      "expected_behavior": "指出资料中的合同/运行条件与地区，不给出跨网络无条件保证",
+      "split": "formal_supported",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R07",
+      "question": "How is curtailment described as a way to accommodate additional load?",
+      "expected_behavior": "解释已审核研究中的机制、假设和限制，不输出未验证的 NZ 容量增益",
+      "split": "formal_supported",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R08",
+      "question": "What do the reviewed sources say about N-1 and N-2 redundancy?",
+      "expected_behavior": "引用定义与适用边界，不声称可直接由术语推算具体站点容量",
+      "split": "formal_supported",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R09",
+      "question": "Can a new 100 MW data centre connect at a specified NZ site next month?",
+      "expected_behavior": "语料缺少站点研究时不回答确定容量或日期；列出所缺信息",
+      "split": "formal_insufficient",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R10",
+      "question": "What is the exact available capacity at that substation today?",
+      "expected_behavior": "无当前站点数据时指出无法确定；不把历史资料作为实时值",
+      "split": "formal_insufficient",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R11",
+      "question": "Does this US connection policy automatically apply to New Zealand?",
+      "expected_behavior": "在仅有美国材料且无 NZ 依据的测试条件下，不断言适用；指出地区证据缺口",
+      "split": "formal_insufficient",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R12",
+      "question": "What exact curtailment hours and connection date will the utility offer this project?",
+      "expected_behavior": "语料无该项目正式条件时拒绝编造数值与承诺；说明需取得何种材料",
+      "split": "formal_insufficient",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R13",
+      "question": "Which side, utility or data centre, shows the sharper pain and a plausible champion?",
+      "expected_behavior": "研究讨论题：区分公开证据、假设和需访谈验证的判断",
+      "split": "discussion",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R14",
+      "question": "What do EPRI DCFlex and the Duke research contribute to our research questions?",
+      "expected_behavior": "仅在对应材料已批准时回答，归纳方法与适用限制",
+      "split": "discussion",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    },
+    {
+      "id": "R15",
+      "question": "What evidence is still missing before choosing a prototype direction?",
+      "expected_behavior": "基于当前库和缺口记录列出下一步，不宣称穷尽所有行业问题",
+      "split": "discussion",
+      "filters": {
+        "region": "NZ",
+        "source_types": []
+      }
+    }
+  ]
+}

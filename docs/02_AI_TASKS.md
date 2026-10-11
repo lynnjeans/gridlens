@@ -1238,7 +1238,7 @@
 
 ## T29 — 建立 15 题与评估运行工具
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D8 / implementation
 **依赖：** T22, T24
 **PRD 对应：** AC-05, AC-06, AC-07, AC-10
@@ -1275,9 +1275,9 @@
 
 - 不由 AI 填造真实 gold 或人工评审者。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_required, human=not_required（gold 与评分属于 T31，由人工填写）
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** 题库原样提取并与 PRD 逐条比对；gold 为空白人工模板。`tests/unit/test_evaluation.py` 14 项通过（门槛 7/8、4/4、100%、90%，缺失评分与分母为零为 awaiting_input，自动定位≠语义支持，fixture 永不验收）。本机 fixture evaluate/evaluate-score 实跑：全部 awaiting_input。完整回归 334 passed、8 deselected。
 
 ## T30 — 执行完整闭环与可信性回归
 

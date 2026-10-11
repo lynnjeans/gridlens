@@ -1,0 +1,102 @@
+{
+  "note": "Human-written only. A reviewer reads the frozen corpus and fills these fields; AI must not invent them. Empty entries keep evaluation in awaiting_input.",
+  "corpus_note": "",
+  "cases": [
+    {
+      "id": "R01",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    },
+    {
+      "id": "R02",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    },
+    {
+      "id": "R03",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    },
+    {
+      "id": "R04",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    },
+    {
+      "id": "R05",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    },
+    {
+      "id": "R06",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    },
+    {
+      "id": "R07",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    },
+    {
+      "id": "R08",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    },
+    {
+      "id": "R09",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    },
+    {
+      "id": "R10",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    },
+    {
+      "id": "R11",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    },
+    {
+      "id": "R12",
+      "acceptable_points": [],
+      "required_limitations": [],
+      "reference_passages": [],
+      "author": "",
+      "status": "awaiting_human"
+    }
+  ]
+}

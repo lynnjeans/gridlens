@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from gridlens.config import Settings
 from gridlens.db import Database
@@ -14,9 +15,24 @@ def main():
     parser = argparse.ArgumentParser(description="GridLens local development tools")
     parser.add_argument(
         "command",
-        choices=["init-db", "doctor", "recover", "prepare-model", "login", "logout"],
+        choices=[
+            "init-db",
+            "doctor",
+            "recover",
+            "prepare-model",
+            "login",
+            "logout",
+            "evaluate",
+            "evaluate-score",
+        ],
     )
     parser.add_argument("--account", help="registration ID for login (sign in again) or logout")
+    parser.add_argument("--cases", default="evals/questions.json", help="evaluate: question bank")
+    parser.add_argument("--mode", choices=["fixture", "live"], help="evaluate: must match APP_MODE")
+    parser.add_argument("--model", help="evaluate (live): a slug from your account's catalog")
+    parser.add_argument("--out", default="artifacts/evals", help="evaluate: output directory")
+    parser.add_argument("--run", help="evaluate-score: a run directory")
+    parser.add_argument("--gold", default="evals/gold.json", help="evaluate-score: gold file")
     args = parser.parse_args()
     settings = Settings.from_env()
     if args.command == "init-db":
@@ -39,6 +55,10 @@ def main():
             f"({manifest.dimensions} dimensions, {manifest.max_seq_length} tokens).\n"
             f"Optionally pin it in .env: EMBEDDING_REVISION={manifest.revision}"
         )
+    elif args.command == "evaluate":
+        _evaluate(settings, args)
+    elif args.command == "evaluate-score":
+        _evaluate_score(args)
     elif args.command == "recover":
         from gridlens.bootstrap import build_container
 
@@ -114,6 +134,77 @@ def doctor(settings: Settings) -> dict:
     else:
         report["credential_store"] = {"exists": False}
     return report
+
+
+def _evaluate(settings: Settings, args) -> None:
+    from uuid import uuid4
+
+    from gridlens.bootstrap import build_container
+    from gridlens.evaluation import load_cases, review_template, run_cases
+
+    if args.mode != settings.mode:
+        print(f"--mode must match APP_MODE ({settings.mode}).", file=sys.stderr)
+        raise SystemExit(1)
+    container = build_container(settings)
+    if container.answer_service is None:
+        print("The local index is unavailable; run prepare-model first.", file=sys.stderr)
+        raise SystemExit(1)
+    provider = container.answers
+    if settings.mode == "live":
+        from gridlens.providers.chatgpt_oauth import ChatGPTAnswerProvider
+
+        handle = container.sessions.current()
+        slugs = [m.slug for m in container.catalog.fetch(handle)] if handle is not None else []
+        if handle is None or args.model not in slugs:
+            print(
+                "Live evaluation needs a signed-in, selected account and --model from its catalog.",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        provider = ChatGPTAnswerProvider(container.sessions, handle, args.model)
+    run_id = datetime_stamp() + "-" + uuid4().hex[:6]
+    report = run_cases(container, load_cases(Path(args.cases)), provider, run_id=run_id)
+    out = Path(args.out) / f"{run_id}-{settings.mode}"
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+    (out / "reviews.json").write_text(
+        json.dumps(review_template(report), ensure_ascii=False, indent=2) + "\n"
+    )
+    if report["warning"]:
+        print(report["warning"])
+    print(f"Run saved to {out}. Fill reviews.json and evals/gold.json, then run evaluate-score.")
+
+
+def _evaluate_score(args) -> None:
+    from gridlens.evaluation import score
+
+    run = Path(args.run or "")
+    if not (run / "report.json").exists():
+        print("Pass --run with a directory created by evaluate.", file=sys.stderr)
+        raise SystemExit(1)
+    report = json.loads((run / "report.json").read_text("utf-8"))
+    reviews_path = run / "reviews.json"
+    reviews = json.loads(reviews_path.read_text("utf-8")) if reviews_path.exists() else None
+    result = score(report, json.loads(Path(args.gold).read_text("utf-8")), reviews)
+    (run / "score.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+    print(
+        json.dumps(
+            {
+                "overall": result["overall"],
+                "metrics": [
+                    {k: m[k] for k in ("name", "numerator", "denominator", "status")}
+                    for m in result["metrics"]
+                ],
+            },
+            indent=2,
+        )
+    )
+
+
+def datetime_stamp() -> str:
+    from datetime import UTC, datetime
+
+    return datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def _login(settings: Settings, account: str | None) -> None:
