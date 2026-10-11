@@ -1347,7 +1347,7 @@
       "scope_paths": [
         "gridlens/ui/ask.py",
         "gridlens/ui/discover.py",
-        "tests/ui/test_gaps.py"
+        "tests/ui/test_gaps_page.py"
       ],
       "objective": "让用户检查缺口、编辑原因并启动下一轮研究。",
       "steps": [
@@ -1372,9 +1372,10 @@
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
       "evidence": [
-        "tests/ui/test_gaps.py: 4 passed（AppTest）：空列表；详情显示范围/原因（知识库范围措辞，无“行业无研究”）/缺失证据，‘Use in Discover’仅写入 discover_prefill，Discover 页预填主题且提示先检查，查看缺口与预填后搜索 provider 调用数为 0；重复问题只显示同一 open 缺口；编辑原因、无说明 resolve 被拒、带说明 resolve、dismiss、按状态筛选后 reopen。",
+        "tests/ui/test_gaps_page.py: 4 passed（AppTest）：空列表；详情显示范围/原因（知识库范围措辞，无“行业无研究”）/缺失证据，‘Use in Discover’仅写入 discover_prefill，Discover 页预填主题且提示先检查，查看缺口与预填后搜索 provider 调用数为 0；重复问题只显示同一 open 缺口；编辑原因、无说明 resolve 被拒、带说明 resolve、dismiss、按状态筛选后 reopen。",
         "完整离线回归：302 passed, 8 deselected；Ruff、format 与 pip check 通过。",
-        "说明：Streamlit 多页导航由用户点击 Discover 完成（填入但不自动跳转/搜索）；未执行人工浏览器检查。"
+        "说明：Streamlit 多页导航由用户点击 Discover 完成（填入但不自动跳转/搜索）；未执行人工浏览器检查。",
+        "提交 3923e7e 时完整测试实际有 1 个收集错误（tests/ui/test_gaps.py 与 tests/integration/test_gaps.py 同名），检查链只看了 tail 的退出码而未拦截；改名为 tests/ui/test_gaps_page.py 后复测 302 passed、8 deselected，并在后续提交中修复。"
       ],
       "validation_state": {
         "offline": "passed",

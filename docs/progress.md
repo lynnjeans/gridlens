@@ -517,9 +517,12 @@ re-checked), mark resolved (note required), dismiss, and reopen closed gaps. "Us
 Discover" only stores the query; the Discover page fills its topic box from it on the next
 visit and runs nothing until the user clicks Search.
 
-Checks: `tests/ui/test_gaps.py` **4 passed** (search provider call count stays 0 while
-viewing gaps and prefilling Discover); full offline regression **302 passed, 8
-deselected**; Ruff, format and pip check passed. Committed and pushed (user's "Auto"
+Checks: `tests/ui/test_gaps_page.py` **4 passed** (search provider call count stays 0
+while viewing gaps and prefilling Discover); full offline regression **302 passed, 8
+deselected**; Ruff, format and pip check passed. Correction: when commit 3923e7e was
+pushed, the full run actually had 1 collection error (the UI test was named
+`tests/ui/test_gaps.py`, clashing with `tests/integration/test_gaps.py`) and my check
+chain did not stop on it; the file was renamed and re-verified in the next commit. Committed and pushed (user's "Auto"
 instruction). Next: T26 refresh and historical citation status.
 
 ## Repository publication — 2026-10-11

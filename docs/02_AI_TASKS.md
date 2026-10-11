@@ -1083,7 +1083,7 @@
 
 - `gridlens/ui/ask.py`
 - `gridlens/ui/discover.py`
-- `tests/ui/test_gaps.py`
+- `tests/ui/test_gaps_page.py`（原定文件名与集成测试同名冲突）
 
 ### 实现步骤
 
@@ -1108,7 +1108,7 @@
 
 **验证状态：** offline=passed, live=not_required, human=not_run
 
-**执行证据：** `tests/ui/test_gaps.py` 4 项 AppTest 通过（空列表、详情与措辞、建议词仅预填 Discover 且 provider 调用数为 0、同一 open 缺口、编辑/resolve 需说明/dismiss/reopen）。完整回归 302 passed、8 deselected。用户需自行点击 Discover 导航；未执行人工浏览器检查。
+**执行证据：** `tests/ui/test_gaps_page.py` 4 项 AppTest 通过（空列表、详情与措辞、建议词仅预填 Discover 且 provider 调用数为 0、同一 open 缺口、编辑/resolve 需说明/dismiss/reopen）。完整回归 302 passed、8 deselected。用户需自行点击 Discover 导航；未执行人工浏览器检查。
 
 ## T26 — 补齐刷新版本与历史引用状态
 
