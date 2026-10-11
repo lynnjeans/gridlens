@@ -620,6 +620,31 @@ Checks: `tests/unit/test_evaluation.py` **14 passed**; a real fixture `evaluate`
 `awaiting_input`. Full offline regression **334 passed, 8 deselected**; Ruff, format and
 pip check passed. Committed and pushed (user's "Auto" instruction). Next: T30.
 
+## T30 — End-to-end and trust-boundary regression (2026-10-12)
+
+Status: **offline regression passed; human UI check and real-account regressions not run**.
+`tests/integration/test_workflow.py` (1) runs search → select → capture → reviewed
+metadata → approve → index → ask → gap → export → restart on synthetic data.
+`tests/integration/test_trust_boundaries.py` (10) checks PRD §15.4 against the retrieval
+context and stored rows: marker text in pending/rejected/failed-indexing/revoked
+documents never reaches context (unapproved text is never chunked); a revoked source
+used by an answer is no longer retrieved and shows as revoked in history; duplicate
+URLs/recaptures/re-indexing add no versions or chunks; corrupt/scanned PDFs and empty
+HTML never create versions; fabricated chunk IDs are rejected; instructions inside a
+source stay JSON data (instructions unchanged, no tools, nothing auto-approved); a
+partial index failure publishes nothing; a dropped ChatGPT stream saves a failure with no
+answer or gaps and no tokens in the database or operation log. Authorization regressions
+are covered by the offline OAuth/session/catalog/provider/account suites.
+
+Checks: full non-live run **345 passed, 8 deselected**; `local_model` **4 passed**; Ruff,
+format and pip check passed; logs in `artifacts/test-results/` (git-ignored). An
+AI-driven browser walkthrough of the fixture flow (Discover → Review → approve/index →
+Knowledge Base → Ask → citation) succeeded and is recorded in
+`artifacts/test-results/ui-walkthrough-2026-10-12-T30.md`; it is not the human UI check.
+No unresolved P0 defect was found. Synthetic results do not show real research quality.
+Committed and pushed (user's "Auto" instruction). Next: T31 needs the user (real corpus,
+sign-in, gold answers and human scoring).
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

@@ -91,7 +91,8 @@ embedding model.
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
 The Ask page answers from approved sources with verified, numbered citations (fixture
 mode end to end; live mode needs sign-in and a selected model). Next development
-milestone: T30 (end-to-end trust regression). Evaluation: `python -m gridlens.cli
+milestone: T31 (real corpus and human evaluation — needs the user). The synthetic
+end-to-end and trust-boundary regressions pass. Evaluation: `python -m gridlens.cli
 evaluate --mode fixture` then `evaluate-score --run <dir>`; gold and scores are human-only. `python -m gridlens.cli recover` marks runs left
 by a crashed process as interrupted; `doctor` runs offline checks. The Knowledge Base page exports a
 Markdown research log. Sources can be refreshed; historical

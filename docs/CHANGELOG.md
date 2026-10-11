@@ -77,3 +77,5 @@ T21 离线完成（awaiting_input，2026-10-12）：ChatGPT 计划用量流式�
 完成 T28（2026-10-12）：运行锁崩溃判定与恢复、脱敏操作日志、离线 doctor、调用预算。8 项集成测试通过；完整回归 320 passed、8 deselected。
 
 完成 T29（2026-10-12）：R01–R15 原样题库、空白人工 gold、evaluate/evaluate-score（PRD 门槛与分子分母，缺人工输入为 awaiting_input，fixture 永不验收）。14 项单元测试通过；完整回归 334 passed、8 deselected。
+
+完成 T30（2026-10-12）：端到端与可信边界回归（直接检查上下文与存储），AI 浏览器 fixture 走查留档。全量 345 passed、8 deselected；人工 UI 检查与真实账户回归未执行。

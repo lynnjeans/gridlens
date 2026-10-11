@@ -1619,7 +1619,7 @@
       "id": "T30",
       "title": "执行完整闭环与可信性回归",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D9",
       "depends_on": [
         "T14",
@@ -1637,7 +1637,7 @@
         "tests/integration/test_workflow.py",
         "tests/integration/test_trust_boundaries.py",
         "docs/progress.md",
-        "artifacts/test-results/"
+        "artifacts/test-results/（Git 忽略）"
       ],
       "objective": "证明已实现模块组合后仍符合审核隔离和引用规则。",
       "steps": [
@@ -1671,12 +1671,19 @@
         "AC-10"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/integration/test_workflow.py: 1 passed：Discover→选择→capture→元数据审核→approve→入库→Ask（仅引用该批准版本、标题来自快照）→缺口→导出→重启后状态/回答/缺口一致且无需恢复。",
+        "tests/integration/test_trust_boundaries.py: 10 passed：PENDING/REJECTED/FAILED/REVOKED 标记文本直接检查不在检索上下文、未批准文本不被分块；已用于回答的来源撤销后不再检索且历史状态 revoked；重复 URL/重抓/重复入库不增版本或 chunk；损坏 PDF、扫描 PDF、空 HTML 不产生版本；伪造 chunk ID 被拒且无引用保存；来源中的指令仅作 JSON 数据、instructions 不变、无工具、不自动批准；部分索引失败不发布；ChatGPT SSE 断流保存 failed、无答案/缺口，数据库与操作日志中无 access/refresh token。",
+        "授权回归（拒绝授权、账户切换、刷新竞争/失效、退出/撤销网络失败、SSE 失败/断流、额度耗尽）由 test_oauth/test_sessions/test_catalog/test_answer_provider/test_account 等离线套件覆盖并在本次全量运行中通过；真实账户回归仍待 T34–T36、T21 的 live 验证。",
+        "全量非 live：345 passed, 8 deselected；local_model 4 passed；Ruff/format/pip check 通过；日志保存在 artifacts/test-results/（Git 忽略）。",
+        "AI 通过内置浏览器完成一次 fixture UI 主流程走查（Discover→Review→Approve/入库→Knowledge Base→Ask→引用展开），记录于 artifacts/test-results/ui-walkthrough-2026-10-12-T30.md；卡片要求的人工 UI 检查未执行。合成测试不代表真实研究质量。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
-        "human": "not_required"
-      }
+        "human": "not_run"
+      },
+      "completed_at": "2026-10-12"
     },
     {
       "id": "T31",
@@ -2013,7 +2020,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T30"
+      "T31"
     ],
     "completed_tasks": [
       "T01",
@@ -2044,6 +2051,7 @@
       "T27",
       "T28",
       "T29",
+      "T30",
       "T33"
     ],
     "repository": {
@@ -2054,7 +2062,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 334,
+      "offline_tests_passed": 345,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

@@ -1281,7 +1281,7 @@
 
 ## T30 — 执行完整闭环与可信性回归
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done（离线；人工 UI 检查与真实账户回归未执行）
 **日程/类别：** D9 / implementation
 **依赖：** T14, T19, T23, T25, T26, T27, T28, T29, T36
 **PRD 对应：** AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09, AC-10
@@ -1318,9 +1318,9 @@
 
 - 不把通过合成测试写成真实研究质量通过。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_required, human=not_run
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `test_workflow.py` 1 项与 `test_trust_boundaries.py` 10 项通过（直接检查上下文的未批准/失败/撤销隔离、重复与重试、解析失败、伪造引用、指令干扰、部分索引失败、SSE 断流不保存且无 token 泄露）。全量 345 passed、8 deselected；local_model 4 passed。AI 浏览器 fixture 主流程走查已留档（非人工检查）。授权类回归由离线套件覆盖，真实账户回归待 T34–T36/T21。
 
 ## T31 — 完成真实语料与人工评估验收
 
