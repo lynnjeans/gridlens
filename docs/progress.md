@@ -485,6 +485,26 @@ Checks: `tests/ui/test_ask.py` **6 passed**; full offline regression **287 passe
 deselected**; Ruff, format and pip check passed. Committed and pushed (user's "Auto"
 instruction). Next: T24 knowledge gaps.
 
+## T24 — Knowledge gaps (2026-10-12)
+
+Status: **implemented and verified offline**. `gridlens/services/gaps.py`: `gap_key` hashes
+canonical JSON of the normalized question (whitespace and case only — numbers, negations
+and place names still differ), canonical filters (region, sorted source types), reason
+type and normalized subquestion. `GapService.write` is the `AnswerService.gap_writer`
+hook, so gaps are saved in the same transaction as the QA record and citations, only for
+completed answers: rule-generated gaps when nothing is eligible (`no_evidence`,
+`jurisdiction_mismatch`) and the verified draft's `missing_evidence` otherwise. An open gap
+with the same key is updated (latest QA, needed evidence, suggested queries, time)
+instead of duplicated; closed gaps stay as history and a later miss opens a new record.
+The subquestion is kept in `scope_json` so edits can recompute the key; editing, resolving
+(non-empty note required), dismissing and reopening are explicit user actions with
+uniqueness checks (`GAP_DUPLICATE`, `GAP_NOT_OPEN`, `RESOLUTION_NOTE_REQUIRED`).
+Provider failures, citation failures and stale context create no gaps.
+
+Checks: `tests/integration/test_gaps.py` **11 passed**; full offline regression **298
+passed, 8 deselected**; Ruff, format and pip check passed. Committed and pushed (user's
+"Auto" instruction). Next: T25 gap list and search entry.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

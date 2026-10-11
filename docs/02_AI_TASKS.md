@@ -1030,7 +1030,7 @@
 
 ## T24 — 实现知识缺口规则、保存与去重
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D7 / implementation
 **依赖：** T03, T22
 **PRD 对应：** AC-07, AC-09
@@ -1040,10 +1040,9 @@
 
 ### 文件范围
 
-- `gridlens/services/gaps.py`
-- `gridlens/services/answers.py`
-- `gridlens/repositories/qa.py`
+- `gridlens/services/gaps.py`、`gridlens/bootstrap.py`（接入 AnswerService.gap_writer）
 - `tests/integration/test_gaps.py`
+- （未改 `services/answers.py` 与 `repositories/qa.py`：T22 已预留事务扩展点）
 
 ### 实现步骤
 
@@ -1066,9 +1065,9 @@
 
 - 不扫描全库推断整个行业没有答案。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_required, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/integration/test_gaps.py` 11 项通过（去重与关键语义保留、scope 参与 key、地区不匹配与 partial 草稿、服务失败不产生缺口、resolve 需说明与关闭后新建、dismiss/reopen、编辑唯一性、事务回滚）。完整回归 298 passed、8 deselected。
 
 ## T25 — 接通缺口列表与补充搜索入口
 

@@ -1284,7 +1284,7 @@
       "id": "T24",
       "title": "实现知识缺口规则、保存与去重",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D7",
       "depends_on": [
         "T03",
@@ -1293,8 +1293,7 @@
       "kind": "implementation",
       "scope_paths": [
         "gridlens/services/gaps.py",
-        "gridlens/services/answers.py",
-        "gridlens/repositories/qa.py",
+        "gridlens/bootstrap.py",
         "tests/integration/test_gaps.py"
       ],
       "objective": "将回答中的证据不足转成可操作、可复查的研究记录。",
@@ -1320,12 +1319,18 @@
         "AC-09"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/integration/test_gaps.py: 11 passed：空库 no_evidence 缺口带 scope 与建议词、空白/大小写差异合并且更新最新 qa_id；数字、否定词、地名不同不合并；地区与类型集合（排序后）参与 key；地区不匹配 jurisdiction_mismatch 与已校验 partial 草稿的 needs_external_validation；服务失败/引用失败不产生缺口；resolve 需 resolution_note、关闭后再次缺证据新建 open 并保留历史、旧记录 reopen 冲突 GAP_DUPLICATE、已关闭不可再 resolve；误报 dismiss 与 reopen；编辑重算 key 并保持 open 唯一；缺口写入失败整笔回滚 QA。",
+        "实现：gap_key = SHA256(规范 JSON[normalize(question), canonical filters, reason_type, normalize(subquestion)])；subquestion 存于 scope_json 以便重算；GapService.write 作为 AnswerService.gap_writer 在 QA 事务内执行；编辑/resolve/dismiss/reopen 仅由用户操作。",
+        "完整离线回归：298 passed, 8 deselected；Ruff、format 与 pip check 通过。",
+        "与卡片差异：缺口写入集中在 services/gaps.py，未改 services/answers.py（T22 已留 gap_writer）与 repositories/qa.py。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
         "human": "not_required"
-      }
+      },
+      "completed_at": "2026-10-12"
     },
     {
       "id": "T25",
@@ -1963,7 +1968,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T24"
+      "T25"
     ],
     "completed_tasks": [
       "T01",
@@ -1988,6 +1993,7 @@
       "T20",
       "T22",
       "T23",
+      "T24",
       "T33"
     ],
     "repository": {
@@ -1998,7 +2004,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 287,
+      "offline_tests_passed": 298,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

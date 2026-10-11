@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T22–T23、T33 完成，T34–T36、T21 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T22–T24、T33 完成，T34–T36、T21 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -452,6 +452,8 @@ SQLite 与 Chroma 不共享事务，使用“向量先写、数据库最后发�
 `gap_key = SHA256(normalize(question) + canonical(filters) + reason_type + normalize(subquestion))`，使用规范 JSON 而非直接拼接。normalize 只规范空白和大小写，不删除数字、否定词或地名。源类型筛选按排序后的列表序列化。
 
 同一 open key 更新最新 qa_id、建议词与时间，不重复插入；resolved/dismissed 留历史。若已关闭问题后来再次缺证据，可建立新 open 记录。编辑影响 key 的字段时重新校验唯一性。Resolved 必须由用户明确操作并填写 resolution_note；模型不能自动宣布解决。
+
+实现（2026-10-12，`gridlens/services/gaps.py`）：subquestion 保存在 `scope_json` 以便编辑时重算 key；错误码 GAP_DUPLICATE、GAP_NOT_OPEN、RESOLUTION_NOTE_REQUIRED、GAP_NOT_FOUND。
 
 缺口建议只把文本带入 Discover 输入框；用户点击 Search 才调用搜索。服务错误、损坏索引和配置错误不构成领域知识缺口。
 

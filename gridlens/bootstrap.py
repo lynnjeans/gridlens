@@ -28,6 +28,7 @@ from gridlens.repositories.research import ResearchRepository
 from gridlens.repositories.sources import SourceRepository
 from gridlens.services.answers import AnswerService
 from gridlens.services.discovery import DiscoveryService
+from gridlens.services.gaps import GapService
 from gridlens.services.ingestion import IngestionService
 from gridlens.services.retrieval import RetrievalService
 from gridlens.services.review import ReviewService
@@ -54,6 +55,7 @@ class Container:
     ingestion: IngestionService | None
     retrieval: RetrievalService | None
     answer_service: AnswerService | None
+    gaps: GapService
 
 
 def build_container(settings: Settings) -> Container:
@@ -82,6 +84,7 @@ def build_container(settings: Settings) -> Container:
     review = ReviewService(db, source_repository, settings.data_dir)
     embeddings, vectors, ingestion = _indexing(settings, db, review)
     research = ResearchRepository(db)
+    gaps = GapService(db)
     retrieval = (
         RetrievalService(
             research,
@@ -131,6 +134,7 @@ def build_container(settings: Settings) -> Container:
         review=review,
         ingestion=ingestion,
         retrieval=retrieval,
+        gaps=gaps,
         answer_service=(
             AnswerService(
                 db,
@@ -138,6 +142,7 @@ def build_container(settings: Settings) -> Container:
                 retrieval,
                 mode=settings.mode,
                 max_attempts=settings.max_generation_attempts,
+                gap_writer=gaps.write,
             )
             if retrieval
             else None
