@@ -101,6 +101,21 @@ documents return stable errors; OCR remains outside scope.
 1 live deselected**; Ruff, format and dependency checks passed. Next task: T12 immutable
 capture snapshots.
 
+## T12 — Immutable review snapshots
+
+Status: **implemented and verified offline**. Capture dispatches bounded HTML/PDF results
+to the matching parser and computes snapshot identity from semantic segments, reviewed
+metadata and the parser version. Fetch timestamps, raw hashes and temporary segment IDs
+do not affect identity. Raw bytes and canonical segment JSON are written with same-directory
+temporary files and atomic replacement under controlled hash paths before the Pending/
+Candidate database version is committed. Duplicate identities reuse the first immutable
+files; changed content or reviewed metadata creates a new version. Failures mark the lead
+failed and do not create an approvable partial version.
+
+`tests/integration/test_snapshots.py`: **6 passed**. Full offline regression: **108 passed,
+1 live deselected**; Ruff, format and dependency checks passed. The service is not yet
+connected to Review; that occurs in T14 after the T13 review state machine.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

@@ -97,3 +97,31 @@ class SourceRepository:
         with self.db.connect() as c:
             row = c.execute("SELECT * FROM sources WHERE id=?", (source_id,)).fetchone()
             return dict(row) if row else None
+
+    def get_version_by_snapshot(self, source_id: str, snapshot_sha256: str) -> dict | None:
+        with self.db.connect() as c:
+            row = c.execute(
+                "SELECT * FROM document_versions WHERE source_id=? AND snapshot_sha256=?",
+                (source_id, snapshot_sha256),
+            ).fetchone()
+            return dict(row) if row else None
+
+    def mark_access(self, source_id: str, status: str) -> None:
+        with self.db.transaction() as c:
+            changed = c.execute(
+                "UPDATE sources SET access_status=? WHERE id=?", (status, source_id)
+            ).rowcount
+            if changed != 1:
+                raise ValueError("Unknown source")
+
+    def latest_published_at(self, source_id: str) -> str | None:
+        with self.db.connect() as c:
+            rows = c.execute(
+                "SELECT metadata_json FROM search_hits WHERE source_id=? ORDER BY rowid DESC",
+                (source_id,),
+            )
+            for row in rows:
+                value = json.loads(row["metadata_json"]).get("published_at")
+                if isinstance(value, str) and value.strip():
+                    return value
+        return None

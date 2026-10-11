@@ -1,6 +1,6 @@
 # GridLens AI 开发任务清单
 
-版本：1.1 | 日期：2026-10-11 | 36 个 P0 任务 | 12 项已完成（T01–T11、T33），24 项待实施。
+版本：1.1 | 日期：2026-10-11 | 36 个 P0 任务 | 13 项已完成（T01–T12、T33），23 项待实施。
 
 本地 Streamlit 网页；ChatGPT OAuth 订阅生成；本地 BGE embedding。T01–T32 保留编号，新增 T33–T36 处理授权；按依赖执行，不按编号机械执行。路径均相对于现有应用根目录；基础阶段已经实现，当前交接入口见 HANDOFF.md。
 
@@ -21,7 +21,7 @@
 | T09 | 实现有边界的公开 URL 获取 | D3 | T02, T04 | implementation | done |
 | T10 | 实现 HTML 正文与段落定位 | D3 | T02, T04 | implementation | done |
 | T11 | 实现 PDF 提取与页码定位 | D3 | T02, T04 | implementation | done |
-| T12 | 保存可审核的不可变文档快照 | D3 | T03, T09, T10, T11 | implementation | todo |
+| T12 | 保存可审核的不可变文档快照 | D3 | T03, T09, T10, T11 | implementation | done |
 | T13 | 实现审核状态机与即时撤销 | D3 | T03, T12 | implementation | todo |
 | T14 | 接通 Review 页面 | D3 | T05, T13 | implementation | todo |
 | T15 | 实现确定性 token 分块 | D4 | T02, T12, T16 | implementation | todo |
@@ -525,7 +525,7 @@
 
 ## T12 — 保存可审核的不可变文档快照
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D3 / implementation
 **依赖：** T03, T09, T10, T11
 **PRD 对应：** AC-02, AC-03, AC-09
@@ -560,9 +560,9 @@
 
 - 不做 embedding，也不修改已批准快照。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_required, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/integration/test_snapshots.py` 6 项通过；覆盖 HTML/PDF 分发、文件/DB/hash 一致、时间/导航无关去重、正文/审核元数据变化、原子写失败清理和抓取失败线索。完整回归 108 passed、1 live deselected；Ruff/format/pip check 通过。
 
 ## T13 — 实现审核状态机与即时撤销
 

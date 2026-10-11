@@ -602,7 +602,7 @@
       "id": "T12",
       "title": "保存可审核的不可变文档快照",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D3",
       "depends_on": [
         "T03",
@@ -640,12 +640,16 @@
         "AC-09"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/integration/test_snapshots.py: 6 passed；覆盖 HTML/PDF 分发、文件/DB/hash 一致、时间/导航无关去重、正文/审核元数据变化、原子写失败清理和抓取失败线索。",
+        "完整离线回归：108 passed, 1 live deselected；Ruff、format 与 pip check 通过。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
         "human": "not_required"
-      }
+      },
+      "completed_at": "2026-10-11"
     },
     {
       "id": "T13",
@@ -1827,7 +1831,6 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T12",
       "T13",
       "T14"
     ],
@@ -1843,6 +1846,7 @@
       "T09",
       "T10",
       "T11",
+      "T12",
       "T33"
     ],
     "repository": {
@@ -1853,7 +1857,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 102,
+      "offline_tests_passed": 108,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

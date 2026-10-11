@@ -7,8 +7,8 @@ its `master` default. The current source is published on `master`.
 A local research assistant for data-centre grid connections. The source-discovery
 milestone is implemented: the local web UI can search through Tavily when configured,
 store deduplicated candidate sources, select a source for review, and manually add a
-public URL as a pending lead. Bounded HTML/PDF capture and HTML/PDF extraction are implemented
-as service modules but are not connected to Review yet. Approval, indexing, ChatGPT OAuth
+public URL as a pending lead. Bounded capture, HTML/PDF extraction and immutable snapshots
+are implemented as service modules but are not connected to Review yet. Approval, indexing, ChatGPT OAuth
 and real Q&A are **not connected yet**. No grid calculation or pandapower/OpenDSS is included.
 
 ## Run locally
@@ -63,7 +63,7 @@ commands and resolved environment details are in `docs/progress.md`. Model depen
 are declared in the optional `models` extra and will be locked/verified when implemented.
 
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
-Next development milestone: T12–T14 (snapshots and human review). The current
+Next development milestone: T13–T14 (human review state and UI). The current
 source can be obtained from the configured GitHub repository.
 
 Read `docs/01_DEVELOPMENT_SPEC.md`, `docs/tasks.json` and `docs/progress.md` for

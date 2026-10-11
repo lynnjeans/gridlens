@@ -120,6 +120,19 @@ class ParsedSegment(DTO):
     warnings: list[str] = Field(default_factory=list)
 
 
+class VersionPreview(DTO):
+    version_id: str
+    source_id: str
+    snapshot_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    raw_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    content_type: Literal["text/html", "application/pdf"]
+    segments: list[ParsedSegment] = Field(min_length=1)
+    metadata: dict
+    extraction_notes: list[str]
+    review_status: Literal["pending"] = "pending"
+    reused: bool = False
+
+
 class ChunkDTO(DTO):
     chunk_id: str = Field(min_length=1)
     version_id: str = Field(min_length=1)
