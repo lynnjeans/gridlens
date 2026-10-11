@@ -89,7 +89,9 @@ chromadb 1.5.9) is locked too; it runs locally with telemetry off and never uses
 embedding model.
 
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
-Next development milestone: T36 (account sidebar and model catalog). The current
+Next development milestone: T21 (streaming answer provider). In live mode the sidebar
+offers Continue with ChatGPT, account and model pickers (from your account's own catalog),
+Reauthorize, Sign out and the usage link. The current
 source can be obtained from the configured GitHub repository.
 
 Read `docs/01_DEVELOPMENT_SPEC.md`, `docs/tasks.json` and `docs/progress.md` for

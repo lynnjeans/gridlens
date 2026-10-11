@@ -57,3 +57,5 @@ T34 离线完成（awaiting_input）：loopback PKCE 登录与 callback/state/no
 完成 T19（2026-10-12）：Knowledge Base 页面（三种状态分列、Searchable 仅来自 SQLite 资格、真实阶段/计数、经服务的 Retry/Revoke）。5 项 AppTest 通过；完整回归 213 passed、6 deselected；人工浏览器检查未执行。
 
 T35 离线完成（awaiting_input，2026-10-12）：串行刷新与旋转 token 完整替换、账户切换隔离、撤销后清除 tokens 并保留注册；`gridlens logout`。19 项单元测试通过；完整回归 232 passed、7 deselected。真实刷新/退出待 T34 登录后验证。
+
+T36 离线完成（awaiting_input，2026-10-12）：账户专属模型目录与侧栏账户/模型选择、重新授权、退出、Usage 链接。13 项目录与 UI 测试通过；完整回归 245 passed、7 deselected。真实目录读取待 T34 登录后验证。

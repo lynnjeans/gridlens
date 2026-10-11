@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T33 完成，T34/T35 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T33 完成，T34–T36 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -145,7 +145,7 @@ python -m gridlens.cli evaluate --cases evals/questions.json --mode fixture
 1. T33 持久化本机 `ext_agent_host_id`，注册记录按已验证身份和 issued client ID 分开保存。使用受保护的用户配置目录，Unix 目录 0700、凭证文件 0600，原子替换；不写研究 SQLite、浏览器存储、Git、导出或日志。保留 access/refresh/ID tokens、scope、expiry、client ID；UI 只取得脱敏账户摘要。
 2. T34 先启动 `127.0.0.1` loopback listener，再打开官方 authorize 页面。每次生成 PKCE S256、state、nonce；首次使用 `dynamic_agent_client` 和 `agent_name_hint=GridLens`，返回后保存 issued client ID。交换 code 使用实际 issued ID、相同 redirect URI、verifier 和 resource；不需要 client secret。验证 state、JWKS 签名、issuer、audience、expiry、nonce，返回登录核对原账户身份；错误 callback 或过期/重放 attempt 不更新当前账户。验证授权范围包含 plan usage 权限，拒绝授权保持当前账户不变。（2026-10-11 按官方 errors-and-recovery 修订：token 响应缺少 `chatgpt.tokens.use.direct` 时保留登录、标记 plan usage 未授权并提示重新授权，不发起推理。JWKS：`https://auth.openai.com/.well-known/jwks.json`，来自 issuer discovery；实现见 `gridlens/auth/oauth.py`，CLI `gridlens login` 仅 live 模式。）[注册与登录](https://developers.openai.com/siwc/token-sharing-open-source/sign-in)
 3. T35 过期前串行刷新；替换完整 token set，避免旋转 refresh token 竞争。invalid_grant 停止生成并要求重新授权。退出先停止请求，按 discovery 文档的 revocation endpoint 尝试撤销 refresh token，再清除本地 tokens，保留 client/host 映射。无法确认远端撤销时清除本地凭证并明确提示用户可到 ChatGPT Settings 断开。切换账户不混用身份、client ID 或 token。（实现 2026-10-12：`gridlens/auth/sessions.py`，过期前 5 分钟刷新，按注册 fcntl 串行；终止性刷新错误清除 tokens 仅保留 ID token 作 hint；临时失败保留凭证；撤销端点必须属于 issuer，最多 3 次退避重试；账户选择以 `active.json` epoch 隔离旧结果；CLI `gridlens logout`。）[会话管理](https://developers.openai.com/siwc/token-sharing-open-source/profiles-and-sessions)
-4. T36 获取选中账户 `GET https://api.openai.com/v1/models`；解析 `models` 数组，只显示 `visibility=list` 项，显示 display_name、请求传 slug。换账户清空旧选择并刷新 catalog。显示 Continue with ChatGPT、已连接账户、模型选择、重新授权、退出和 [ChatGPT Usage](https://chatgpt.com/settings/usage) 链接；无需增加第五个研究页面。[模型目录](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference)
+4. T36 获取选中账户 `GET https://api.openai.com/v1/models`；解析 `models` 数组，只显示 `visibility=list` 项，显示 display_name、请求传 slug。换账户清空旧选择并刷新 catalog。显示 Continue with ChatGPT、已连接账户、模型选择、重新授权、退出和 [ChatGPT Usage](https://chatgpt.com/settings/usage) 链接；无需增加第五个研究页面。（实现 2026-10-12：`gridlens/auth/catalog.py`、`gridlens/ui/account.py`；目录按账户选择缓存在 session state、不含 token；`selected_model()` 只返回当前账户目录中的模型。）[模型目录](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference)
 
 Authorize endpoint：`https://auth.openai.com/api/accounts/authorize`。Token endpoint：`https://auth.openai.com/api/accounts/oauth/token`。请求 identity scopes `openid profile email`，plan scopes `offline_access resource.invoke chatgpt.tokens.use.direct`，resource `https://api.openai.com/v1`。listener 固定 `/auth/callback`，端口可用时选择；同一 attempt 的 authorize 与 exchange URI 必须完全相同，不能把 host 换成 localhost。使用已安装 JWT/OIDC 库验证，不手写密码学。
 

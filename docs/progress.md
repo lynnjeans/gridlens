@@ -383,6 +383,32 @@ deselected**; live tests skip without opt-in; Ruff, format and pip check passed.
 real refresh/sign-out — after `gridlens login`, run `APP_MODE=live GRIDLENS_LIVE_SESSION=1 .venv/bin/python -m pytest -m live -k live_sessions -s`. Committed and pushed
 (user's "Auto" instruction). Next: T36 account sidebar and model catalog.
 
+## T36 — Account sidebar and model catalog (awaiting real check)
+
+Status: **implemented and verified offline; real catalog not read** (task
+`awaiting_input`, needs the T34 sign-in). Official models-and-inference page checked
+2026-10-12.
+
+`gridlens/auth/catalog.py`: `ModelCatalog.fetch(handle)` gets a token through
+`SessionManager`, calls `GET https://api.openai.com/v1/models` with only the Bearer header,
+keeps `visibility == "list"` entries in server order (dedupes, display name falls back to
+slug), maps 401/403/429/other to `AUTH_EXPIRED` / `PLAN_PERMISSION_MISSING` /
+`USAGE_LIMITED` / `MODEL_CATALOG_UNAVAILABLE`, and discards a response if the account
+changed meanwhile. `gridlens/ui/account.py` (sidebar): fixture mode shows a disabled
+sign-in; live mode offers Continue with ChatGPT (runs the T34 loopback login in-process),
+an account picker (selection via `SessionManager.select`, which resets the catalog and
+model choice), a model picker from that account's catalog only (loaded once per selection
+and cached in session state without tokens; "Refresh models" reloads), a plan-usage
+warning when the scope is missing, Reauthorize, Sign out (reports unconfirmed revocation),
+Add another account, and the ChatGPT Usage link. `selected_model()` returns a model only if
+it belongs to the current account's catalog and plan usage is granted.
+
+Checks: `tests/unit/test_catalog.py` **8 passed**, `tests/ui/test_account.py` **5 passed**.
+Full offline regression **245 passed, 7 deselected**; `local_model` 4 passed; Ruff,
+format and pip check passed. Not run: a real catalog read and selection. Committed and
+pushed (user's "Auto" instruction); the first push (649649b) carried only tasks.json
+because a documentation script failed midway — fixed in the next commit. Next: T21.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

@@ -1538,7 +1538,7 @@
 
 ## T36 — 接通账户侧栏和可用模型目录
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / awaiting_input（离线完成，真实目录需 T34 登录）
 **日程/类别：** D4 / implementation
 **依赖：** T05, T35
 **PRD 对应：** AC-09, AC-10
@@ -1550,7 +1550,7 @@
 
 - `gridlens/auth/catalog.py`
 - `gridlens/ui/account.py`
-- `gridlens/ui/common.py`
+- `gridlens/ui/common.py`、`gridlens/bootstrap.py`（oauth/sessions/catalog 装配）
 - `tests/unit/test_catalog.py`
 - `tests/ui/test_account.py`
 
@@ -1575,6 +1575,6 @@
 
 - 不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。
 
-**验证状态：** offline=not_run, live=not_run, human=not_required
+**验证状态：** offline=passed, live=not_run, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** 已核对官方 models 文档。`tests/unit/test_catalog.py` 8 项、`tests/ui/test_account.py` 5 项通过（字段/空目录/错误映射、账户切换清空并隔离、rerun 不重复请求、plan scope 缺失、退出）。完整回归 245 passed、7 deselected。**未运行真实目录读取**：需 T34 登录后在 live 侧栏完成一次选择。
