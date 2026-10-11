@@ -552,7 +552,7 @@
       "id": "T11",
       "title": "实现 PDF 提取与页码定位",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D3",
       "depends_on": [
         "T02",
@@ -587,12 +587,16 @@
         "AC-09"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/unit/test_pdf_parser.py: 6 passed；覆盖两页文本/file_page、确定性、扫描件、损坏/加密 PDF、页数限制和可终止超时子进程。",
+        "完整离线回归：102 passed, 1 live deselected；Ruff、format 与 pip check 通过。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
         "human": "not_required"
-      }
+      },
+      "completed_at": "2026-10-11"
     },
     {
       "id": "T12",
@@ -1823,7 +1827,6 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T11",
       "T12",
       "T13",
       "T14"
@@ -1839,6 +1842,7 @@
       "T08",
       "T09",
       "T10",
+      "T11",
       "T33"
     ],
     "repository": {
@@ -1849,7 +1853,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 96,
+      "offline_tests_passed": 102,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

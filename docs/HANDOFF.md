@@ -21,7 +21,7 @@
 
 ## 2. 当前完成状态
 
-36 项任务中 **11 项 done，25 项 todo**。T01–T10、T33 已完成并通过离线验证；当前没有遗留的失败检查。
+36 项任务中 **12 项 done，24 项 todo**。T01–T11、T33 已完成并通过离线验证；当前没有遗留的失败检查。
 
 | 已完成 | 当前能力 | 主要文件 |
 | --- | --- | --- |
@@ -35,6 +35,7 @@
 | T08 | Discover 搜索/错误/空状态、候选选择、手动 pending lead 与 Review 交接 | `gridlens/ui/discover.py`、`ui/review.py` |
 | T09 | 公开 URL/DNS/重定向边界、流式大小/超时限制与 HTML/PDF 获取 | `gridlens/documents/fetch.py` |
 | T10 | HTML 正文清理、标题路径、稳定段落定位及解析限制警告 | `gridlens/documents/html.py` |
+| T11 | 可终止子进程中的 PDF 逐页提取、页码定位与稳定格式错误 | `gridlens/documents/pdf.py` |
 | T33 | 稳定 host ID、按注册隔离的受保护原子凭证存储 | `gridlens/auth/host.py`、`credentials.py` |
 
 所有其他任务待实施，包括：真实搜索联调、抓取/解析服务、批准/拒绝操作、
@@ -48,7 +49,7 @@ Knowledge Base 和 Ask 的主要操作仍不可用。凭证存储实现不等于
 
 | 命令 | 结果 |
 | --- | --- |
-| `.venv/bin/python -m pytest -q` | 96 passed，1 live deselected，0.76s |
+| `.venv/bin/python -m pytest -q` | 102 passed，1 live deselected，1.94s |
 | `.venv/bin/ruff check .` | All checks passed |
 | `.venv/bin/ruff format --check .` | 47 files already formatted |
 | `.venv/bin/python -m pip check` | No broken requirements found |
@@ -79,7 +80,7 @@ Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件�
 GitHub 地址和分支信息已在本文明确记录。解压后复用已有应用目录，
 避免覆盖另一份更新的 checkout。
 
-## 5. 下一项工作：T11 → T12 → T13 → T14
+## 5. 下一项工作：T12 → T13 → T14
 
 T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 
@@ -87,8 +88,8 @@ T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 2. **T07 discovery service 已完成**：离线单元/集成测试 11 项通过，三次预算、去重、partial/failed 和持久幂等已验证。
 3. **T08 Discover UI 已完成**：表单、状态、rerun 幂等、手动来源和 Review 选择通过 UI 测试。
 
-T09 公开 URL 获取和 T10 HTML 提取已完成。接下来 T11 提取 PDF；T12 保存不可变
-快照；T13 建立 approve/reject/revoke 状态机；T14 接通人工审核页面。
+T09 公开 URL 获取、T10 HTML 和 T11 PDF 提取已完成。接下来 T12 保存不可变快照；
+T13 建立 approve/reject/revoke 状态机；T14 接通人工审核页面。
 T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的共享文件
 进行未经安排的并发编辑。本交接不要求或启动多代理。
 
@@ -117,10 +118,10 @@ T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的�
 ## 7. 可复制的接手提示词
 
 ```text
-请接手已有 GridLens 项目，完成 T11–T14 PDF、快照与人工审核里程碑。
+请接手已有 GridLens 项目，完成 T12–T14 快照与人工审核里程碑。
 先读取根 AGENTS.md、docs/HANDOFF.md、docs/tasks.json 和对应任务卡，
 再检查真实代码及开发规格相关章节。
-T01–T10、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
+T01–T11、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
 按依赖顺序实现并验证，保持 fixture/live 隔离、有限调用预算和 UI rerun 幂等。
 抓取与解析先用离线 HTTP/DNS fixture 完成；真实任意网站不作为单元验收条件。
 不要索要聊天中的密钥，不自动批准资料，不虚构研究评估，不增加 P1。

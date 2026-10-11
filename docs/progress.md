@@ -88,6 +88,19 @@ than substituting a search snippet.
 `tests/unit/test_html_parser.py`: **5 passed**. Full regression: **96 passed, 1 live
 deselected**; Ruff and format checks passed. Next task: T11 PDF parsing.
 
+## T11 — PDF text and page extraction
+
+Status: **implemented and verified offline**. PDF parsing runs in a terminable spawned
+subprocess with a page limit and caller timeout. Text is emitted as deterministic
+segments with one-based physical `file_page` locators; it does not invent printed page
+numbers. Every segment warns that complex tables and multi-column reading order need
+checking against the original. Scanned/empty, corrupt, encrypted, over-limit and timed-out
+documents return stable errors; OCR remains outside scope.
+
+`tests/unit/test_pdf_parser.py`: **6 passed**. Full offline regression: **102 passed,
+1 live deselected**; Ruff, format and dependency checks passed. Next task: T12 immutable
+capture snapshots.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as
