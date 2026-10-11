@@ -1336,7 +1336,7 @@
       "id": "T25",
       "title": "接通缺口列表与补充搜索入口",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D7",
       "depends_on": [
         "T08",
@@ -1371,12 +1371,17 @@
         "AC-07"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/ui/test_gaps.py: 4 passed（AppTest）：空列表；详情显示范围/原因（知识库范围措辞，无“行业无研究”）/缺失证据，‘Use in Discover’仅写入 discover_prefill，Discover 页预填主题且提示先检查，查看缺口与预填后搜索 provider 调用数为 0；重复问题只显示同一 open 缺口；编辑原因、无说明 resolve 被拒、带说明 resolve、dismiss、按状态筛选后 reopen。",
+        "完整离线回归：302 passed, 8 deselected；Ruff、format 与 pip check 通过。",
+        "说明：Streamlit 多页导航由用户点击 Discover 完成（填入但不自动跳转/搜索）；未执行人工浏览器检查。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
-        "human": "not_required"
-      }
+        "human": "not_run"
+      },
+      "completed_at": "2026-10-12"
     },
     {
       "id": "T26",
@@ -1968,7 +1973,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T25"
+      "T26"
     ],
     "completed_tasks": [
       "T01",
@@ -1994,6 +1999,7 @@
       "T22",
       "T23",
       "T24",
+      "T25",
       "T33"
     ],
     "repository": {
@@ -2004,7 +2010,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 298,
+      "offline_tests_passed": 302,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

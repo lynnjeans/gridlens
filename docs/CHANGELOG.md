@@ -67,3 +67,5 @@ T21 离线完成（awaiting_input，2026-10-12）：ChatGPT 计划用量流式�
 完成 T23（2026-10-12）：Ask 页面（已保存记录渲染、fact/inference、编号引用展开与来源状态复查、失败/不足/过期分别显示、历史）。6 项 AppTest 通过；完整回归 287 passed、8 deselected。
 
 完成 T24（2026-10-12）：知识缺口规则、规范 gap_key、open 唯一合并、与 QA 同事务保存、仅用户关闭。11 项集成测试通过；完整回归 298 passed、8 deselected。
+
+完成 T25（2026-10-12）：缺口列表（筛选、详情、编辑、resolve/dismiss/reopen），建议词仅预填 Discover、点击 Search 才搜索。4 项 AppTest 通过；完整回归 302 passed、8 deselected。

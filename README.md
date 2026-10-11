@@ -91,8 +91,8 @@ embedding model.
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
 The Ask page answers from approved sources with verified, numbered citations (fixture
 mode end to end; live mode needs sign-in and a selected model). Next development
-milestone: T25 (gap list and follow-up search). Knowledge gaps are recorded and
-deduplicated with each answer. In live mode the sidebar
+milestone: T26 (refresh and historical citation status). Knowledge gaps are recorded,
+deduplicated, reviewable in the Gaps tab, and can prefill Discover. In live mode the sidebar
 offers Continue with ChatGPT, account and model pickers (from your account's own catalog),
 Reauthorize, Sign out and the usage link. The current
 source can be obtained from the configured GitHub repository.

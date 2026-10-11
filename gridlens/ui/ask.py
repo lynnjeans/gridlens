@@ -206,6 +206,139 @@ def _ask_tab(container: Container):
     _show_answer(envelope, _eligible(container))
 
 
+REASONS = {
+    "no_evidence": "No approved source covers this yet",
+    "partial_coverage": "Approved sources cover only part of this",
+    "jurisdiction_mismatch": "Approved sources are for another region",
+    "freshness_unverified": "Approved sources may be out of date",
+    "conflicting_evidence": "Approved sources disagree",
+    "needs_external_validation": "Needs a source outside the knowledge base",
+}
+
+
+def _gap_detail(container: Container, gap: dict):
+    scope = json.loads(gap["scope_json"])
+    filters = scope.get("filters", {})
+    queries = json.loads(gap["suggested_queries_json"])
+    st.markdown(f"#### {gap['question']}")
+    types = ", ".join(filters.get("source_types") or []) or "all"
+    st.caption(
+        f"Status {gap['status']} · region {filters.get('region', 'NZ')} · types {types} · "
+        f"updated {gap['updated_at'][:19]}"
+    )
+    st.markdown(f"**Why:** {REASONS.get(gap['reason_type'], gap['reason_type'])}")
+    st.markdown(f"**Sub-question:** {scope.get('subquestion', gap['question'])}")
+    st.markdown(f"**Missing evidence:** {gap['missing_evidence']}")
+    if gap["resolution_note"]:
+        st.markdown(f"**Note:** {gap['resolution_note']}")
+    existing = [
+        row
+        for row in container.qa.list_answers()
+        if row["id"] == gap["qa_id"] and row["answer_json"]
+    ]
+    cited = json.loads(existing[0]["answer_json"]).get("citations", []) if existing else []
+    if cited:
+        st.markdown("**Evidence already found:**")
+        for citation in cited:
+            st.caption(f"[{citation['number']}] {citation['source'].get('title') or 'Untitled'}")
+    else:
+        st.caption("No approved evidence was cited for this question yet.")
+
+    st.markdown("**Suggested searches**")
+    for index, query in enumerate(queries):
+        left, right = st.columns([3, 1])
+        left.write(query)
+        if right.button("Use in Discover", key=f"gap-query-{gap['id']}-{index}"):
+            st.session_state["discover_prefill"] = query
+            st.success("Query ready. Open Discover from the navigation and click Search.")
+
+    gap_id = gap["id"]
+    if gap["status"] != "open":
+        if st.button("Reopen", key=f"gap-reopen-{gap_id}"):
+            _gap_action(lambda: container.gaps.reopen(gap_id), "Gap reopened.")
+        return
+    with st.form(f"gap-edit-{gap_id}"):
+        st.markdown("**Edit**")
+        reason = st.selectbox(
+            "Reason",
+            list(REASONS),
+            index=list(REASONS).index(gap["reason_type"]),
+            format_func=REASONS.__getitem__,
+            key=f"gap-reason-{gap_id}",
+        )
+        sub = st.text_input(
+            "Sub-question", value=scope.get("subquestion", ""), key=f"gap-sub-{gap_id}"
+        )
+        needed = st.text_input(
+            "Missing evidence", value=gap["missing_evidence"], key=f"gap-needed-{gap_id}"
+        )
+        lines = st.text_area(
+            "Suggested searches (one per line)",
+            value="\n".join(queries),
+            key=f"gap-queries-{gap_id}",
+        )
+        save = st.form_submit_button("Save changes")
+    if save:
+        from pydantic import ValidationError
+
+        from gridlens.contracts import MissingEvidence
+
+        try:
+            missing = MissingEvidence(
+                reason_type=reason,
+                subquestion=sub,
+                needed_evidence=needed,
+                suggested_queries=[q.strip() for q in lines.splitlines() if q.strip()],
+            )
+        except ValidationError:
+            st.error("Fill in the sub-question, missing evidence and at least one search.")
+        else:
+            _gap_action(lambda: container.gaps.edit(gap_id, missing), "Gap updated.")
+    with st.form(f"gap-close-{gap_id}"):
+        note = st.text_input("Resolution or dismissal note", key=f"gap-note-{gap_id}")
+        left, right = st.columns(2)
+        resolve = left.form_submit_button("Mark resolved")
+        dismiss = right.form_submit_button("Dismiss")
+    if resolve:
+        _gap_action(lambda: container.gaps.resolve(gap_id, note), "Gap marked resolved.")
+    if dismiss:
+        _gap_action(lambda: container.gaps.dismiss(gap_id, note), "Gap dismissed.")
+
+
+def _gap_action(action, message: str):
+    try:
+        action()
+    except AppError as error:
+        messages = {
+            "RESOLUTION_NOTE_REQUIRED": "Add a note explaining how the gap was resolved.",
+            "GAP_DUPLICATE": "Another open gap already covers this question.",
+            "GAP_NOT_OPEN": "This gap is no longer open. Reload the list.",
+        }
+        st.error(messages.get(error.code, "The gap could not be changed."))
+        return
+    st.session_state["gap_notice"] = message
+    st.rerun()
+
+
+def _gaps_tab(container: Container):
+    if notice := st.session_state.pop("gap_notice", None):
+        st.success(notice)
+    statuses = {"Open": "open", "Resolved": "resolved", "Dismissed": "dismissed", "All": None}
+    label = st.radio("Show", list(statuses), horizontal=True, key="gap_status")
+    gaps = container.gaps.list_gaps(statuses[label])
+    if not gaps:
+        empty_state("No knowledge gaps here. Gaps appear when an answer lacks evidence.")
+        return
+    st.caption(
+        "Gaps describe what this knowledge base cannot yet support, not what research exists."
+    )
+    names = {g["id"]: f"{g['question'][:70]} · {g['status']}" for g in gaps}
+    gap_id = st.selectbox(
+        "Gap", list(names), format_func=names.__getitem__, key=f"gap_pick_{label}"
+    )
+    _gap_detail(container, next(g for g in gaps if g["id"] == gap_id))
+
+
 def render(container: Container):
     st.title("Ask & Gaps")
     st.write("Ask a research question and check the evidence behind each claim.")
@@ -213,5 +346,4 @@ def render(container: Container):
     with ask:
         _ask_tab(container)
     with gaps:
-        if not container.qa.list_gaps():
-            empty_state("No knowledge gaps recorded yet.")
+        _gaps_tab(container)

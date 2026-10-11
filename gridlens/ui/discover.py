@@ -45,6 +45,10 @@ def _show_results(result: SearchRunDetail):
 def render(container: Container):
     st.title("Discover")
     st.write("Find public policies, technical documents and research about grid connections.")
+    if prefill := st.session_state.pop("discover_prefill", None):
+        # Filled from a knowledge gap; nothing is searched until the user clicks Search.
+        st.session_state["discover_topic"] = prefill
+        st.info("A suggested query from a knowledge gap was filled in. Review it, then search.")
     with st.form("discover"):
         topic = st.text_input(
             "Research topic",

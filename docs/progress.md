@@ -505,6 +505,23 @@ Checks: `tests/integration/test_gaps.py` **11 passed**; full offline regression 
 passed, 8 deselected**; Ruff, format and pip check passed. Committed and pushed (user's
 "Auto" instruction). Next: T25 gap list and search entry.
 
+## T25 — Gap list and follow-up search entry (2026-10-12)
+
+Status: **implemented and verified offline (AppTest); manual browser check not run**.
+The Knowledge gaps tab filters by Open/Resolved/Dismissed/All and shows, per gap, the
+question, scope (region, types), a reason phrased against this knowledge base ("No
+approved source covers this yet", "Approved sources are for another region", …), the
+sub-question, the missing evidence, evidence already cited by the linked answer, and the
+suggested searches. Users can edit reason/sub-question/missing evidence/searches (key
+re-checked), mark resolved (note required), dismiss, and reopen closed gaps. "Use in
+Discover" only stores the query; the Discover page fills its topic box from it on the next
+visit and runs nothing until the user clicks Search.
+
+Checks: `tests/ui/test_gaps.py` **4 passed** (search provider call count stays 0 while
+viewing gaps and prefilling Discover); full offline regression **302 passed, 8
+deselected**; Ruff, format and pip check passed. Committed and pushed (user's "Auto"
+instruction). Next: T26 refresh and historical citation status.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as
