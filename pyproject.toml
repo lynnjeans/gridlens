@@ -31,7 +31,7 @@ gridlens = "gridlens.cli:main"
 include = ["gridlens*"]
 
 [tool.setuptools.package-data]
-gridlens = ["migrations/*.sql"]
+gridlens = ["migrations/*.sql", "prompts/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

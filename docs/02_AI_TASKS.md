@@ -900,7 +900,7 @@
 
 ## T21 — 实现订阅授权的流式回答 Provider
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / awaiting_input（离线完成，真实 smoke 需登录与计划用量）
 **日程/类别：** D5 / implementation
 **依赖：** T02, T04, T35, T36
 **PRD 对应：** AC-05, AC-06
@@ -913,7 +913,8 @@
 - `gridlens/providers/chatgpt_oauth.py`
 - `gridlens/prompts/answer_v1.txt`
 - `tests/unit/test_answer_provider.py`
-- `tests/live/test_answer_provider.py`
+- `tests/live/test_live_answer_provider.py`（原定文件名与单元测试同名冲突）
+- `pyproject.toml`（打包 prompts/*.txt）
 
 ### 实现步骤
 
@@ -937,9 +938,9 @@
 
 - 不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。
 
-**验证状态：** offline=not_run, live=not_run, human=not_required
+**验证状态：** offline=passed, live=not_run, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** 已核对官方 inference/限制/错误文档。`tests/unit/test_answer_provider.py` 21 项通过（请求字段白名单、证据仅作数据、schema→prompt-JSON 单次回退、未 completed/额度/资格/畸形流不返回答案、自由文本与额外字段被拒、错误映射不重试、无权限或换账户不请求）。完整回归 266 passed、8 deselected。**未运行真实 smoke**：需 `APP_MODE=live GRIDLENS_LIVE_ANSWER=1 .venv/bin/python -m pytest -m live -k live_answer -s`。
 
 ## T22 — 实现问答服务、引用校验与保存
 

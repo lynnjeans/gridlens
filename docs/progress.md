@@ -409,6 +409,35 @@ format and pip check passed. Not run: a real catalog read and selection. Committ
 pushed (user's "Auto" instruction); the first push (649649b) carried only tasks.json
 because a documentation script failed midway — fixed in the next commit. Next: T21.
 
+## T21 — ChatGPT plan-usage streaming answer provider (awaiting real smoke)
+
+Status: **implemented and verified offline; real generation not run** (task
+`awaiting_input`). Official models-and-inference, preview-limitations and
+errors-and-recovery pages checked 2026-10-12; they do not document `text.format` or usage
+fields, so structured-output support must be confirmed on the real selected model.
+
+`gridlens/providers/chatgpt_oauth.py` `ChatGPTAnswerProvider(sessions, handle, slug)`
+implements `AnswerProvider.generate`. It refuses without the plan scope or when the
+account changed, takes the token from `SessionManager`, and posts with raw httpx (no
+SDK retries) to `/v1/responses` a body limited to model/instructions/input/store/stream/
+text: `store=false`, `stream=true`, the `answer_v1` prompt as `instructions`, and one user
+message whose text is a JSON object holding the question and evidence (so document text
+is data). Output mode `auto` tries a strict `json_schema` and, only if the request is
+rejected with a `text.*` parameter error before any stream, retries once in
+`prompt_json_validated`; both modes require a strict `AnswerDraft` (no free text, no extra
+URL/page fields). SSE is buffered (2 MB cap) until `response.completed`; `response.failed`
+(usage limit → `USAGE_LIMITED`, not eligible / scope → `PLAN_PERMISSION_MISSING`,
+invalid user → `AUTH_EXPIRED`), `response.incomplete`, malformed events, a dropped
+connection or a stream without completion all raise. Admission 401/403/404/429/5xx map
+to distinct errors without retry. `provider.last` records registration prefix, slug,
+returned model, output mode, request ID, terminal event, usage and latency — never the
+token. Prompt: `gridlens/prompts/answer_v1.txt` (packaged).
+
+Checks: `tests/unit/test_answer_provider.py` **21 passed**. Full offline regression
+**266 passed, 8 deselected**; Ruff, format and pip check passed. Not run: real answer
+smoke (`APP_MODE=live GRIDLENS_LIVE_ANSWER=1 .venv/bin/python -m pytest -m live -k live_answer -s`, uses plan usage) and a rebuilt-wheel check of the packaged prompt.
+Citation validation is T22. Committed and pushed (user's "Auto" instruction).
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

@@ -1116,7 +1116,7 @@
       "id": "T21",
       "title": "实现订阅授权的流式回答 Provider",
       "priority": "P0",
-      "status": "todo",
+      "status": "awaiting_input",
       "day": "D5",
       "depends_on": [
         "T02",
@@ -1128,8 +1128,9 @@
       "scope_paths": [
         "gridlens/providers/chatgpt_oauth.py",
         "gridlens/prompts/answer_v1.txt",
+        "pyproject.toml",
         "tests/unit/test_answer_provider.py",
-        "tests/live/test_answer_provider.py"
+        "tests/live/test_live_answer_provider.py"
       ],
       "objective": "使用选中账户订阅授权生成 AnswerDraft，仅在完整流和校验成功后返回。",
       "steps": [
@@ -1155,12 +1156,19 @@
         "AC-06"
       ],
       "required_inputs": "离线实现无凭证；真实smoke需合资格ChatGPT账户、本人OAuth plan授权、可用额度与所选catalog模型。",
-      "evidence": [],
+      "evidence": [
+        "2026-10-12 核对官方 models-and-inference、preview-limitations、errors-and-recovery：POST /v1/responses、store=false、stream=true、input 数组、instructions（拒绝 system message）、不支持字段清单、response.completed 才算成功、failed/incomplete/断流、额度错误码。官方未说明 text.format 与 usage，故 schema 能力需真实验证。",
+        "实现：原生 httpx（无 SDK 隐式重试）；顶层字段白名单 model/instructions/input/store/stream/text；证据以 JSON 数据放入 user 消息；output_mode auto 先 strict json_schema，流开始前 400 且 param 为 text.* 时回退一次 prompt_json_validated，两种模式均严格 AnswerDraft 校验；2MB 流上限；记录脱敏注册引用、slug、实际模型、output mode、request ID、terminal event、usage、latency。",
+        "tests/unit/test_answer_provider.py: 21 passed（字段白名单与禁用字段、无 system message、注入文本仅作数据、Bearer 为选中账户、schema 回退一次与显式 schema 不回退、无 completed/incomplete/流中额度错误/资格错误/server_error/畸形 SSE 均不返回答案、自由文本/额外 url/page 字段/状态不一致被拒、401/403/404/429/503 映射且不重试、超时与断流、无 plan scope 或账户已切换不发请求、超大流）。",
+        "完整离线回归：266 passed, 8 deselected；live 组 4 项按设计 skip；Ruff、format 与 pip check 通过。",
+        "未运行：真实生成 smoke（需登录与计划用量）；wheel 中 prompts 打包未重新构建验证。引用校验在 T22。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_run",
         "human": "not_required"
-      }
+      },
+      "awaiting": "T34 登录并在侧栏选择模型后，运行 APP_MODE=live GRIDLENS_LIVE_ANSWER=1 .venv/bin/python -m pytest -m live -k live_answer -s（消耗计划用量），记录 slug、output mode、terminal event 与 usage（脱敏）。"
     },
     {
       "id": "T22",
@@ -1941,7 +1949,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T21"
+      "T22"
     ],
     "completed_tasks": [
       "T01",
@@ -1974,7 +1982,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 245,
+      "offline_tests_passed": 266,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",
@@ -1985,7 +1993,8 @@
     "awaiting_input": [
       "T34",
       "T35",
-      "T36"
+      "T36",
+      "T21"
     ]
   }
 }

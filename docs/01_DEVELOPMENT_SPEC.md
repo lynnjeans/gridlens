@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T33 完成，T34–T36 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T33 完成，T34–T36、T21 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -157,6 +157,7 @@ T21 的 HTTP 生成请求必须满足：
 - SSE 缓冲直到 `response.completed`；failed/incomplete/断流都不是成功。随后 Pydantic 校验 AnswerDraft、引用校验和输出前来源资格校验，全部成功才保存/展示可信答案。进度可以展示，未验证正文不能进入 research log。
 - 首次真实联调测试所选模型的 JSON schema 能力；支持时使用兼容的 `text.format` schema。若不支持，明确记录为 prompt-JSON + 同等严格本地校验模式；两种模式均不得接受自由文本或绕过引用校验。记录实际 output mode，不承诺所有账户模型均支持同一 schema 参数。
 - 权限未开通、过期/被撤销、模型不可用和计划额度耗尽独立显示；额度错误即停止，绝不无限重试或自动换成收费平台调用。用量有返回则记入 QA usage，未返回为未知，不推算“剩余百分比”。
+- 实现（2026-10-12，`gridlens/providers/chatgpt_oauth.py`）：原生 httpx、顶层字段白名单 `model/instructions/input/store/stream/text`；官方 2026-10-12 文档未说明 `text.format` 与 usage 字段，故 output mode `auto` 先 strict json_schema，流开始前因 `text.*` 参数被拒时回退一次 `prompt_json_validated`；错误码 USAGE_LIMITED、PLAN_PERMISSION_MISSING、AUTH_EXPIRED、MODEL_UNAVAILABLE、STREAM_INCOMPLETE、OUTPUT_INVALID、PROVIDER_TIMEOUT、PROVIDER_UNAVAILABLE、GENERATION_FAILED、GENERATION_TOO_LARGE。
 
 上述端点/参数与事件行为依据 [模型调用](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference)、[预览限制](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations)、[错误与恢复](https://developers.openai.com/siwc/token-sharing-open-source/errors-and-recovery)，核对日期 2026-10-11。它们不是本应用已经完成的登录或可用性测试。
 

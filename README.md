@@ -89,7 +89,8 @@ chromadb 1.5.9) is locked too; it runs locally with telemetry off and never uses
 embedding model.
 
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
-Next development milestone: T21 (streaming answer provider). In live mode the sidebar
+Next development milestone: T22 (Q&A service and citation checks). The ChatGPT
+plan-usage answer provider exists but is not yet wired into Ask. In live mode the sidebar
 offers Continue with ChatGPT, account and model pickers (from your account's own catalog),
 Reauthorize, Sign out and the usage link. The current
 source can be obtained from the configured GitHub repository.
