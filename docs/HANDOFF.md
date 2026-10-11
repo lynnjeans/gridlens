@@ -21,7 +21,7 @@
 
 ## 2. 当前完成状态
 
-36 项任务中 **27 项 done，4 项 awaiting_input，5 项 todo**。T01–T20、T22–T27、T33 已完成并通过离线验证；
+36 项任务中 **28 项 done，4 项 awaiting_input，4 项 todo**。T01–T20、T22–T28、T33 已完成并通过离线验证；
 T34/T35/T36/T21 离线完成、等待本人真实登录及其后的会话/目录/生成验证。当前没有遗留的失败检查。
 
 | 已完成 | 当前能力 | 主要文件 |
@@ -56,6 +56,7 @@ T34/T35/T36/T21 离线完成、等待本人真实登录及其后的会话/目录
 | T25 | 缺口列表：状态筛选、详情（范围/原因/已有证据/建议词）、编辑/resolve/dismiss/reopen、建议词仅预填 Discover | `gridlens/ui/ask.py`、`ui/discover.py` |
 | T26 | 刷新（沿用已审核元数据、同内容 no-op、变化建 pending）、已批准元数据修正、待审核更新标记、撤销后尽力删除向量、历史引用动态状态 | `snapshots.py`、`services/review.py`、`citations.py`、`ui/knowledge_base.py` |
 | T27 | Markdown research log：当前/历史/待审核分区、撤销来源省略摘录与仅依赖其的 claim、转义与 HTTP(S) 链接、KB 下载 | `gridlens/services/export.py` |
+| T28 | 运行锁（fcntl）判定崩溃、会话级恢复与 `gridlens recover`、脱敏操作日志与 logging filter、离线 doctor、调用预算 | `services/recovery.py`、`runlocks.py`、`oplog.py`、`cli.py` |
 | T33 | 稳定 host ID、按注册隔离的受保护原子凭证存储 | `gridlens/auth/host.py`、`credentials.py` |
 
 所有其他任务待实施，包括：真实搜索联调、抓取/解析服务、批准/拒绝操作、
@@ -70,11 +71,11 @@ Knowledge Base 与 Ask 已接通（fixture 可完整使用；live 生成需登�
 
 | 命令 | 结果 |
 | --- | --- |
-| `.venv/bin/python -m pytest -q` | 312 passed，8 deselected（live/local_model） |
+| `.venv/bin/python -m pytest -q` | 320 passed，8 deselected（live/local_model） |
 | `.venv/bin/ruff check .` | All checks passed |
 | `.venv/bin/ruff format --check .` | 93 files already formatted |
 | `.venv/bin/python -m pip check` | No broken requirements found |
-| `.venv/bin/python -m gridlens.cli doctor` | fixture；搜索 key 未配置；oauth_login live_cli_only_not_verified；模型 prepared `5c38ec7c405e` |
+| `.venv/bin/python -m gridlens.cli doctor` | 离线 JSON：mode、extras、模型 revision、数据目录可写、schema 是否最新、待恢复运行、凭证目录权限（不含密钥） |
 | `.venv/bin/python -m pytest -m local_model -q` | 4 passed（禁网；需本机已 prepare-model；含 live 装配端到端入库） |
 
 Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件。
@@ -104,7 +105,7 @@ Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件�
 GitHub 地址和分支信息已在本文明确记录。解压后复用已有应用目录，
 避免覆盖另一份更新的 checkout。
 
-## 5. 下一项工作：T28（T34–T36、T21 真实验证待用户）
+## 5. 下一项工作：T29（T34–T36、T21 真实验证待用户）
 
 T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 
@@ -114,7 +115,7 @@ T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 
 T09–T14 的获取、解析、不可变快照、审核状态机和 Review 页面已完成。
 T34 OAuth 登录离线已完成，等待用户本人运行 `APP_MODE=live .venv/bin/python -m gridlens.cli login` 完成真实登录并确认 plan scope
-（只记录脱敏结果，AI 不代为登录）。T19、T20 已完成，T35/T36 离线完成。T21 离线完成，T22–T27 完成。下一项 T28 中断恢复、调用限额与运行记录
+（只记录脱敏结果，AI 不代为登录）。T19、T20 已完成，T35/T36 离线完成。T21 离线完成，T22–T28 完成。下一项 T29 15 题与评估运行工具
 （离线可实现，真实验证依赖 T34 登录）。关键路径：T34 → T35 → T36 → T21 → T22。
 T18 接好后在 Review 批准成功处触发一次入库。
 T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的共享文件
@@ -148,10 +149,10 @@ T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的�
 ## 7. 可复制的接手提示词
 
 ```text
-请接手已有 GridLens 项目，完成 T28 中断恢复、调用限额与运行记录（T34–T36、T21 等待用户真实登录）。
+请接手已有 GridLens 项目，完成 T29 评估工具（T34–T36、T21 等待用户真实登录）。
 先读取根 AGENTS.md、docs/HANDOFF.md、docs/tasks.json 和对应任务卡，
 再检查真实代码及开发规格相关章节。
-T01–T20、T22–T27、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
+T01–T20、T22–T28、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
 按依赖顺序实现并验证，保持 fixture/live 隔离、有限调用预算和 UI rerun 幂等。
 抓取与解析先用离线 HTTP/DNS fixture 完成；真实任意网站不作为单元验收条件。
 不要索要聊天中的密钥，不自动批准资料，不虚构研究评估，不增加 P1。

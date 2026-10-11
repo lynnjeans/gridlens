@@ -1503,7 +1503,7 @@
       "id": "T28",
       "title": "实现中断恢复、调用限额与运行记录",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D8",
       "depends_on": [
         "T18",
@@ -1512,9 +1512,14 @@
       "kind": "implementation",
       "scope_paths": [
         "gridlens/services/recovery.py",
+        "gridlens/runlocks.py",
+        "gridlens/oplog.py",
         "gridlens/bootstrap.py",
-        "gridlens/config.py",
         "gridlens/cli.py",
+        "app.py",
+        "gridlens/services/ingestion.py",
+        "gridlens/services/discovery.py",
+        "gridlens/services/answers.py",
         "tests/integration/test_recovery.py"
       ],
       "objective": "重启后能够解释失败、保留有效数据，并避免隐形重复调用。",
@@ -1541,12 +1546,18 @@
         "AC-10"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/integration/test_recovery.py: 8 passed：模拟崩溃的 processing 入库运行被标 INGESTION_INTERRUPTED、版本 failed 可重试、恢复幂等；子进程持有运行锁时恢复不回收（still_running=1），子进程被杀后才标中断；running 搜索运行标 SEARCH_INTERRUPTED 后可继续搜索；重启与恢复后已批准来源与历史问答仍在；429 链：回答 1 次调用不重试、搜索 ≤3 次且操作重放不再调用；操作日志只有 kind/stage/计数/usage 类别且不含问题或正文；脱敏覆盖 Bearer、code/state、id_token_hint、JWT、refresh_token、tvly key 与 logging filter；doctor 不输出密钥、schema/可写检查。",
+        "实现：RunLocks 每个运行持有 fcntl 文件锁（data/<mode>/locks），恢复以非阻塞加锁判断 owner 是否已退出；app 每个浏览器会话恢复一次，CLI `gridlens recover`；OperationLog（data/<mode>/logs/operations.jsonl）区分 local_inference/search_quota/chatgpt_plan/fixture；install_log_redaction 为 root/httpx/httpcore 加脱敏 filter；doctor 离线检查配置、可写性、schema、待恢复运行、凭证目录权限与注册数量、已安装 extras（不导入）、模型准备。",
+        "调用预算：所有外部调用使用原生 httpx 且无隐式重试；回答 ≤2 次（仅格式/引用修复），搜索 ≤3 次。T28 之前遗留的无锁 processing 运行会被视为已中断。",
+        "完整离线回归：320 passed, 8 deselected；Ruff、format 与 pip check 通过。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
         "human": "not_required"
-      }
+      },
+      "completed_at": "2026-10-12"
     },
     {
       "id": "T29",
@@ -1996,7 +2007,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T28"
+      "T29"
     ],
     "completed_tasks": [
       "T01",
@@ -2025,6 +2036,7 @@
       "T25",
       "T26",
       "T27",
+      "T28",
       "T33"
     ],
     "repository": {
@@ -2035,7 +2047,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 312,
+      "offline_tests_passed": 320,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

@@ -13,7 +13,8 @@ from gridlens.providers.local_embeddings import prepare_model, read_manifest
 def main():
     parser = argparse.ArgumentParser(description="GridLens local development tools")
     parser.add_argument(
-        "command", choices=["init-db", "doctor", "prepare-model", "login", "logout"]
+        "command",
+        choices=["init-db", "doctor", "recover", "prepare-model", "login", "logout"],
     )
     parser.add_argument("--account", help="registration ID for login (sign in again) or logout")
     args = parser.parse_args()
@@ -38,25 +39,81 @@ def main():
             f"({manifest.dimensions} dimensions, {manifest.max_seq_length} tokens).\n"
             f"Optionally pin it in .env: EMBEDDING_REVISION={manifest.revision}"
         )
+    elif args.command == "recover":
+        from gridlens.bootstrap import build_container
+
+        report = build_container(settings).recovery.recover()
+        print(json.dumps(report.model_dump(), indent=2))
     else:
-        try:
-            revision = read_manifest(settings).revision
-            model = {"model_download": "prepared", "model_revision": revision}
-        except AppError:
-            model = {"model_download": "not_performed"}
-        print(
-            json.dumps(
-                {
-                    "mode": settings.mode,
-                    "python_required": "3.12",
-                    "search_key_configured": bool(settings.tavily_api_key.get_secret_value()),
-                    "oauth_login": "live_cli_only_not_verified",
-                    **model,
-                    "milestone": "review_and_local_embeddings",
-                },
-                indent=2,
+        print(json.dumps(doctor(settings), indent=2))
+
+
+def doctor(settings: Settings) -> dict:
+    """Offline checks only: no network, no secrets, no writes besides a probe file."""
+    import importlib.util
+    import os
+    import sqlite3
+    import stat
+
+    from gridlens.db import MIGRATIONS
+    from gridlens.runlocks import RunLocks
+
+    report: dict = {
+        "mode": settings.mode,
+        "python": ".".join(map(str, sys.version_info[:3])),
+        "python_required": "3.12",
+        "search_key_configured": bool(settings.tavily_api_key.get_secret_value()),
+        "chatgpt_sign_in": "available_in_live_mode_not_verified_by_developers",
+        "extras": {
+            name: importlib.util.find_spec(module) is not None
+            for name, module in (("embeddings", "sentence_transformers"), ("vectors", "chromadb"))
+        },
+    }
+    try:
+        report["local_model"] = {"prepared": True, "revision": read_manifest(settings).revision}
+    except AppError:
+        report["local_model"] = {"prepared": False}
+    data = settings.data_dir
+    probe = data / ".doctor-probe"
+    try:
+        data.mkdir(parents=True, exist_ok=True)
+        probe.write_text("ok")
+        probe.unlink()
+        report["data_dir_writable"] = True
+    except OSError:
+        report["data_dir_writable"] = False
+    database = data / "research.sqlite3"
+    if database.exists():
+        with sqlite3.connect(database) as c:
+            versions = sorted(r[0] for r in c.execute("SELECT version FROM schema_migrations"))
+            processing = [
+                r[0] for r in c.execute("SELECT id FROM ingestion_runs WHERE status='processing'")
+            ]
+            searching = [
+                r[0] for r in c.execute("SELECT id FROM search_runs WHERE status='running'")
+            ]
+        locks = RunLocks(data / "locks")
+        report["database"] = {
+            "schema_versions": versions,
+            "schema_current": versions == list(range(1, len(MIGRATIONS) + 1)),
+            "interrupted_runs_to_recover": sum(
+                locks.is_abandoned(f"ingest-{r}") for r in processing
             )
-        )
+            + sum(locks.is_abandoned(f"search-{r}") for r in searching),
+            "runs_in_progress": len(processing) + len(searching),
+        }
+    else:
+        report["database"] = {"exists": False}
+    auth = settings.auth_dir
+    if auth.exists():
+        mode = stat.S_IMODE(auth.stat().st_mode)
+        report["credential_store"] = {
+            "owner_only": mode & 0o077 == 0 and auth.stat().st_uid == os.getuid(),
+            "registrations": len([p for p in auth.glob("*.json") if len(p.stem) == 64]),
+        }
+    else:
+        report["credential_store"] = {"exists": False}
+    return report
 
 
 def _login(settings: Settings, account: str | None) -> None:

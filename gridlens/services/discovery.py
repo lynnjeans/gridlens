@@ -3,6 +3,7 @@
 import ipaddress
 import json
 import re
+import time
 from dataclasses import dataclass
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import uuid4
@@ -16,7 +17,9 @@ from gridlens.contracts import (
 )
 from gridlens.db import Database, now
 from gridlens.errors import AppError
+from gridlens.oplog import OperationLog
 from gridlens.repositories.sources import SourceRepository
+from gridlens.runlocks import RunLocks
 
 TRACKING_PARAMETERS = {
     "fbclid",
@@ -83,6 +86,8 @@ class DiscoveryService:
     mode: str
     max_calls: int = 3
     max_results: int = 10
+    locks: RunLocks | None = None
+    oplog: OperationLog | None = None
 
     def discover(self, request: DiscoveryRequest, operation_key: str) -> SearchRunDetail:
         operation_key = operation_key.strip()
@@ -95,6 +100,14 @@ class DiscoveryService:
             raise AppError("CONFIG_MISSING", "Live search is not configured.")
         queries = queries_for(request)
         run_id = str(uuid4())
+        if self.locks is None:
+            return self._execute(request, operation_key, queries, run_id)
+        # Held for the whole run so recovery can tell a crash from a search in progress.
+        with self.locks.hold(f"search-{run_id}"):
+            return self._execute(request, operation_key, queries, run_id)
+
+    def _execute(self, request, operation_key: str, queries: list[str], run_id: str):
+        clock = time.monotonic()
         started = now()
         filters = {
             "region": request.region,
@@ -185,6 +198,17 @@ class DiscoveryService:
                 "UPDATE search_runs SET status=?, calls_used=?, finished_at=?, error_code=?, "
                 "filters_json=? WHERE id=?",
                 (status, calls, now(), error_code, json.dumps(filters), run_id),
+            )
+        if self.oplog is not None:
+            self.oplog.record(
+                kind="search",
+                operation=run_id,
+                stage="saved",
+                status=status,
+                duration_ms=int((time.monotonic() - clock) * 1000),
+                calls=calls,
+                usage_category="fixture" if self.mode == "fixture" else "search_quota",
+                error_code=error_code,
             )
         result = self.sources.get_search_run(operation_key, self.mode)
         if result is None:

@@ -569,6 +569,31 @@ passed, 8 deselected**; Ruff, format and pip check passed. I generated and read 
 fixture export; the card's human check of an exported file was not run. Committed and
 pushed (user's "Auto" instruction). Next: T28 recovery, limits and run records.
 
+## T28 — Recovery, call limits and run records (2026-10-12)
+
+Status: **implemented and verified offline**. Every ingestion and search run now holds an
+OS `fcntl` lock file (`data/<mode>/locks/<kind>-<run>.lock`) for its whole duration.
+`RecoveryService.recover()` (once per browser session in `app.py`, or `gridlens recover`)
+tries each processing/running run's lock without blocking: if it can be taken the owner has
+exited, so the run becomes `failed` with `INGESTION_INTERRUPTED` / `SEARCH_INTERRUPTED`
+and a processing version becomes retryable `failed`; a lock held by a live process is left
+alone. Nothing approved, indexed or answered is touched, and nothing is retried
+automatically. Runs left by versions before T28 have no lock and count as interrupted.
+`OperationLog` appends redacted JSON lines (`data/<mode>/logs/operations.jsonl`) with kind,
+operation ID, stage, status, duration, call count, usage category (`local_inference`,
+`search_quota`, `chatgpt_plan`, `fixture`, `none`), numeric usage and error code — never
+questions, answers, documents or tokens. `install_log_redaction()` adds a redacting filter
+(Bearer tokens, OAuth `code`/`state`/`nonce`/`id_token_hint`/`login_hint`, JWTs,
+`*_token` values, `tvly-`/`sk-` keys) to the root and HTTP-client loggers. `gridlens doctor`
+is offline and secret-free: config, data-dir write probe, schema currency, runs to recover
+vs in progress, credential-dir owner-only permissions and registration count, installed
+extras (found without importing) and the prepared model. Call budgets: raw httpx with no
+hidden retries; answers ≤2 calls (format/citation repair only), searches ≤3 calls.
+
+Checks: `tests/integration/test_recovery.py` **8 passed** (a real child process holds a
+lock); full offline regression **320 passed, 8 deselected**; Ruff, format and pip check
+passed. Committed and pushed (user's "Auto" instruction). Next: T29 evaluation tooling.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

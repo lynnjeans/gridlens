@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T22–T27、T33 完成，T34–T36、T21 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T22–T28、T33 完成，T34–T36、T21 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -512,6 +512,8 @@ Session state 只保存当前选中 ID、表单输入和 operation_key，不保�
 | `STALE_CONTEXT` | 提示来源状态变化，重新提问 | 否 |
 
 所有第三方 SDK 的自动重试关闭或明确纳入服务统一预算，不能出现“服务重试 2 次 × SDK 重试 3 次”的隐形调用。日志至少包括 operation ID、stage、耗时、错误码和可用 usage，不记录密钥及全量正文。
+
+实现（2026-10-12）：运行期间持有 `data/<mode>/locks` 下的 fcntl 文件锁，恢复以非阻塞加锁判定 owner 已退出（`INGESTION_INTERRUPTED` / `SEARCH_INTERRUPTED`）；操作日志 `data/<mode>/logs/operations.jsonl` 仅含计量字段并脱敏；`gridlens recover`、`gridlens doctor`。
 
 重启恢复只标记确定已中断的 processing runs；不得清空已审核语料。数据库迁移只前进、不通过删库绕过错误。开发测试必须用临时数据目录。
 

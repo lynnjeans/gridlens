@@ -1195,7 +1195,7 @@
 
 ## T28 — 实现中断恢复、调用限额与运行记录
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D8 / implementation
 **依赖：** T18, T22
 **PRD 对应：** AC-09, AC-10
@@ -1205,11 +1205,10 @@
 
 ### 文件范围
 
-- `gridlens/services/recovery.py`
-- `gridlens/bootstrap.py`
-- `gridlens/config.py`
-- `gridlens/cli.py`
-- `tests/integration/test_recovery.py`
+- `gridlens/services/recovery.py`、`gridlens/runlocks.py`、`gridlens/oplog.py`
+- `gridlens/bootstrap.py`、`gridlens/cli.py`（recover、doctor）、`app.py`（会话级恢复与日志脱敏）
+- `gridlens/services/ingestion.py`、`discovery.py`、`answers.py`（运行锁与操作日志）
+- `tests/integration/test_recovery.py`（未改 `config.py`：锁与日志位于 data_dir）
 
 ### 实现步骤
 
@@ -1233,9 +1232,9 @@
 
 - 不加监控平台、自动清库或无人值守重跑。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_required, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/integration/test_recovery.py` 8 项通过（崩溃恢复与重试、存活子进程持锁不被回收、搜索中断、重启后数据保留、429 链式预算、日志无正文与脱敏、doctor 无密钥）。完整回归 320 passed、8 deselected。
 
 ## T29 — 建立 15 题与评估运行工具
 

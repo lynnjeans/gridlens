@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from gridlens.bootstrap import build_container
 from gridlens.config import Settings
+from gridlens.oplog import install_log_redaction
 from gridlens.ui import ask, discover, knowledge_base, review
 from gridlens.ui.common import sidebar
 
@@ -18,6 +19,11 @@ except ValidationError:
 
 # Do not put secrets in cache keys: keep the container assembly uncached for now.
 container = build_container(settings)
+install_log_redaction()
+if not st.session_state.get("gridlens_recovered"):
+    # Once per browser session: mark runs whose owner process has exited as interrupted.
+    container.recovery.recover()
+    st.session_state["gridlens_recovered"] = True
 sidebar(container)
 pages = [
     st.Page(

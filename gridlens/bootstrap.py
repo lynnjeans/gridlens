@@ -13,6 +13,7 @@ from gridlens.documents.chunking import index_fingerprint
 from gridlens.documents.fetch import DocumentFetcher
 from gridlens.documents.snapshots import SnapshotService
 from gridlens.errors import AppError
+from gridlens.oplog import OperationLog
 from gridlens.providers.chroma_store import ChromaVectorStore
 from gridlens.providers.fakes import (
     FakeAnswerProvider,
@@ -26,11 +27,13 @@ from gridlens.providers.tavily import TavilySearchProvider
 from gridlens.repositories.qa import QARepository
 from gridlens.repositories.research import ResearchRepository
 from gridlens.repositories.sources import SourceRepository
+from gridlens.runlocks import RunLocks
 from gridlens.services.answers import AnswerService
 from gridlens.services.discovery import DiscoveryService
 from gridlens.services.export import ExportService
 from gridlens.services.gaps import GapService
 from gridlens.services.ingestion import IngestionService
+from gridlens.services.recovery import RecoveryService
 from gridlens.services.retrieval import RetrievalService
 from gridlens.services.review import ReviewService
 
@@ -58,6 +61,7 @@ class Container:
     answer_service: AnswerService | None
     gaps: GapService
     export: ExportService
+    recovery: RecoveryService
 
 
 def build_container(settings: Settings) -> Container:
@@ -84,7 +88,10 @@ def build_container(settings: Settings) -> Container:
         )
     )
     review = ReviewService(db, source_repository, settings.data_dir)
-    embeddings, vectors, ingestion = _indexing(settings, db, review)
+    # Lock files and operation logs live in the per-mode data directory, never in Git.
+    locks = RunLocks(settings.data_dir / "locks")
+    oplog = OperationLog(settings.data_dir / "logs" / "operations.jsonl")
+    embeddings, vectors, ingestion = _indexing(settings, db, review, locks, oplog)
     research = ResearchRepository(db)
     gaps = GapService(db)
     retrieval = (
@@ -124,6 +131,8 @@ def build_container(settings: Settings) -> Container:
             mode=settings.mode,
             max_calls=settings.max_search_calls,
             max_results=settings.max_search_results,
+            locks=locks,
+            oplog=oplog,
         ),
         snapshots=SnapshotService(
             db,
@@ -137,6 +146,7 @@ def build_container(settings: Settings) -> Container:
         ingestion=ingestion,
         retrieval=retrieval,
         gaps=gaps,
+        recovery=RecoveryService(db, locks),
         export=ExportService(
             db, mode=settings.mode, index_fingerprint=ingestion.fingerprint if ingestion else None
         ),
@@ -148,6 +158,7 @@ def build_container(settings: Settings) -> Container:
                 mode=settings.mode,
                 max_attempts=settings.max_generation_attempts,
                 gap_writer=gaps.write,
+                oplog=oplog,
             )
             if retrieval
             else None
@@ -155,7 +166,13 @@ def build_container(settings: Settings) -> Container:
     )
 
 
-def _indexing(settings: Settings, db: Database, review: ReviewService):
+def _indexing(
+    settings: Settings,
+    db: Database,
+    review: ReviewService,
+    locks: RunLocks,
+    oplog: OperationLog,
+):
     """Builds lazy indexing parts; nothing loads a model or opens Chroma here."""
     if settings.mode == "fixture":
         embeddings = FakeEmbeddingProvider()
@@ -184,5 +201,7 @@ def _indexing(settings: Settings, db: Database, review: ReviewService):
         chunk_tokens=settings.chunk_tokens,
         chunk_overlap=settings.chunk_overlap,
         max_input_tokens=max_input,
+        locks=locks,
+        oplog=oplog,
     )
     return embeddings, vectors, ingestion

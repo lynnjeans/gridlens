@@ -20,6 +20,7 @@ from gridlens.contracts import (
 )
 from gridlens.db import Database, now
 from gridlens.errors import AppError
+from gridlens.oplog import OperationLog
 from gridlens.providers.chatgpt_oauth import PROMPT_VERSION
 from gridlens.repositories.research import ResearchRepository
 from gridlens.services.citations import citation_problems
@@ -46,6 +47,7 @@ class AnswerService:
         max_attempts: int = 2,
         gap_writer: GapWriter | None = None,
         clock=time.monotonic,
+        oplog: OperationLog | None = None,
     ):
         self.db = db
         self.research = research
@@ -54,6 +56,7 @@ class AnswerService:
         self.max_attempts = max_attempts
         self.gap_writer = gap_writer
         self.clock = clock
+        self.oplog = oplog
 
     def ask(
         self,
@@ -178,6 +181,25 @@ class AnswerService:
             raise AppError("QA_SAVE_FAILED", "The answer could not be saved.") from None
         except sqlite3.Error:
             raise AppError("QA_SAVE_FAILED", "The answer could not be saved.") from None
+        if self.oplog is not None:
+            usage = record.meta["usage"]
+            self.oplog.record(
+                kind="answer",
+                operation=qa_id,
+                stage="saved",
+                status=row["execution_status"],
+                duration_ms=row["latency_ms"],
+                calls=record.meta["attempts"],
+                usage_category=(
+                    "none"
+                    if not record.meta["attempts"]
+                    else "fixture"
+                    if record.meta["output_mode"] == "fixture"
+                    else "chatgpt_plan"
+                ),
+                usage=usage,
+                error_code=row["error_code"],
+            )
         return _envelope(row, self.mode, gaps)
 
 

@@ -6,6 +6,7 @@ eligibility is decided only by SQLite.
 """
 
 import json
+import time
 from collections.abc import Callable
 from uuid import uuid4
 
@@ -19,6 +20,8 @@ from gridlens.contracts import (
 from gridlens.db import Database, now
 from gridlens.documents.chunking import chunk_segments, index_fingerprint
 from gridlens.errors import AppError
+from gridlens.oplog import OperationLog
+from gridlens.runlocks import RunLocks
 from gridlens.services.review import ReviewService
 
 UPSERT_BATCH = 16
@@ -39,6 +42,8 @@ class IngestionService:
         chunk_overlap: int,
         max_input_tokens: int,
         before_publish: Callable[[str], None] | None = None,
+        locks: RunLocks | None = None,
+        oplog: OperationLog | None = None,
     ):
         self.db = db
         self.review = review
@@ -53,14 +58,42 @@ class IngestionService:
         self.fingerprint = index_fingerprint(embedding_identity, chunk_tokens, chunk_overlap)
         # Test hook between verification and publication; never set by the app.
         self.before_publish = before_publish
+        self.locks = locks
+        self.oplog = oplog
 
     def ingest(self, version_id: str, operation_key: str) -> IngestionResult:
         if not operation_key.strip():
             raise AppError("INVALID_INPUT", "An operation key is required.")
-        started = self._start(version_id, operation_key)
+        run_id = str(uuid4())
+        if self.locks is None:
+            return self._run(version_id, operation_key, run_id)
+        # Held for the whole run: recovery treats a run as interrupted only once this lock is
+        # free, so a live run in another tab or process is never reclaimed.
+        with self.locks.hold(f"ingest-{run_id}"):
+            return self._run(version_id, operation_key, run_id)
+
+    def _run(self, version_id: str, operation_key: str, run_id: str) -> IngestionResult:
+        clock = time.monotonic()
+        started = self._start(version_id, operation_key, run_id)
         if isinstance(started, IngestionResult):
             return started
-        run_id, approved_hash = started
+        _, approved_hash = started
+        result = self._process(version_id, run_id, approved_hash)
+        if self.oplog is not None:
+            self.oplog.record(
+                kind="ingest",
+                operation=run_id,
+                stage="published" if result.status == "completed" else "failed",
+                status=result.status,
+                duration_ms=int((time.monotonic() - clock) * 1000),
+                calls=-(-result.indexed_chunks // UPSERT_BATCH),
+                usage_category="local_inference",
+                usage={"chunks": result.indexed_chunks},
+                error_code=result.error_code,
+            )
+        return result
+
+    def _process(self, version_id: str, run_id: str, approved_hash: str) -> IngestionResult:
         try:
             chunks = self._prepare_chunks(version_id, run_id)
             self._index(chunks, run_id)
@@ -82,7 +115,7 @@ class IngestionService:
             return False
         return True
 
-    def _start(self, version_id: str, operation_key: str):
+    def _start(self, version_id: str, operation_key: str, run_id: str):
         with self.db.transaction() as c:
             existing = c.execute(
                 "SELECT * FROM ingestion_runs WHERE operation_key=?", (operation_key,)
@@ -126,7 +159,6 @@ class IngestionService:
                 ).fetchone()[0]
                 + 1
             )
-            run_id = str(uuid4())
             c.execute(
                 "INSERT INTO ingestion_runs VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                 (
