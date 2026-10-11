@@ -944,7 +944,7 @@
 
 ## T22 — 实现问答服务、引用校验与保存
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D5 / implementation
 **依赖：** T20, T21
 **PRD 对应：** AC-05, AC-06, AC-09
@@ -956,8 +956,9 @@
 
 - `gridlens/services/answers.py`
 - `gridlens/services/citations.py`
-- `gridlens/repositories/qa.py`
-- `tests/integration/test_answers.py`
+- `gridlens/contracts.py`（AnswerProvider repair 参数、AnswerEnvelope.missing_evidence）、`gridlens/bootstrap.py`
+- `gridlens/providers/fakes.py`、`gridlens/providers/chatgpt_oauth.py`（repair 说明）
+- `tests/integration/test_answers.py`（QA 写入集中在服务事务内，未改 repositories/qa.py）
 
 ### 实现步骤
 
@@ -981,9 +982,9 @@
 - 不在问答时自动联网补证据。
 - 不声称程序已验证语义蕴含。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_required, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/integration/test_answers.py` 15 项通过（伪造引用与错误 quote、修复一次、provider 失败不伪装 insufficient、中途撤销 stale_context、空库 insufficient 不调用模型、operation_key 重放、保存失败整笔回滚、历史引用锁定版本）。完整回归 281 passed、8 deselected。引用校验不等于语义蕴含验证。
 
 ## T23 — 接通 Ask 与引用查看
 

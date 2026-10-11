@@ -26,6 +26,7 @@ from gridlens.providers.tavily import TavilySearchProvider
 from gridlens.repositories.qa import QARepository
 from gridlens.repositories.research import ResearchRepository
 from gridlens.repositories.sources import SourceRepository
+from gridlens.services.answers import AnswerService
 from gridlens.services.discovery import DiscoveryService
 from gridlens.services.ingestion import IngestionService
 from gridlens.services.retrieval import RetrievalService
@@ -52,6 +53,7 @@ class Container:
     review: ReviewService
     ingestion: IngestionService | None
     retrieval: RetrievalService | None
+    answer_service: AnswerService | None
 
 
 def build_container(settings: Settings) -> Container:
@@ -129,6 +131,17 @@ def build_container(settings: Settings) -> Container:
         review=review,
         ingestion=ingestion,
         retrieval=retrieval,
+        answer_service=(
+            AnswerService(
+                db,
+                research,
+                retrieval,
+                mode=settings.mode,
+                max_attempts=settings.max_generation_attempts,
+            )
+            if retrieval
+            else None
+        ),
     )
 
 

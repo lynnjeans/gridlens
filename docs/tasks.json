@@ -1174,7 +1174,7 @@
       "id": "T22",
       "title": "实现问答服务、引用校验与保存",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D5",
       "depends_on": [
         "T20",
@@ -1184,7 +1184,10 @@
       "scope_paths": [
         "gridlens/services/answers.py",
         "gridlens/services/citations.py",
-        "gridlens/repositories/qa.py",
+        "gridlens/contracts.py",
+        "gridlens/bootstrap.py",
+        "gridlens/providers/fakes.py",
+        "gridlens/providers/chatgpt_oauth.py",
         "tests/integration/test_answers.py"
       ],
       "objective": "把检索、生成、引用验证和 QA 保存连成可信的一次操作。",
@@ -1212,12 +1215,18 @@
         "AC-09"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/integration/test_answers.py: 15 passed（真实临时 Chroma + fake embedding）；服务端引用（编号、标题、URL、版本/快照 hash、定位）；虚构 chunk 修复一次后发布、两次虚构或错误 quote 失败且不保存答案/引用；格式错误修复一次、二次失败保存 OUTPUT_INVALID；USAGE_LIMITED/STREAM_INCOMPLETE/PROVIDER_TIMEOUT/PLAN_PERMISSION_MISSING 不重试且保存为 failed 而非 insufficient；生成期间撤销 → stale_context；空库/筛选全排除直接 completed+insufficient 不调用模型；operation_key 重放（含失败）不再调用模型；无 provider → AUTH_REQUIRED；citations 插入失败整笔回滚 QA_SAVE_FAILED；新版本发布后历史引用仍锁定原版本。",
+        "接口：AnswerProvider.generate 增加可选 repair 说明（fake 与 ChatGPT provider 已支持）；AnswerEnvelope 增加 missing_evidence；Container.answer_service；AnswerService 预留 gap_writer 事务扩展点（T24）。",
+        "完整离线回归：281 passed, 8 deselected；local_model 4 passed；Ruff、format 与 pip check 通过。",
+        "说明：引用校验证明出处与逐字摘录，不证明语义蕴含；问答时不联网补证据。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
         "human": "not_required"
-      }
+      },
+      "completed_at": "2026-10-12"
     },
     {
       "id": "T23",
@@ -1949,7 +1958,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T22"
+      "T23"
     ],
     "completed_tasks": [
       "T01",
@@ -1972,6 +1981,7 @@
       "T18",
       "T19",
       "T20",
+      "T22",
       "T33"
     ],
     "repository": {
@@ -1982,7 +1992,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 266,
+      "offline_tests_passed": 281,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

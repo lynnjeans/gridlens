@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T33 完成，T34–T36、T21 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T20、T22、T33 完成，T34–T36、T21 离线完成待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -440,6 +440,8 @@ SQLite 与 Chroma 不共享事务，使用“向量先写、数据库最后发�
 同一回答内按首次出现顺序给引用编号，claim 与 citation 关联保持明确。在保存和显示前再次检查来源资格；失效则 execution_status=stale_context，不发布草稿。成功后在一个事务中保存 QA + citations + 自动缺口草稿。
 
 最多两次模型调用；第一次格式或引用错误可用错误原因修复一次。服务超时、provider 拒绝、输出截断、schema 错误与“证据不足”分开。失败无正常答案、不创建知识缺口，保留安全错误码供重试。
+
+实现（2026-10-12，`gridlens/services/answers.py`、`citations.py`）：可修复错误仅 `OUTPUT_INVALID` 与引用问题（修复说明经 `AnswerProvider.generate(..., repair=...)` 传入）；其他 provider 错误保存为 failed 不重试；无合格证据时 completed/insufficient 不调用模型；`answer_json = {draft, citations}`，citations 表按 claim 保存逐字 quote、定位与来源快照（含 version_id 与 snapshot hash）；`gap_writer` 在同一事务内写缺口（T24）。
 
 ## 9. 缺口、版本与导出
 

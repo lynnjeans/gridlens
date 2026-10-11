@@ -438,6 +438,32 @@ Checks: `tests/unit/test_answer_provider.py` **21 passed**. Full offline regress
 smoke (`APP_MODE=live GRIDLENS_LIVE_ANSWER=1 .venv/bin/python -m pytest -m live -k live_answer -s`, uses plan usage) and a rebuilt-wheel check of the packaged prompt.
 Citation validation is T22. Committed and pushed (user's "Auto" instruction).
 
+## T22 — Q&A service, citation checks and saving (2026-10-12)
+
+Status: **implemented and verified offline**. `AnswerService.ask(question, filters,
+operation_key, provider)` replays a stored result for a known operation key (no second
+model call), retrieves approved context (T20), and answers `completed/insufficient`
+without any model when nothing is eligible (reason → `no_evidence` or
+`jurisdiction_mismatch`) or saves `stale_context` when retrieval found only revoked
+evidence. Otherwise it generates at most twice: a format error (`OUTPUT_INVALID`) or a
+citation problem (`services/citations.py`: chunk must be in this context and eligible,
+quote must be a whitespace-normalized verbatim span) gets one repair attempt with the
+reason; provider failures (usage, permission, timeout, incomplete stream …) are saved as
+`failed` with their code — never as insufficient evidence — and not retried. Just before
+saving, cited versions are re-checked against the SQLite eligibility predicate (revoked →
+`stale_context`, no draft published). Citations are numbered by first appearance;
+title, publisher, date, region, type, URLs, version ID, snapshot hash and locator come
+from snapshots, never from the model. QA record + per-claim citation rows (+ a `gap_writer`
+hook for T24) are written in one transaction; any failure rolls everything back
+(`QA_SAVE_FAILED`). Records keep model, output mode, registration prefix, prompt version,
+index fingerprint, latency, usage, request ID and attempt count.
+
+Interfaces: `AnswerProvider.generate(..., repair=None)`; `AnswerEnvelope.missing_evidence`;
+`Container.answer_service`. Checks: `tests/integration/test_answers.py` **15 passed**;
+full offline regression **281 passed, 8 deselected**; `local_model` 4 passed; Ruff, format
+and pip check passed. Citation checks prove provenance, not semantic entailment.
+Committed and pushed (user's "Auto" instruction). Next: T23 Ask page.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

@@ -130,9 +130,13 @@ class FakeAnswerProvider:
     def __init__(self, fault: str | None = None):
         self.fault = fault
         self.calls = 0
+        self.repairs: list[str | None] = []
 
-    def generate(self, question: str, context: RetrievalContext) -> AnswerDraft:
+    def generate(
+        self, question: str, context: RetrievalContext, repair: str | None = None
+    ) -> AnswerDraft:
         self.calls += 1
+        self.repairs.append(repair)
         if self.fault and self.fault != "CITATION_INVALID":
             raise AppError(self.fault, "Synthetic answer failure.")
         missing = {

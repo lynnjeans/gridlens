@@ -285,11 +285,12 @@ class AnswerEnvelope(DTO):
     gaps: list[dict]
     error: dict | None
     mode: Literal["fixture", "live"]
+    missing_evidence: list[MissingEvidence] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def no_success_on_error(self):
         if self.execution_status != "completed" and (
-            self.claims or self.evidence_status or self.gaps
+            self.claims or self.evidence_status or self.gaps or self.missing_evidence
         ):
             raise ValueError("Failed operations cannot contain a normal answer or knowledge gaps")
         return self
@@ -348,7 +349,9 @@ class EmbeddingProvider(Protocol):
 
 
 class AnswerProvider(Protocol):
-    def generate(self, question: str, context: RetrievalContext) -> AnswerDraft: ...
+    def generate(
+        self, question: str, context: RetrievalContext, repair: str | None = None
+    ) -> AnswerDraft: ...
 
 
 class VectorStore(Protocol):

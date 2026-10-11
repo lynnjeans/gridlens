@@ -138,7 +138,9 @@ class ChatGPTAnswerProvider:
         self.clock = clock
         self.last: GenerationRecord | None = None
 
-    def generate(self, question: str, context: RetrievalContext) -> AnswerDraft:
+    def generate(
+        self, question: str, context: RetrievalContext, repair: str | None = None
+    ) -> AnswerDraft:
         if not self.sessions.plan_usage_enabled(self.handle):
             raise AppError("PLAN_PERMISSION_MISSING", "ChatGPT plan usage is not authorized.")
         token = self.sessions.access_token(self.handle)  # raises if account changed/expired
@@ -146,16 +148,22 @@ class ChatGPTAnswerProvider:
             "prompt_json_validated" if self.output_mode == "prompt_json_validated" else "schema"
         )
         try:
-            return self._call(token, question, context, mode)
+            return self._call(token, question, context, mode, repair)
         except _SchemaUnsupported:
             if self.output_mode != "auto":
                 raise AppError(
                     "OUTPUT_MODE_UNSUPPORTED", "The model rejected structured output."
                 ) from None
             # Rejected before any stream opened; retry once with prompt-JSON + strict checks.
-            return self._call(token, question, context, "prompt_json_validated")
+            return self._call(token, question, context, "prompt_json_validated", repair)
 
-    def build_request(self, question: str, context: RetrievalContext, mode: OutputMode) -> dict:
+    def build_request(
+        self,
+        question: str,
+        context: RetrievalContext,
+        mode: OutputMode,
+        repair: str | None = None,
+    ) -> dict:
         evidence = [
             {
                 "chunk_id": chunk.chunk_id,
@@ -166,10 +174,21 @@ class ChatGPTAnswerProvider:
         ]
         # Evidence travels as a JSON value inside the user message: data, not instructions.
         payload = json.dumps({"question": question, "evidence": evidence}, ensure_ascii=False)
+        content = [{"type": "input_text", "text": payload}]
+        if repair:
+            # One repair attempt: say why the previous draft was rejected, nothing else.
+            content.append(
+                {
+                    "type": "input_text",
+                    "text": "Your previous output was rejected: "
+                    + repair
+                    + " Return a corrected AnswerDraft using only the evidence above.",
+                }
+            )
         body = {
             "model": self.model_slug,
             "instructions": load_prompt(),
-            "input": [{"role": "user", "content": [{"type": "input_text", "text": payload}]}],
+            "input": [{"role": "user", "content": content}],
             "store": False,
             "stream": True,
         }
@@ -186,7 +205,7 @@ class ChatGPTAnswerProvider:
             raise RuntimeError("Request contains a field this route does not support")
         return body
 
-    def _call(self, token, question, context, mode: OutputMode) -> AnswerDraft:
+    def _call(self, token, question, context, mode: OutputMode, repair=None) -> AnswerDraft:
         record = GenerationRecord(
             registration_ref=self.handle.registration_id[:12],
             requested_model=self.model_slug,
@@ -194,7 +213,7 @@ class ChatGPTAnswerProvider:
         )
         self.last = record
         started = self.clock()
-        body = self.build_request(question, context, mode)
+        body = self.build_request(question, context, mode, repair)
         try:
             with httpx.Client(timeout=self.timeout_seconds, transport=self.transport) as client:
                 with client.stream(
