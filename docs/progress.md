@@ -116,6 +116,20 @@ failed and do not create an approvable partial version.
 1 live deselected**; Ruff, format and dependency checks passed. The service is not yet
 connected to Review; that occurs in T14 after the T13 review state machine.
 
+## T13 — Human review state machine
+
+Status: **implemented and verified offline**. Approve validates the expected preview hash,
+stored raw hash, parsed body and recomputed semantic snapshot identity before binding the
+approved hash. Reject requires a reason. Revoke immediately changes the authoritative
+SQLite review state, so an otherwise Ready/Active version is excluded from retrieval.
+Reopen is limited to Rejected/Revoked non-superseded versions and clears approval/index
+state back to Pending/Candidate/Not started. Actual transitions append one review event
+in the same transaction; exact repeats are idempotent and event-write failure rolls back
+the state update.
+
+`tests/integration/test_review.py`: **6 passed**. Full offline regression: **114 passed,
+1 live deselected**; Ruff, format and dependency checks passed. Next task: T14 Review UI.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

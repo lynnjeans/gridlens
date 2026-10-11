@@ -133,6 +133,16 @@ class VersionPreview(DTO):
     reused: bool = False
 
 
+class ReviewResult(DTO):
+    version_id: str
+    review_status: ReviewStatus
+    ingestion_status: IngestionStatus
+    version_status: VersionStatus
+    snapshot_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    approved_snapshot_sha256: str | None = None
+    changed: bool
+
+
 class ChunkDTO(DTO):
     chunk_id: str = Field(min_length=1)
     version_id: str = Field(min_length=1)

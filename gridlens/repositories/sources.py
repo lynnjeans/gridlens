@@ -125,3 +125,8 @@ class SourceRepository:
                 if isinstance(value, str) and value.strip():
                     return value
         return None
+
+    def get_version(self, version_id: str) -> dict | None:
+        with self.db.connect() as c:
+            row = c.execute("SELECT * FROM document_versions WHERE id=?", (version_id,)).fetchone()
+            return dict(row) if row else None

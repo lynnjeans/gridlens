@@ -655,7 +655,7 @@
       "id": "T13",
       "title": "实现审核状态机与即时撤销",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D3",
       "depends_on": [
         "T03",
@@ -691,12 +691,16 @@
         "AC-09"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/integration/test_review.py: 6 passed；覆盖 approve/reject/revoke/reopen、hash/正文完整性、原因/审核人、幂等、非法状态、即时资格排除和事务回滚。",
+        "完整离线回归：114 passed, 1 live deselected；Ruff、format 与 pip check 通过。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
         "human": "not_required"
-      }
+      },
+      "completed_at": "2026-10-11"
     },
     {
       "id": "T14",
@@ -1831,7 +1835,6 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T13",
       "T14"
     ],
     "completed_tasks": [
@@ -1847,6 +1850,7 @@
       "T10",
       "T11",
       "T12",
+      "T13",
       "T33"
     ],
     "repository": {
@@ -1857,7 +1861,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 108,
+      "offline_tests_passed": 114,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

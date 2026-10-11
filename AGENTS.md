@@ -6,7 +6,7 @@ This is an existing application, not a new project. Before changing code, read
 
 - T01–T08 and T33 are implemented. Verify the existing code and evidence; do not
   repeat initialization or replace this directory with an empty clone.
-- The next recommended milestone is T13 → T14. Respect the task dependency
+- The next recommended milestone is T14. Respect the task dependency
   graph, particularly T16 before T15 and T35/T36 before T21. A handoff document
   is context; it does not itself authorize starting work or contacting another agent.
 - Use the existing Python 3.12 environment and modular Streamlit application.

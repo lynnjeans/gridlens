@@ -16,6 +16,16 @@ from gridlens.errors import AppError
 from gridlens.repositories.sources import SourceRepository
 
 PARSER_VERSIONS = {"text/html": "html-v1", "application/pdf": "pypdf-v1"}
+REVIEWED_METADATA_KEYS = (
+    "title",
+    "publisher",
+    "published_at",
+    "jurisdiction",
+    "source_type",
+    "original_url",
+    "final_url",
+    "content_type",
+)
 AtomicWriter = Callable[[Path, bytes], None]
 
 
@@ -76,15 +86,9 @@ class SnapshotService:
             "content_type": fetched.content_type,
         }
         serial_segments = [segment.model_dump(mode="json") for segment in segments]
-        identity_segments = [
-            segment.model_dump(mode="json", exclude={"segment_id"}) for segment in segments
-        ]
-        identity = {
-            "segments": identity_segments,
-            "reviewed_metadata": metadata,
-            "parser_version": PARSER_VERSIONS[fetched.content_type],
-        }
-        snapshot_sha256 = hashlib.sha256(_canonical_json(identity)).hexdigest()
+        parser_version = PARSER_VERSIONS[fetched.content_type]
+        snapshot_sha256 = snapshot_digest(segments, metadata, parser_version)
+        stored_metadata = {**metadata, "parser_version": parser_version}
         existing = self.sources.get_version_by_snapshot(source_id, snapshot_sha256)
         if existing:
             self.sources.mark_access(source_id, "readable")
@@ -122,7 +126,7 @@ class SnapshotService:
                         snapshot_sha256,
                         str(raw_relative),
                         str(segments_relative),
-                        _canonical_json(metadata).decode(),
+                        _canonical_json(stored_metadata).decode(),
                         metadata["published_at"],
                         fetched.fetched_at,
                         _canonical_json(notes).decode(),
@@ -149,7 +153,7 @@ class SnapshotService:
         row = self.sources.get_version_by_snapshot(source_id, snapshot_sha256)
         if row is None:
             raise AppError("SNAPSHOT_SAVE_FAILED", "The saved snapshot could not be loaded.")
-        return self._preview(row, segments, metadata, reused=False)
+        return self._preview(row, segments, stored_metadata, reused=False)
 
     def _parse(self, fetched: FetchedDocument) -> list[ParsedSegment]:
         if fetched.content_type == "text/html":
@@ -191,3 +195,14 @@ def _canonical_json(value) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
     )
+
+
+def snapshot_digest(segments: list[ParsedSegment], metadata: dict, parser_version: str) -> str:
+    identity = {
+        "segments": [
+            segment.model_dump(mode="json", exclude={"segment_id"}) for segment in segments
+        ],
+        "reviewed_metadata": {key: metadata.get(key) for key in REVIEWED_METADATA_KEYS},
+        "parser_version": parser_version,
+    }
+    return hashlib.sha256(_canonical_json(identity)).hexdigest()
