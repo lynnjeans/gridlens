@@ -1324,7 +1324,7 @@
 
 ## T31 — 完成真实语料与人工评估验收
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / awaiting_input（需要用户：真实语料、登录、gold 与人工评分）
 **日程/类别：** D9 / human_gated_acceptance
 **依赖：** T06, T16, T21, T29, T30
 **PRD 对应：** AC-01, AC-03, AC-05, AC-06, AC-07, AC-10
@@ -1362,13 +1362,22 @@
 - 不为凑足数量伪造日期、文档、审核记录或评分。
 - 不自动购买账户或发送评估结果给他人。
 
-**验证状态：** offline=not_run, live=not_run, human=not_run
+**验证状态：** offline=not_required, live=not_run, human=not_run
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** 尚无验收结果。工具已就绪；AI 未批准来源、未填写 gold、未评分。执行步骤：
+
+T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或评分）：
+1. APP_MODE=live；`.env` 配置 TAVILY_API_KEY；`gridlens doctor` 确认 local_model prepared。
+2. 侧栏 Continue with ChatGPT 本人登录并选择模型（完成 T34–T36、T21 的真实验证）。
+3. Discover 运行 3 个冻结查询，人工标注前 10 条相关性（目标 ≥30 条、相关 ≥70%）。
+4. Review 中人工审核并批准 ≥10 份资料（覆盖 ≥3 类），记录 source/version ID；Knowledge Base 确认 Searchable。
+5. 由人阅读冻结语料填写 evals/gold.json（R01–R12 参考段落与要点，作者署名）。
+6. `gridlens evaluate --mode live --model <slug>`；由队友（或注明自评）填写 artifacts/evals/<run>/reviews.json。
+7. `gridlens evaluate-score --run artifacts/evals/<run>`；把全部指标（含分子分母、失败项、评审者、用量与耗时）写入 docs/progress.md，并导出 artifacts/research-log.md。
 
 ## T32 — 整理运行说明、限制和 demo 交付
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / awaiting_input（文档与干净环境已完成；最终交付依赖 T31）
 **日程/类别：** D10 / delivery
 **依赖：** T30, T31
 **PRD 对应：** AC-10
@@ -1406,9 +1415,9 @@
 
 - 不发布公网、不推送远端或通知外部人员，除非已有相应用户授权。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_run, human=not_run
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** README 重写、`docs/DEMO.md`、`docs/KNOWN_LIMITATIONS.md`、`.env.example` 更新。离线干净环境（uv 本地缓存，未下载）安装并通过 fixture 全流程。MVP 验收不能宣称通过：T31、真实账户与人工检查未执行。
 
 ## T33 — 建立本机注册与受保护凭证存储
 

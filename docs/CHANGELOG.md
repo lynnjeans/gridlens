@@ -79,3 +79,5 @@ T21 离线完成（awaiting_input，2026-10-12）：ChatGPT 计划用量流式�
 完成 T29（2026-10-12）：R01–R15 原样题库、空白人工 gold、evaluate/evaluate-score（PRD 门槛与分子分母，缺人工输入为 awaiting_input，fixture 永不验收）。14 项单元测试通过；完整回归 334 passed、8 deselected。
 
 完成 T30（2026-10-12）：端到端与可信边界回归（直接检查上下文与存储），AI 浏览器 fixture 走查留档。全量 345 passed、8 deselected；人工 UI 检查与真实账户回归未执行。
+
+2026-10-12：T31 记录为 awaiting_input（需要真实语料、登录、gold 与人工评分，AI 未代做）；T32 文档完成（README 重写、DEMO、KNOWN_LIMITATIONS，离线干净环境安装与 fixture 全流程通过），最终交付待 T31。MVP 验收不能宣称通过。

@@ -4,11 +4,12 @@ This is an existing application, not a new project. Before changing code, read
 `docs/HANDOFF.md`, `docs/tasks.json`, and the relevant parts of
 `docs/01_DEVELOPMENT_SPEC.md` and `docs/02_AI_TASKS.md`.
 
-- T01–T20, T22–T30 and T33 are implemented; T34 OAuth, T35 sessions, T36 account sidebar and T21
+- T01–T20, T22–T30 and T33 are done; T21, T31, T32 and T34–T36 await the user
+  (real sign-in, live checks, real corpus, gold answers and human scores); T34 OAuth, T35 sessions, T36 account sidebar and T21
   answer provider are implemented offline and await the user's own real sign-in. Verify the existing code and evidence; do not
   repeat initialization or replace this directory with an empty clone.
-- The next recommended milestone is T31, which needs the user (real corpus, sign-in, gold
-  answers and human scores). Respect the task dependency
+- No development task remains; the next steps are the user's live checks and T31
+  evaluation (runbook in docs/HANDOFF.md §5). Respect the task dependency
   graph, particularly T16 before T15 and T35/T36 before T21. A handoff document
   is context; it does not itself authorize starting work or contacting another agent.
 - Use the existing Python 3.12 environment and modular Streamlit application.

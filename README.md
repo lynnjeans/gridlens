@@ -1,25 +1,22 @@
 # GridLens
 
-Project repository: [lynnjeans/gridlens](https://github.com/lynnjeans/gridlens).
-The local `origin` points to this repository; the initial local branch follows
-its `master` default. The current source is published on `master`.
+A local research assistant for data-centre grid connections. You search for public
+sources, read and approve them yourself, and ask questions that are answered only from
+the sources you approved, with numbered citations you can check against the saved text.
+Missing evidence becomes a tracked knowledge gap, and the work can be exported as a
+Markdown research log. GridLens performs no grid calculations.
 
-A local research assistant for data-centre grid connections. The source-discovery
-milestone is implemented: the local web UI can search through Tavily when configured,
-store deduplicated candidate sources, select a source for review, and manually add a
-public URL as a pending lead. Bounded capture, HTML/PDF extraction, immutable snapshots
-and review-state rules are connected to the Review page (capture, preview, metadata
-correction, approve/reject/revoke/reopen). Approving a version on the Review page indexes it
-(deterministic chunking, pinned local BGE embeddings, local Chroma) and publishes it as
-Ready/Active only after a complete, verified index; live indexing needs `prepare-model`.
-Approved-only retrieval (SQLite eligibility whitelist, reviewed-metadata region rules) is
-implemented, and the Knowledge Base page shows review/ingestion/version status with
-Retry and Revoke. ChatGPT generation
-and real Q&A are **not connected yet**. No grid calculation or pandapower/OpenDSS is included.
+Repository: [lynnjeans/gridlens](https://github.com/lynnjeans/gridlens) (`master`).
 
-## Run locally
+**Status (2026-10-12).** Every feature is implemented and passes the offline test suite,
+including a synthetic end-to-end and trust-boundary regression. Not yet done:
+a real ChatGPT sign-in, real answers, a real Tavily search, the real-corpus evaluation
+with human gold answers and scores (T31), and a human UI check. Passing tests is **not**
+research acceptance; see `docs/KNOWN_LIMITATIONS.md`.
 
-Requires Python **3.12**. Use the project environment, rather than macOS's system Python.
+## Install
+
+Requires Python **3.12** (not macOS's system Python). From this directory:
 
 ```bash
 python3.12 -m venv .venv
@@ -27,82 +24,83 @@ source .venv/bin/activate
 python -m pip install -r requirements.lock
 python -m pip install -e . --no-deps
 python -m gridlens.cli init-db
-python -m streamlit run app.py --server.address 127.0.0.1
 ```
 
-Open [GridLens](http://127.0.0.1:8501). Default mode is `fixture`: synthetic, offline
-development only. Copy `.env.example` to `.env` when configuration is needed.
-For `APP_MODE=live`, storage uses a separate `data/live/` directory. Add
-`TAVILY_API_KEY` to the local `.env` to enable source search. Without it the app still
-starts and shows that search is unavailable. Fixture mode uses synthetic candidates.
+`requirements.lock` pins core, dev, auth, embeddings (sentence-transformers 6.1.0, torch
+2.14.1) and vectors (chromadb 1.5.9) on Python 3.12, resolved on macOS with
+`uv pip compile pyproject.toml --extra dev --extra auth --extra embeddings --extra vectors`.
+Protected credential storage uses POSIX permissions; Windows is not supported yet.
 
-With the environment already installed, `./run.sh` starts the local app directly.
-This first implementation is verified on macOS; protected storage uses POSIX
-file permissions and locking. Windows support is not yet implemented.
-
-## Checks
+## Run
 
 ```bash
-python -m pytest
-python -m ruff check .
-python -m ruff format --check .
-python -m gridlens.cli doctor
+python -m streamlit run app.py --server.address 127.0.0.1   # or ./run.sh
 ```
 
-Tests block network connections and use temporary databases/auth directories. AppTest
-covers all four pages. SQLite constraints and eligibility are tested separately;
-synthetic tests cannot prove research accuracy or real subscription access.
+Open [http://127.0.0.1:8501](http://127.0.0.1:8501). Pages: **Discover** (search or add a
+URL), **Review** (capture, read, correct metadata, approve/reject; approval indexes the
+text), **Knowledge Base** (status, retry, revoke, refresh, export) and **Ask & Gaps**
+(questions, citations, history, knowledge gaps).
 
-## Credentials and models
+### Modes
 
-Future generation uses the official **Sign in with ChatGPT** plan-usage flow, with
-the user's consent. It does not need an OpenAI platform API key. Tokens must live
-outside this repository in an owner-only user configuration directory; the first
-milestone implemented storage. Sign-in is now implemented (loopback PKCE, verified ID token,
-issued client ID) and can be run explicitly in live mode:
+- `APP_MODE=fixture` (default): synthetic sources, fake embeddings and fake answers, no
+  network, data in `data/fixture/`. Every page is usable; answers are marked synthetic.
+- `APP_MODE=live`: real services, data in `data/live/`. Copy `.env.example` to `.env`.
+
+### Live mode setup
+
+1. **Search**: add `TAVILY_API_KEY` to `.env` (a separate Tavily account and quota).
+2. **Local embeddings**: download the pinned model once (about 134 MB into the
+   git-ignored `models/`); normal runs never download.
+
+   ```bash
+   python -m gridlens.cli prepare-model
+   python -m pytest -m local_model -q
+   ```
+
+3. **ChatGPT answers**: in the sidebar choose **Continue with ChatGPT** (or run
+   `APP_MODE=live python -m gridlens.cli login`). The official OpenAI page opens in your
+   browser; you sign in and approve GridLens yourself. This uses your ChatGPT plan's
+   usage, not an API key; availability depends on your account, and the sidebar links to
+   [ChatGPT usage](https://chatgpt.com/settings/usage). Then pick a model from your
+   account's catalog. Tokens stay in the owner-only `AUTH_DIR` (default
+   `~/.config/gridlens`), are refreshed automatically, and are cleared by **Sign out**
+   (or `python -m gridlens.cli logout --account <prefix>`).
+
+## Checks and tools
 
 ```bash
-APP_MODE=live .venv/bin/python -m gridlens.cli login
+python -m pytest -q                 # offline: network blocked, temporary storage
+python -m ruff check . && python -m ruff format --check .
+python -m gridlens.cli doctor       # offline configuration and storage checks, no secrets
+python -m gridlens.cli recover      # mark runs left by a crashed process as interrupted
+python -m pytest -m local_model -q  # real local model (after prepare-model)
 ```
 
-It opens the official page in your browser; you sign in and approve GridLens yourself.
-Tokens are stored only in the owner-only `AUTH_DIR` (default `~/.config/gridlens`).
-Sign out with `python -m gridlens.cli logout --account <registration prefix>` (revokes the
-refresh token when confirmed, always clears local tokens). A real sign-in, refresh and
-sign-out have not been verified by the developers yet.
-Source discovery uses a separate Tavily search key. Embeddings use a pinned local
-`BAAI/bge-small-en-v1.5` model on CPU. Download it once, explicitly (about 134 MB, into
-the git-ignored `models/` or `LOCAL_MODEL_DIR`):
+Live tests are opt-in (`-m live` plus `GRIDLENS_LIVE_*=1`, see `tests/live/`) and use
+your own account. Evaluation (`evals/`):
 
 ```bash
-python -m gridlens.cli prepare-model
-python -m pytest -m local_model -q
+python -m gridlens.cli evaluate --mode fixture          # or --mode live --model <slug>
+python -m gridlens.cli evaluate-score --run artifacts/evals/<run>
 ```
 
-Normal runs only load local files; nothing is downloaded automatically. The command
-prints the resolved commit, which can be pinned as `EMBEDDING_REVISION` in `.env`.
+Gold answers (`evals/gold.json`) and review scores are written by people only; until
+they exist every metric reports `awaiting_input`, and fixture runs never count.
 
-`requirements.lock` pins the installed core/dev/auth/embeddings/vectors dependencies on Python
-3.12 (resolved on macOS; includes torch). `requirements.lock` is generated from `pyproject.toml` with uv pip compile;
-commands and resolved environment details are in `docs/progress.md`. Chroma (`vectors` extra,
-chromadb 1.5.9) is locked too; it runs locally with telemetry off and never uses its default
-embedding model.
+## Data and backup
 
-For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
-The Ask page answers from approved sources with verified, numbered citations (fixture
-mode end to end; live mode needs sign-in and a selected model). Next development
-milestone: T31 (real corpus and human evaluation — needs the user). The synthetic
-end-to-end and trust-boundary regressions pass. Evaluation: `python -m gridlens.cli
-evaluate --mode fixture` then `evaluate-score --run <dir>`; gold and scores are human-only. `python -m gridlens.cli recover` marks runs left
-by a crashed process as interrupted; `doctor` runs offline checks. The Knowledge Base page exports a
-Markdown research log. Sources can be refreshed; historical
-answers show whether their cited versions were superseded or revoked. Knowledge gaps are recorded,
-deduplicated, reviewable in the Gaps tab, and can prefill Discover. In live mode the sidebar
-offers Continue with ChatGPT, account and model pickers (from your account's own catalog),
-Reauthorize, Sign out and the usage link. The current
-source can be obtained from the configured GitHub repository.
+Research data lives in `data/<mode>/` (SQLite `research.sqlite3`, `snapshots/`,
+`chroma/`, `locks/`, `logs/`); models in `models/`; credentials in `AUTH_DIR`. All are
+git-ignored. To back up, stop the app and copy `data/live/` (the Chroma index can be
+rebuilt by re-indexing; snapshots and the database cannot). Never copy `AUTH_DIR`
+between people.
 
-Read `docs/01_DEVELOPMENT_SPEC.md`, `docs/tasks.json` and `docs/progress.md` for
-contracts and actual completion evidence. The documents describe future behavior;
-they do not mean the full application or research acceptance has been completed.
+## More
 
+- `docs/DEMO.md` — a 6–8 minute demo script.
+- `docs/KNOWN_LIMITATIONS.md` — limits, unverified items and next steps.
+- `docs/HANDOFF.md`, `AGENTS.md` — for the next developer or AI agent.
+- `docs/01_DEVELOPMENT_SPEC.md`, `docs/tasks.json`, `docs/progress.md` — contracts and
+  the actual evidence for each task.

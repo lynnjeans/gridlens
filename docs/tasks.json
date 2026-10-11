@@ -1689,7 +1689,7 @@
       "id": "T31",
       "title": "完成真实语料与人工评估验收",
       "priority": "P0",
-      "status": "todo",
+      "status": "awaiting_input",
       "day": "D9",
       "depends_on": [
         "T06",
@@ -1734,18 +1734,21 @@
         "AC-10"
       ],
       "required_inputs": "真实搜索key、合资格ChatGPT本人OAuth plan授权/可用额度、固定本地模型缓存、至少10份人工批准资料、gold参考与人工评分。",
-      "evidence": [],
+      "evidence": [
+        "工具已就绪（T29 evaluate/evaluate-score、T30 回归）。尚无真实语料、登录、gold 或人工评分；未产生任何验收指标。AI 未批准来源、未填写 gold、未打分。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "not_required",
         "live": "not_run",
         "human": "not_run"
-      }
+      },
+      "awaiting": "T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或评分）：\n1. APP_MODE=live；`.env` 配置 TAVILY_API_KEY；`gridlens doctor` 确认 local_model prepared。\n2. 侧栏 Continue with ChatGPT 本人登录并选择模型（完成 T34–T36、T21 的真实验证）。\n3. Discover 运行 3 个冻结查询，人工标注前 10 条相关性（目标 ≥30 条、相关 ≥70%）。\n4. Review 中人工审核并批准 ≥10 份资料（覆盖 ≥3 类），记录 source/version ID；Knowledge Base 确认 Searchable。\n5. 由人阅读冻结语料填写 evals/gold.json（R01–R12 参考段落与要点，作者署名）。\n6. `gridlens evaluate --mode live --model <slug>`；由队友（或注明自评）填写 artifacts/evals/<run>/reviews.json。\n7. `gridlens evaluate-score --run artifacts/evals/<run>`；把全部指标（含分子分母、失败项、评审者、用量与耗时）写入 docs/progress.md，并导出 artifacts/research-log.md。"
     },
     {
       "id": "T32",
       "title": "整理运行说明、限制和 demo 交付",
       "priority": "P0",
-      "status": "todo",
+      "status": "awaiting_input",
       "day": "D10",
       "depends_on": [
         "T30",
@@ -1782,12 +1785,17 @@
         "AC-10"
       ],
       "required_inputs": "T31真实验收结果；若未通过，可先准备文档，但最终交付状态必须反映未通过。",
-      "evidence": [],
+      "evidence": [
+        "README 重写为当前真实状态（安装、运行、fixture/live、live 设置：Tavily、prepare-model、Continue with ChatGPT/计划用量/Usage/刷新/退出、检查与评估命令、数据位置与备份）；新增 docs/DEMO.md（6–8 分钟脚本，演示前检查，fixture 时须声明）与 docs/KNOWN_LIMITATIONS.md（未验证项与验证方法、产品限制、工程说明、下一步）；.env.example 注明 CHATGPT_MODEL_SLUG 未使用。",
+        "干净环境：在 scratchpad 用 uv 从本地缓存离线创建 Python 3.12.14 虚拟环境并安装 requirements.lock 与项目（未下载），uv pip check 125 个包兼容；从 site-packages 运行：版本 Streamlit 1.65.0 / Pydantic 2.14.0 / chromadb 1.5.9 / sentence-transformers 6.1.0 / torch 2.14.1，打包的 prompt 与迁移可加载，fixture 搜索→capture→批准→入库→问答（1 条引用）→导出成功。",
+        "不能宣称 MVP 验收通过：T31 未执行，T21/T34–T36 真实验证未执行，人工 UI 检查未执行。"
+      ],
       "validation_state": {
-        "offline": "not_run",
-        "live": "not_required",
-        "human": "not_required"
-      }
+        "offline": "passed",
+        "live": "not_run",
+        "human": "not_run"
+      },
+      "awaiting": "最终交付状态依赖 T31 真实验收结果；T31 完成后用真实结果更新 DEMO 与限制文档，并人工按 DEMO 核对真实界面。"
     },
     {
       "id": "T33",
@@ -2020,7 +2028,12 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T31"
+      "T34",
+      "T35",
+      "T36",
+      "T21",
+      "T31",
+      "T32"
     ],
     "completed_tasks": [
       "T01",
@@ -2074,7 +2087,9 @@
       "T34",
       "T35",
       "T36",
-      "T21"
+      "T21",
+      "T31",
+      "T32"
     ]
   }
 }

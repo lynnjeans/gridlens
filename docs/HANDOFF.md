@@ -21,8 +21,8 @@
 
 ## 2. 当前完成状态
 
-36 项任务中 **30 项 done，4 项 awaiting_input，2 项 todo**。T01–T20、T22–T30、T33 已完成并通过离线验证；
-T34/T35/T36/T21 离线完成、等待本人真实登录及其后的会话/目录/生成验证。当前没有遗留的失败检查。
+36 项任务中 **30 项 done，6 项 awaiting_input，0 项 todo**。T01–T20、T22–T30、T33 已完成并通过离线验证；
+T34/T35/T36/T21 离线完成、等待本人真实登录及其后的会话/目录/生成验证；T31 真实验收与 T32 最终交付等待用户。当前没有遗留的失败检查。
 
 | 已完成 | 当前能力 | 主要文件 |
 | --- | --- | --- |
@@ -107,25 +107,30 @@ Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件�
 GitHub 地址和分支信息已在本文明确记录。解压后复用已有应用目录，
 避免覆盖另一份更新的 checkout。
 
-## 5. 下一项工作：T31（需要用户：真实语料、登录、gold 与人工评分）
+## 5. 下一项工作：全部开发任务已完成，剩余均需用户参与
 
-T06–T08 的“搜索候选来源并保存”里程碑已经完成：
+代码层面 36 项任务中 30 项 done，其余 6 项 awaiting_input：
+T34 登录、T35 会话、T36 账户/目录、T21 真实生成 smoke、T31 真实语料与人工评估、
+T32 最终交付（文档已完成，待 T31 结果）。不能宣称 MVP 验收通过。
 
-1. **T06 Tavily adapter 已完成**：离线 HTTP 合约 9 项通过；真实 smoke 因无 key 为 not_run。
-2. **T07 discovery service 已完成**：离线单元/集成测试 11 项通过，三次预算、去重、partial/failed 和持久幂等已验证。
-3. **T08 Discover UI 已完成**：表单、状态、rerun 幂等、手动来源和 Review 选择通过 UI 测试。
+先做真实账户验证：
 
-T09–T14 的获取、解析、不可变快照、审核状态机和 Review 页面已完成。
-T34 OAuth 登录离线已完成，等待用户本人运行 `APP_MODE=live .venv/bin/python -m gridlens.cli login` 完成真实登录并确认 plan scope
-（只记录脱敏结果，AI 不代为登录）。T19、T20 已完成，T35/T36 离线完成。T21 离线完成，T22–T30 完成。下一项 T31 真实语料与人工评估验收，依赖用户输入
-（离线可实现，真实验证依赖 T34 登录）。关键路径：T34 → T35 → T36 → T21 → T22。
-T18 接好后在 Review 批准成功处触发一次入库。
-T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的共享文件
-进行未经安排的并发编辑。本交接不要求或启动多代理。
+```bash
+APP_MODE=live .venv/bin/python -m gridlens.cli login
+APP_MODE=live GRIDLENS_LIVE_SESSION=1 .venv/bin/python -m pytest -m live -k live_sessions -s
+APP_MODE=live GRIDLENS_LIVE_ANSWER=1 .venv/bin/python -m pytest -m live -k live_answer -s
+```
 
-其他重要顺序：**T16 → T15**（真实 tokenizer 先准备）、
-**T34 → T35 → T36 → T21**（会话/账户模型选择先于生成），随后 T22/T23。
-以 tasks.json 的完整依赖图为准，不能单纯按任务数字执行。
+T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或评分）：
+1. APP_MODE=live；`.env` 配置 TAVILY_API_KEY；`gridlens doctor` 确认 local_model prepared。
+2. 侧栏 Continue with ChatGPT 本人登录并选择模型（完成 T34–T36、T21 的真实验证）。
+3. Discover 运行 3 个冻结查询，人工标注前 10 条相关性（目标 ≥30 条、相关 ≥70%）。
+4. Review 中人工审核并批准 ≥10 份资料（覆盖 ≥3 类），记录 source/version ID；Knowledge Base 确认 Searchable。
+5. 由人阅读冻结语料填写 evals/gold.json（R01–R12 参考段落与要点，作者署名）。
+6. `gridlens evaluate --mode live --model <slug>`；由队友（或注明自评）填写 artifacts/evals/<run>/reviews.json。
+7. `gridlens evaluate-score --run artifacts/evals/<run>`；把全部指标（含分子分母、失败项、评审者、用量与耗时）写入 docs/progress.md，并导出 artifacts/research-log.md。
+
+AI 接手者可以协助执行与记录，但不得代为登录、批准来源、编写 gold 或评分。
 
 ## 6. 实现时容易误判的地方
 
@@ -151,10 +156,10 @@ T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的�
 ## 7. 可复制的接手提示词
 
 ```text
-请接手已有 GridLens 项目，协助用户完成 T31 真实语料与人工评估（T34–T36、T21 等待用户真实登录）。
+请接手已有 GridLens 项目，协助用户完成真实验证与 T31 人工评估（T34–T36、T21、T31、T32 等待用户）。
 先读取根 AGENTS.md、docs/HANDOFF.md、docs/tasks.json 和对应任务卡，
 再检查真实代码及开发规格相关章节。
-T01–T20、T22–T30、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
+T01–T20、T22–T30、T33 已完成（T21、T34–T36、T31–T32 awaiting_input），请复用现有项目，不再初始化，不用空远端覆盖本地代码。
 按依赖顺序实现并验证，保持 fixture/live 隔离、有限调用预算和 UI rerun 幂等。
 抓取与解析先用离线 HTTP/DNS fixture 完成；真实任意网站不作为单元验收条件。
 不要索要聊天中的密钥，不自动批准资料，不虚构研究评估，不增加 P1。

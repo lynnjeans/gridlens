@@ -645,6 +645,27 @@ No unresolved P0 defect was found. Synthetic results do not show real research q
 Committed and pushed (user's "Auto" instruction). Next: T31 needs the user (real corpus,
 sign-in, gold answers and human scoring).
 
+## T31 / T32 — Acceptance and delivery status (2026-10-12)
+
+**T31: awaiting_input.** Real-corpus acceptance needs the user: a Tavily key, the owner's
+ChatGPT sign-in and model choice, ≥10 sources approved by a person, human-written gold for
+R01–R12 and human (preferably teammate) scores. None exist, so no acceptance metric has
+been produced. I did not approve sources, write gold answers or score anything. The
+runbook is in `docs/HANDOFF.md` §5 and the T31 card.
+
+**T32: documents done; delivery awaiting T31.** README rewritten to the real state
+(install, run, fixture/live, live setup for Tavily, `prepare-model`, Continue with
+ChatGPT / plan usage / usage link / refresh / sign-out, checks, evaluation, data
+locations and backup). Added `docs/DEMO.md` (6–8 minute script with pre-demo checks; fixture
+demos must say so) and `docs/KNOWN_LIMITATIONS.md` (unverified items with how to verify
+them, product limits, engineering notes, next steps); `.env.example` now says
+`CHATGPT_MODEL_SLUG` is unused. Clean environment: a fresh Python 3.12.14 venv built with
+uv **offline from the local cache** (no downloads) installed `requirements.lock` and the
+project; `uv pip check` found 125 compatible packages; from site-packages the packaged
+prompt and migrations loaded and a fixture search → capture → approve → index → ask (1
+citation) → export ran. **MVP acceptance cannot be claimed**: T31, the real-account checks
+(T34–T36, T21) and the human UI checks have not been done.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as
