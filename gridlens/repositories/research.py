@@ -54,3 +54,13 @@ class ResearchRepository:
                 (fingerprint, *chunk_ids),
             )
             return {row["id"]: dict(row) for row in rows}
+
+    def latest_ingestion_runs(self) -> dict[str, dict]:
+        """Most recent ingestion run per version (real stage and counts for the UI)."""
+        with self.db.connect() as c:
+            rows = c.execute(
+                "SELECT * FROM ingestion_runs r WHERE r.rowid = (SELECT r2.rowid FROM "
+                "ingestion_runs r2 WHERE r2.version_id = r.version_id "
+                "ORDER BY r2.attempt DESC, r2.rowid DESC LIMIT 1)"
+            )
+            return {row["version_id"]: dict(row) for row in rows}

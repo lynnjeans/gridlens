@@ -817,7 +817,7 @@
 
 ## T19 — 接通 Knowledge Base 页面
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D6 / implementation
 **依赖：** T05, T18
 **PRD 对应：** AC-03, AC-09
@@ -827,7 +827,8 @@
 
 ### 文件范围
 
-- `gridlens/ui/knowledge_base.py`
+- `gridlens/ui/knowledge_base.py`、`gridlens/ui/common.py`（共用 index_version）、`gridlens/ui/review.py`
+- `gridlens/repositories/research.py`（latest_ingestion_runs）
 - `tests/ui/test_knowledge_base.py`
 
 ### 实现步骤
@@ -851,9 +852,9 @@
 
 - 不开发统计 dashboard 或批处理队列。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_required, human=not_run（人工浏览器检查未执行）
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/ui/test_knowledge_base.py` 5 项 AppTest 通过（全部状态、Searchable 仅来自 SQLite 资格、失败 Retry 的 kb-retry- operation_key、处理中禁用与真实阶段/计数、Revoke 需 reviewer 且与检索资格一致、rerun 不重复、空库）。完整回归 213 passed、6 deselected。未执行人工浏览器检查；Refresh 属于 T26。
 
 ## T20 — 实现仅限批准版本的检索
 

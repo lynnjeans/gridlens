@@ -1,5 +1,4 @@
 import json
-from uuid import uuid4
 
 import streamlit as st
 from pydantic import ValidationError
@@ -7,7 +6,7 @@ from pydantic import ValidationError
 from gridlens.bootstrap import Container
 from gridlens.contracts import MetadataCorrection
 from gridlens.errors import AppError
-from gridlens.ui.common import empty_state, show_error
+from gridlens.ui.common import empty_state, index_version, show_error
 
 STATUS_ORDER = {"pending": 0, "rejected": 1, "revoked": 2, "approved": 3}
 JURISDICTIONS = ["NZ", "US", "GLOBAL", "UNKNOWN"]
@@ -22,28 +21,8 @@ def _notice(message: str, kind: str = "success"):
 
 
 def _index(container: Container, version_id: str, prefix: str):
-    """Runs one indexing operation per click; failures never undo the approval."""
-    if container.ingestion is None:
-        _notice(
-            f"{prefix} Indexing needs the local model; run `gridlens prepare-model`.", "warning"
-        )
-        return
-    try:
-        with st.spinner("Indexing the approved text…"):
-            result = container.ingestion.ingest(version_id, str(uuid4()))
-    except AppError as error:
-        message, kind = f"{prefix} Indexing could not run ({error.code}).", "warning"
-    else:
-        if result.status == "failed":
-            message, kind = f"{prefix} Indexing failed ({result.error_code}).", "warning"
-        elif result.status == "noop":
-            message, kind = f"{prefix} This version is already indexed.", "success"
-        else:
-            message = f"{prefix} Indexed {result.indexed_chunks} chunk(s); it is now searchable."
-            kind = "success"
-    if kind == "warning":
-        message += " The approval is kept; retry indexing when ready."
-    _notice(message, kind)
+    message, kind = index_version(container, version_id, "review")
+    _notice(f"{prefix} {message}", kind)
 
 
 def _selected_source(container: Container):

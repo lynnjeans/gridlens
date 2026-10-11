@@ -53,3 +53,5 @@ T01–T05、T33 完成，42项离线测试通过；四页本地浏览器导航�
 T34 离线完成（awaiting_input）：loopback PKCE 登录与 callback/state/nonce/JWKS/issued-ID 校验，全部通过才保存凭证；`gridlens login`（仅 live）。按官方指引，缺少 plan scope 时保留登录但禁用 plan usage。22 项 OAuth 测试通过；完整回归 198 passed、6 deselected。真实登录待用户本人执行。
 
 完成 T20（2026-10-12）：仅限批准版本的检索（SQLite 资格 + 已审核元数据地区/类型规则、白名单 Top-10、越界 ID 丢弃、相邻重叠去重、5 块/4000 tokens、返回前复查）；迁移 002 增加 chunk segment IDs，迁移执行器按序应用。9 项检索集成测试、v1 升级测试与禁网真实模型检索 smoke 通过；完整回归 208 passed、6 deselected。
+
+完成 T19（2026-10-12）：Knowledge Base 页面（三种状态分列、Searchable 仅来自 SQLite 资格、真实阶段/计数、经服务的 Retry/Revoke）。5 项 AppTest 通过；完整回归 213 passed、6 deselected；人工浏览器检查未执行。

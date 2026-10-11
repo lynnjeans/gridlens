@@ -336,6 +336,25 @@ v1→v2 in-place upgrade test. `local_model` **4 passed** — live wiring return
 "load forecast" chunk. Full offline regression **208 passed, 6 deselected**; Ruff, format
 and pip check passed. At the user's request T20 was committed and pushed. Next: T19 Knowledge Base page or T35.
 
+## T19 — Knowledge Base page (2026-10-12)
+
+Status: **implemented and verified offline (AppTest); manual browser check not run**.
+The page lists every version with review, ingestion and version status in separate
+columns, reviewed region/type, a "Searchable" flag taken only from the SQLite eligibility
+predicate, and a plain status (Waiting for review, Rejected, Approval revoked, Approved ·
+not indexed yet / indexing (stage) / indexing failed (code) / indexed with another
+configuration, Superseded, Searchable), plus counts. The detail view shows reviewed
+metadata, extraction limits, the latest run's real stage and `indexed/expected` counts
+(no percentages), and Retry (via `IngestionService`, fresh `kb-retry-<uuid>` operation key,
+disabled while processing) and Revoke (via `ReviewService`, reviewer required, optional
+reason) actions; "Reload status" re-reads state. Review and Knowledge Base now share
+`ui/common.index_version`. `ResearchRepository.latest_ingestion_runs()` added.
+
+Checks: `tests/ui/test_knowledge_base.py` **5 passed**; full offline regression **213
+passed, 6 deselected**; Ruff, format and pip check passed. Not run: manual browser check.
+Refresh to a new snapshot is T26. Committed and pushed under the user's "Auto, go to the
+end" instruction. Next: T35 sessions (offline; real check needs the T34 sign-in).
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

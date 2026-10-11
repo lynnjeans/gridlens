@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import streamlit as st
 
 from gridlens.bootstrap import Container
@@ -65,3 +67,25 @@ def show_error(error: AppError):
         "VERSION_NOT_FOUND": "This document version no longer exists.",
     }
     st.error(messages.get(error.code, "The operation could not be completed."))
+
+
+def index_version(container: Container, version_id: str, key_prefix: str) -> tuple[str, str]:
+    """Runs one indexing operation for a click; returns (message, kind). Never undoes approval."""
+    if container.ingestion is None:
+        return "Indexing needs the local model; run `gridlens prepare-model`.", "warning"
+    try:
+        with st.spinner("Indexing the approved text…"):
+            result = container.ingestion.ingest(version_id, f"{key_prefix}-{uuid4()}")
+    except AppError as error:
+        message, kind = f"Indexing could not run ({error.code}).", "warning"
+    else:
+        if result.status == "failed":
+            message, kind = f"Indexing failed ({result.error_code}).", "warning"
+        elif result.status == "noop":
+            message, kind = "This version is already indexed.", "success"
+        else:
+            message = f"Indexed {result.indexed_chunks} chunk(s); it is now searchable."
+            kind = "success"
+    if kind == "warning":
+        message += " The approval is kept; retry indexing when ready."
+    return message, kind

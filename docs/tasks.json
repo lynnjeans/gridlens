@@ -1001,7 +1001,7 @@
       "id": "T19",
       "title": "接通 Knowledge Base 页面",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D6",
       "depends_on": [
         "T05",
@@ -1010,6 +1010,9 @@
       "kind": "implementation",
       "scope_paths": [
         "gridlens/ui/knowledge_base.py",
+        "gridlens/ui/common.py",
+        "gridlens/ui/review.py",
+        "gridlens/repositories/research.py",
         "tests/ui/test_knowledge_base.py"
       ],
       "objective": "展示真正可用的资料，以及处理阶段和恢复操作。",
@@ -1035,12 +1038,18 @@
         "AC-09"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/ui/test_knowledge_base.py: 5 passed（AppTest，fixture 覆盖 pending/rejected/revoked/未入库/入库失败/处理中/Searchable/Superseded）；三种状态分列与 Searchable 仅来自 SQLite 资格；失败版本 Retry 通过 IngestionService，operation_key 前缀 kb-retry- 且每次新生成，rerun 不重复；处理中 Retry 禁用并显示真实阶段与 1/4 计数；Revoke 需 reviewer、事件记录 reviewer/原因、撤销后检索资格即时排除、rerun 不重复事件；空库状态。",
+        "Review 与 Knowledge Base 共用 ui/common.index_version；Review UI 测试仍通过。",
+        "完整离线回归：213 passed, 6 deselected；Ruff、format 与 pip check 通过。",
+        "未运行：人工浏览器交互检查。Refresh（新快照）属于 T26。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
-        "human": "not_required"
-      }
+        "human": "not_run"
+      },
+      "completed_at": "2026-10-12"
     },
     {
       "id": "T20",
@@ -1916,7 +1925,6 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T19",
       "T35"
     ],
     "completed_tasks": [
@@ -1938,6 +1946,7 @@
       "T16",
       "T17",
       "T18",
+      "T19",
       "T20",
       "T33"
     ],
@@ -1949,7 +1958,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 208,
+      "offline_tests_passed": 213,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",
