@@ -464,6 +464,27 @@ full offline regression **281 passed, 8 deselected**; `local_model` 4 passed; Ru
 and pip check passed. Citation checks prove provenance, not semantic entailment.
 Committed and pushed (user's "Auto" instruction). Next: T23 Ask page.
 
+## T23 — Ask page and citation viewer (2026-10-12)
+
+Status: **implemented and verified offline (AppTest); live asking and manual browser check
+not run**. The Ask tab has a question form with region (NZ/US include GLOBAL; ALL adds
+UNKNOWN) and source types. The operation key stays in session state until the answer is
+saved, and the page always renders from the stored QA record via `AnswerService.replay`,
+so reruns never call the model. Answers show the evidence status (answered / partly
+answered / insufficient), each claim labelled Fact or Inference with `[n]` markers,
+limitations and missing evidence (always visible), and numbered source expanders with
+the verbatim short quote, PDF file page (and printed page) or section › paragraph,
+publisher/date/region/type, the supported claim IDs and the original link. Each render
+re-checks current eligibility and marks citations from revoked/superseded versions as
+historical. Failures (sign-in, permission, usage limit with usage link, incomplete stream,
+format/citation rejection, timeout), stale context and invalid input are shown
+distinctly; no retrieval distance is shown. A history picker re-renders earlier answers.
+Live mode builds `ChatGPTAnswerProvider` from the sidebar's account/model selection.
+
+Checks: `tests/ui/test_ask.py` **6 passed**; full offline regression **287 passed, 8
+deselected**; Ruff, format and pip check passed. Committed and pushed (user's "Auto"
+instruction). Next: T24 knowledge gaps.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

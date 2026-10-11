@@ -1232,7 +1232,7 @@
       "id": "T23",
       "title": "接通 Ask 与引用查看",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D5",
       "depends_on": [
         "T05",
@@ -1241,7 +1241,6 @@
       "kind": "implementation",
       "scope_paths": [
         "gridlens/ui/ask.py",
-        "gridlens/ui/common.py",
         "tests/ui/test_ask.py"
       ],
       "objective": "用户能提问并核查每个论断的原文证据。",
@@ -1268,12 +1267,18 @@
         "AC-06"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/ui/test_ask.py: 6 passed（AppTest fixture）：partial 路径的 claim→[n] 引用映射、展开区逐字摘录/段落定位/支持的 claim、缺失证据与合成标记、rerun 不再调用模型；answered（inference 标注）；空库 insufficient 不显示错误；provider USAGE_LIMITED 显示为失败与 Usage 链接而非证据不足；撤销后历史引用提示不再有效；输入校验。",
+        "实现：表单（问题、地区含 GLOBAL/ALL 说明、类型）；operation_key 保存在会话直到保存完成；页面从已保存记录渲染（replay，不调用模型）；fact/inference、answered/partial/insufficient、限制与缺失证据始终显示；引用展开区显示短摘录、PDF 文件页（印刷页）或章节›段落、来源元数据与原链接，并按当前 SQLite 资格提示历史引用；失败/stale/未登录分别显示；不显示检索距离。live 模式通过侧栏 selected_model 构造 ChatGPTAnswerProvider。",
+        "完整离线回归：287 passed, 8 deselected；Ruff、format 与 pip check 通过。",
+        "未运行：live 模式真实提问（依赖 T34/T36/T21 真实验证）与人工浏览器检查。"
+      ],
       "validation_state": {
-        "offline": "not_run",
-        "live": "not_required",
-        "human": "not_required"
-      }
+        "offline": "passed",
+        "live": "not_run",
+        "human": "not_run"
+      },
+      "completed_at": "2026-10-12"
     },
     {
       "id": "T24",
@@ -1958,7 +1963,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T23"
+      "T24"
     ],
     "completed_tasks": [
       "T01",
@@ -1982,6 +1987,7 @@
       "T19",
       "T20",
       "T22",
+      "T23",
       "T33"
     ],
     "repository": {
@@ -1992,7 +1998,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 281,
+      "offline_tests_passed": 287,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

@@ -1,7 +1,209 @@
+import json
+from uuid import uuid4
+
 import streamlit as st
 
 from gridlens.bootstrap import Container
-from gridlens.ui.common import empty_state
+from gridlens.contracts import AnswerEnvelope, RetrievalFilters
+from gridlens.errors import AppError
+from gridlens.ui.common import empty_state, show_error
+
+REGIONS = {
+    "New Zealand (+ global)": "NZ",
+    "United States (+ global)": "US",
+    "Global only": "GLOBAL",
+    "All regions (includes unknown)": "ALL",
+}
+SOURCE_TYPES = {
+    "Policy": "policy",
+    "Technical": "technical",
+    "Paper": "paper",
+    "Industry report": "industry_report",
+    "Product": "product",
+    "Unknown": "unknown",
+}
+FAILURES = {
+    "AUTH_REQUIRED": "Sign in with ChatGPT and choose a model in the sidebar to generate answers.",
+    "AUTH_EXPIRED": "The ChatGPT session ended. Sign in again from the sidebar.",
+    "ACCOUNT_CHANGED": "The selected account changed during the request. Ask again.",
+    "PLAN_PERMISSION_MISSING": "This account has not granted ChatGPT plan usage to GridLens.",
+    "USAGE_LIMITED": "Your ChatGPT plan usage limit was reached. Check usage and try later.",
+    "MODEL_UNAVAILABLE": "The selected model is not available. Choose another in the sidebar.",
+    "STREAM_INCOMPLETE": "The answer stream did not complete, so nothing was published.",
+    "PROVIDER_TIMEOUT": "The answer took too long. Try again.",
+    "PROVIDER_UNAVAILABLE": "ChatGPT is temporarily unavailable. Try again later.",
+    "OUTPUT_INVALID": "The answer did not match the required format, even after one repair.",
+    "CITATION_INVALID": "The answer cited text not in the evidence, so it was withheld.",
+    "OUTPUT_MODE_UNSUPPORTED": "The model rejected structured output.",
+    "GENERATION_TOO_LARGE": "The answer was larger than allowed.",
+    "GENERATION_FAILED": "ChatGPT could not complete the answer.",
+}
+
+
+def _provider(container: Container):
+    if container.settings.mode == "fixture":
+        return container.answers
+    from gridlens.providers.chatgpt_oauth import ChatGPTAnswerProvider
+    from gridlens.ui.account import selected_model
+
+    choice = selected_model(container)
+    if choice is None:
+        return None
+    handle, slug = choice
+    return ChatGPTAnswerProvider(
+        container.sessions, handle, slug, timeout_seconds=container.settings.model_timeout_seconds
+    )
+
+
+def _location(locator: dict) -> str:
+    if locator.get("kind") == "pdf":
+        text = f"File page {locator.get('file_page')}"
+        if locator.get("printed_page"):
+            text += f" (printed page {locator['printed_page']})"
+        return text
+    parts = [*locator.get("heading_path", []), f"paragraph {locator.get('paragraph_index')}"]
+    return " › ".join(str(p) for p in parts if p)
+
+
+def _show_answer(envelope: AnswerEnvelope, eligible: set[str]):
+    if envelope.mode == "fixture":
+        st.caption("Synthetic development answer — not real grid research.")
+    if envelope.execution_status == "failed":
+        code = (envelope.error or {}).get("code", "")
+        st.error(FAILURES.get(code, f"The answer could not be completed ({code})."))
+        if code == "USAGE_LIMITED":
+            st.link_button("View ChatGPT usage", "https://chatgpt.com/settings/usage")
+        return
+    if envelope.execution_status == "stale_context":
+        st.warning(
+            "A source changed or was revoked while answering, so no answer was published. "
+            "Ask again to use the current approved sources."
+        )
+        return
+    labels = {
+        "answered": ("success", "Answered from approved sources."),
+        "partial": ("warning", "Partly answered — some of the question lacks evidence."),
+        "insufficient": ("info", "Insufficient evidence in the approved sources."),
+    }
+    kind, text = labels[envelope.evidence_status]
+    getattr(st, kind)(text)
+
+    numbers = {c["chunk_id"]: c["number"] for c in envelope.citations}
+    for claim in envelope.claims:
+        marks = "".join(
+            f" [{numbers[e.chunk_id]}]" for e in claim.evidence if e.chunk_id in numbers
+        )
+        label = "Fact" if claim.kind == "fact" else "Inference"
+        st.markdown(f"**{label}:** {claim.text}{marks}")
+    if envelope.limitations:
+        st.markdown("**Limitations**")
+        for item in envelope.limitations:
+            st.markdown(f"- {item}")
+    if envelope.missing_evidence:
+        st.markdown("**Missing evidence**")
+        for missing in envelope.missing_evidence:
+            st.markdown(f"- {missing.subquestion} — needs: {missing.needed_evidence}")
+            st.caption("Suggested searches: " + "; ".join(missing.suggested_queries))
+    if envelope.citations:
+        st.markdown("**Sources**")
+    for citation in envelope.citations:
+        source = citation["source"]
+        with st.expander(f"[{citation['number']}] {source.get('title') or 'Untitled'}"):
+            st.markdown(f"> {citation['quote']}")
+            st.caption(_location(citation["locator"]))
+            st.caption(
+                " · ".join(
+                    [
+                        source.get("publisher") or "Publisher unknown",
+                        source.get("published_at") or "Date unknown",
+                        source.get("jurisdiction") or "UNKNOWN",
+                        source.get("source_type") or "unknown",
+                    ]
+                )
+            )
+            st.caption("Supports claim(s): " + ", ".join(citation["claim_ids"]))
+            if source.get("version_id") not in eligible:
+                st.warning(
+                    "This source version is no longer approved and current; treat this "
+                    "citation as historical."
+                )
+            if source.get("original_url"):
+                st.link_button("Open original", source["original_url"])
+
+
+def _eligible(container: Container) -> set[str]:
+    if container.ingestion is None:
+        return set()
+    return {
+        v["id"]
+        for v in container.research.eligible_versions(
+            container.ingestion.fingerprint, jurisdiction=None
+        )
+    }
+
+
+def _ask_tab(container: Container):
+    service = container.answer_service
+    if service is None:
+        st.info("Answers need the local index. In live mode run `gridlens prepare-model` first.")
+        return
+    provider = _provider(container)
+    if provider is None:
+        st.info(FAILURES["AUTH_REQUIRED"] + " Without it, only scope checks can run.")
+    with st.form("ask"):
+        question = st.text_area(
+            "Question",
+            placeholder="Who is involved in a large-load connection in NZ?",
+            key="ask_question",
+        )
+        left, right = st.columns(2)
+        region = left.selectbox("Region", list(REGIONS), key="ask_region")
+        types = right.multiselect("Source types", list(SOURCE_TYPES), key="ask_types")
+        submitted = st.form_submit_button("Ask GridLens")
+    if submitted:
+        try:
+            filters = RetrievalFilters(
+                region=REGIONS[region], source_types=[SOURCE_TYPES[t] for t in types]
+            )
+            # Kept until the answer is saved, so a rerun can never call the model again.
+            key = st.session_state.setdefault("ask_operation_key", f"ask-{uuid4()}")
+            with st.spinner("Searching approved sources and checking citations…"):
+                service.ask(question, filters, key, provider)
+            st.session_state["ask_selected_key"] = key
+            st.session_state.pop("ask_operation_key", None)
+        except AppError as error:
+            if error.code == "INVALID_INPUT":
+                st.error("Ask a question between 3 and 2000 characters.")
+            elif error.code == "EMBEDDING_INPUT_TOO_LONG":
+                st.error("The question is too long for the search model. Shorten it.")
+            else:
+                show_error(error)
+
+    history = container.qa.list_answers()
+    if not history:
+        empty_state("No questions asked yet.")
+        return
+    keys = {r["operation_key"]: r for r in history}
+    selected = st.session_state.get("ask_selected_key")
+    if selected not in keys:
+        selected = history[0]["operation_key"]
+    chosen = st.selectbox(
+        "History",
+        list(keys),
+        index=list(keys).index(selected),
+        format_func=lambda k: (
+            f"{keys[k]['question'][:80]} · {keys[k]['execution_status']}"
+            + (f"/{keys[k]['evidence_status']}" if keys[k]["evidence_status"] else "")
+        ),
+        key=f"ask_history_{selected}",
+    )
+    st.session_state["ask_selected_key"] = chosen
+    record = keys[chosen]
+    st.markdown(f"#### {record['question']}")
+    filters = json.loads(record["filters_json"])
+    st.caption(f"Region {filters.get('region')} · asked {record['created_at'][:19]} UTC")
+    envelope = service.replay(chosen)  # stored result; never a new model call
+    _show_answer(envelope, _eligible(container))
 
 
 def render(container: Container):
@@ -9,12 +211,7 @@ def render(container: Container):
     st.write("Ask a research question and check the evidence behind each claim.")
     ask, gaps = st.tabs(["Ask a question", "Knowledge gaps"])
     with ask:
-        with st.form("ask"):
-            st.text_area(
-                "Question", placeholder="Who is involved in a large-load connection in NZ?"
-            )
-            st.form_submit_button("Ask GridLens", disabled=True)
-        empty_state("Question answering will be available after ingestion and ChatGPT sign-in.")
+        _ask_tab(container)
     with gaps:
         if not container.qa.list_gaps():
             empty_state("No knowledge gaps recorded yet.")

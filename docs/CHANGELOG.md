@@ -63,3 +63,5 @@ T36 离线完成（awaiting_input，2026-10-12）：账户专属模型目录与�
 T21 离线完成（awaiting_input，2026-10-12）：ChatGPT 计划用量流式回答 Provider（字段白名单、证据作数据、schema/prompt-JSON 严格校验、SSE 至 completed、独立错误）。21 项单元测试通过；完整回归 266 passed、8 deselected。真实 smoke 待登录。
 
 完成 T22（2026-10-12）：问答服务（检索→生成→逐字引用校验→发布前复查→单事务保存），最多两次生成、provider 失败不伪装为证据不足、operation_key 重放不重复调用。15 项集成测试通过；完整回归 281 passed、8 deselected。
+
+完成 T23（2026-10-12）：Ask 页面（已保存记录渲染、fact/inference、编号引用展开与来源状态复查、失败/不足/过期分别显示、历史）。6 项 AppTest 通过；完整回归 287 passed、8 deselected。

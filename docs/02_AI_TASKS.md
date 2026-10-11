@@ -988,7 +988,7 @@
 
 ## T23 — 接通 Ask 与引用查看
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D5 / implementation
 **依赖：** T05, T22
 **PRD 对应：** AC-05, AC-06
@@ -999,7 +999,7 @@
 ### 文件范围
 
 - `gridlens/ui/ask.py`
-- `gridlens/ui/common.py`
+- （未改 `gridlens/ui/common.py`；账户状态复用 T36 的 `ui/account.selected_model`）
 - `tests/ui/test_ask.py`
 
 ### 实现步骤
@@ -1024,9 +1024,9 @@
 
 - 不实现多轮聊天或视觉动画。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_run（依赖 T34/T36/T21）, human=not_run
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/ui/test_ask.py` 6 项 AppTest 通过（partial 引用映射与展开区、answered、insufficient、provider 失败、撤销后历史提示、rerun 不再调用模型、输入校验）。完整回归 287 passed、8 deselected。未运行 live 真实提问与人工浏览器检查。
 
 ## T24 — 实现知识缺口规则、保存与去重
 
