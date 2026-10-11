@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T13、T33 完成；审核页面、授权和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T14、T33 完成；入库、授权和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -333,6 +333,8 @@ pypdf 不执行 OCR，扫描图像和复杂排版可能无法得到可用文本�
 ### 6.3 审核
 
 待审核页面显示来源元数据、正文、解析限制、hash 对应版本和原始链接。Approve 要求非空正文、可支持的文档类型和最新预览 hash；Reject 要求 reason。审核服务不调用 embedding，也不联网生成批准结论。
+
+Pending 元数据修正通过 `ReviewService.update_metadata(version_id, expected_hash, MetadataCorrection)` 重算 hash；页面记录审核者打开时的 hash，与当前不一致时禁用批准并要求重新加载。fixture 模式的 capture 使用合成 `FakeDocumentFetcher`，不访问真实网站。
 
 Approve 成功后 UI 可自动发起一次同步入库操作；失败只改 ingestion，不撤销人的审核。再次渲染页面不能重复触发批准或入库。需要 retry 时使用新的 operation_key，版本仍保持同一个。
 

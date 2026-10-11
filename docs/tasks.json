@@ -706,7 +706,7 @@
       "id": "T14",
       "title": "接通 Review 页面",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D3",
       "depends_on": [
         "T05",
@@ -715,7 +715,15 @@
       "kind": "implementation",
       "scope_paths": [
         "gridlens/ui/review.py",
-        "tests/ui/test_review.py"
+        "gridlens/ui/common.py",
+        "gridlens/services/review.py",
+        "gridlens/repositories/research.py",
+        "gridlens/contracts.py",
+        "gridlens/bootstrap.py",
+        "gridlens/providers/fakes.py",
+        "gridlens/documents/snapshots.py",
+        "tests/ui/test_review_page.py",
+        "tests/integration/test_review.py"
       ],
       "objective": "用户可查看对应正文和版本，然后明确批准或拒绝。",
       "steps": [
@@ -739,12 +747,19 @@
         "AC-02"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/ui/test_review_page.py: 8 passed（AppTest）；覆盖 capture/预览/approve、reviewer 必填、reject 原因必填与原文保存、stale 预览需重新加载、不可读快照禁止批准、空文档 capture 不建版本、元数据修正改 hash 并绑定批准、revoke/reopen，以及 rerun 不重复事件。",
+        "tests/integration/test_review.py: 7 passed（新增元数据修正 stale/幂等/仅 pending 测试）。",
+        "完整离线回归：123 passed, 1 live deselected；Ruff、format 与 pip check 通过。",
+        "测试文件命名为 tests/ui/test_review_page.py，因与 tests/integration/test_review.py 同 basename 导致 pytest 收集冲突。",
+        "未执行真实浏览器手动检查和真实网站抓取；入库触发待 T18。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
         "human": "not_required"
-      }
+      },
+      "completed_at": "2026-10-11"
     },
     {
       "id": "T15",
@@ -1835,7 +1850,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T14"
+      "T16"
     ],
     "completed_tasks": [
       "T01",
@@ -1851,6 +1866,7 @@
       "T11",
       "T12",
       "T13",
+      "T14",
       "T33"
     ],
     "repository": {
@@ -1861,7 +1877,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 114,
+      "offline_tests_passed": 123,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

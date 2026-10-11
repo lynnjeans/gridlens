@@ -6,8 +6,11 @@ from gridlens.auth.credentials import FileCredentialStore
 from gridlens.config import Settings
 from gridlens.contracts import AnswerProvider, EmbeddingProvider, SearchProvider, VectorStore
 from gridlens.db import Database
+from gridlens.documents.fetch import DocumentFetcher
+from gridlens.documents.snapshots import SnapshotService
 from gridlens.providers.fakes import (
     FakeAnswerProvider,
+    FakeDocumentFetcher,
     FakeEmbeddingProvider,
     FakeSearchProvider,
     FakeVectorStore,
@@ -17,6 +20,7 @@ from gridlens.repositories.qa import QARepository
 from gridlens.repositories.research import ResearchRepository
 from gridlens.repositories.sources import SourceRepository
 from gridlens.services.discovery import DiscoveryService
+from gridlens.services.review import ReviewService
 
 
 @dataclass
@@ -32,6 +36,8 @@ class Container:
     answers: AnswerProvider | None
     vectors: VectorStore | None
     discovery: DiscoveryService
+    snapshots: SnapshotService
+    review: ReviewService
 
 
 def build_container(settings: Settings) -> Container:
@@ -48,6 +54,15 @@ def build_container(settings: Settings) -> Container:
         )
     else:
         search = None
+    # Constructing the fetcher opens no connection; capture runs only on a user action.
+    fetcher = (
+        FakeDocumentFetcher()
+        if is_fixture
+        else DocumentFetcher(
+            max_bytes=settings.max_document_bytes,
+            timeout_seconds=settings.fetch_timeout_seconds,
+        )
+    )
     return Container(
         settings=settings,
         db=db,
@@ -67,4 +82,13 @@ def build_container(settings: Settings) -> Container:
             max_calls=settings.max_search_calls,
             max_results=settings.max_search_results,
         ),
+        snapshots=SnapshotService(
+            db,
+            source_repository,
+            fetcher,
+            settings.data_dir,
+            max_pdf_pages=settings.max_pdf_pages,
+            pdf_timeout_seconds=settings.fetch_timeout_seconds,
+        ),
+        review=ReviewService(db, source_repository, settings.data_dir),
     )

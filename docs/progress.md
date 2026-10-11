@@ -130,6 +130,29 @@ the state update.
 `tests/integration/test_review.py`: **6 passed**. Full offline regression: **114 passed,
 1 live deselected**; Ruff, format and dependency checks passed. Next task: T14 Review UI.
 
+## T14 — Review page
+
+Status: **implemented and verified offline**. Review lists captured versions (pending
+first), captures the selected source only on an explicit button click, shows the verified
+segment text with locators, extraction limits, original/redirect links, snapshot hash,
+status and review history. Pending versions accept metadata corrections (title,
+publisher, date, jurisdiction, source type); the service recomputes the snapshot hash
+and the page binds actions to the hash the reviewer opened. If the stored hash changes,
+the page shows a stale warning, disables approval and requires "Reload preview". An
+unreadable or tampered snapshot shows an error and cannot be approved. Reject requires a
+reason; approved versions can be revoked and rejected/revoked ones reopened. Reruns
+do not repeat actions or events. Fixture mode uses a synthetic `FakeDocumentFetcher`;
+live mode uses the bounded `DocumentFetcher`. Ingestion after approval is not wired yet
+(T18); the page says indexing becomes available later.
+
+`tests/ui/test_review_page.py`: **8 passed** (named to avoid a pytest basename clash with
+`tests/integration/test_review.py`, which now has **7 passed**). Full offline
+regression: **123 passed, 1 live deselected**; Ruff, format and pip check passed. One
+early run of the new UI file failed once in 10.7s on the first test and did not repeat in
+six later runs (likely a cold-start AppTest timeout). No manual browser check, live
+capture or real source review was run. At the user's request T13 and T14 were committed
+and pushed to `origin/master`. Next task: T16 local embeddings (T16 → T15, T17 → T18).
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

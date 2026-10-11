@@ -8,6 +8,7 @@ from gridlens.contracts import (
     AnswerDraft,
     ChunkDTO,
     EmbeddingBatch,
+    FetchedDocument,
     RetrievalContext,
     SearchHitDTO,
     VectorHit,
@@ -38,6 +39,42 @@ class FakeSearchProvider:
                 metadata_evidence={"synthetic": True},
             )
         ][:limit]
+
+
+SYNTHETIC_DOCUMENTS = {
+    "https://synthetic.example/connection-guide": (
+        b"<!doctype html><html><head><title>Synthetic connection guide</title></head>"
+        b"<body><main><h1>Synthetic connection guide \xe2\x80\x94 not a real policy</h1>"
+        b"<p>The synthetic process starts with an application.</p>"
+        b"<h2>Review</h2><p>The synthetic request is reviewed by a fictional operator.</p>"
+        b"<p>Missing project information must be recorded as a research gap.</p>"
+        b"</main></body></html>"
+    ),
+    "https://synthetic.example/empty": b"<!doctype html><html><body><main></main></body></html>",
+}
+
+
+class FakeDocumentFetcher:
+    """Serves synthetic HTML only; fixture mode never reaches a real host."""
+
+    def __init__(self, documents: dict[str, bytes] | None = None):
+        self.documents = SYNTHETIC_DOCUMENTS if documents is None else documents
+        self.calls = 0
+
+    def fetch(self, url: str) -> FetchedDocument:
+        self.calls += 1
+        body = self.documents.get(url.strip())
+        if body is None:
+            raise AppError("SOURCE_NOT_FOUND", "No synthetic document exists for this URL.")
+        return FetchedDocument(
+            requested_url=url,
+            final_url=url.strip(),
+            content_type="text/html",
+            body=body,
+            raw_sha256=hashlib.sha256(body).hexdigest(),
+            fetched_at="2026-01-01T00:00:00+00:00",
+            redirect_count=0,
+        )
 
 
 class FakeEmbeddingProvider:

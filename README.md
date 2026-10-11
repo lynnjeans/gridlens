@@ -8,7 +8,8 @@ A local research assistant for data-centre grid connections. The source-discover
 milestone is implemented: the local web UI can search through Tavily when configured,
 store deduplicated candidate sources, select a source for review, and manually add a
 public URL as a pending lead. Bounded capture, HTML/PDF extraction, immutable snapshots
-and review-state rules are implemented but are not connected to Review yet. Indexing, ChatGPT OAuth
+and review-state rules are connected to the Review page (capture, preview, metadata
+correction, approve/reject/revoke/reopen). Indexing, ChatGPT OAuth
 and real Q&A are **not connected yet**. No grid calculation or pandapower/OpenDSS is included.
 
 ## Run locally
@@ -63,7 +64,7 @@ commands and resolved environment details are in `docs/progress.md`. Model depen
 are declared in the optional `models` extra and will be locked/verified when implemented.
 
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
-Next development milestone: T14 (human review UI). The current
+Next development milestone: T16 (local embeddings). The current
 source can be obtained from the configured GitHub repository.
 
 Read `docs/01_DEVELOPMENT_SPEC.md`, `docs/tasks.json` and `docs/progress.md` for

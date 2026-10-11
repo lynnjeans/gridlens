@@ -18,6 +18,16 @@ class ResearchRepository:
                 )
             ]
 
+    def review_events(self, version_id: str) -> list[dict]:
+        with self.db.connect() as c:
+            return [
+                dict(r)
+                for r in c.execute(
+                    "SELECT * FROM review_events WHERE version_id=? ORDER BY created_at, rowid",
+                    (version_id,),
+                )
+            ]
+
     def eligible_versions(self, fingerprint: str, jurisdiction: str | None = "NZ") -> list[dict]:
         with self.db.connect() as c:
             rows = c.execute(

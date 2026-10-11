@@ -5,9 +5,9 @@ import json
 from pathlib import Path
 from uuid import uuid4
 
-from gridlens.contracts import ParsedSegment, ReviewResult
+from gridlens.contracts import MetadataCorrection, ParsedSegment, ReviewResult
 from gridlens.db import Database, now
-from gridlens.documents.snapshots import snapshot_digest
+from gridlens.documents.snapshots import canonical_json, snapshot_digest
 from gridlens.errors import AppError
 from gridlens.repositories.sources import SourceRepository
 
@@ -17,6 +17,46 @@ class ReviewService:
         self.db = db
         self.sources = sources
         self.snapshot_root = snapshot_root.resolve()
+
+    def load_snapshot(self, version_id: str) -> list[ParsedSegment]:
+        """Return verified segments; raise when the saved preview cannot be trusted."""
+        return self._validate_snapshot(self._version(version_id))
+
+    def update_metadata(
+        self, version_id: str, expected_hash: str, correction: MetadataCorrection
+    ) -> ReviewResult:
+        row = self._version(version_id)
+        if row["review_status"] != "pending":
+            raise AppError("REVIEW_STATE_INVALID", "Only a pending version can be corrected.")
+        if row["snapshot_sha256"] != expected_hash:
+            raise AppError("REVIEW_STALE", "The document preview has changed.")
+        segments = self._validate_snapshot(row)
+        metadata = {**json.loads(row["metadata_json"]), **correction.model_dump()}
+        digest = snapshot_digest(segments, metadata, metadata["parser_version"])
+        if digest == row["snapshot_sha256"]:
+            return self._result(row, changed=False)
+        with self.db.transaction() as connection:
+            if connection.execute(
+                "SELECT 1 FROM document_versions WHERE source_id=? AND snapshot_sha256=?",
+                (row["source_id"], digest),
+            ).fetchone():
+                raise AppError(
+                    "VERSION_DUPLICATE", "Another version already has this content and metadata."
+                )
+            changed = connection.execute(
+                "UPDATE document_versions SET metadata_json=?, published_at=?, snapshot_sha256=? "
+                "WHERE id=? AND review_status='pending' AND snapshot_sha256=?",
+                (
+                    canonical_json(metadata).decode(),
+                    metadata["published_at"],
+                    digest,
+                    version_id,
+                    expected_hash,
+                ),
+            ).rowcount
+            if changed != 1:
+                raise AppError("REVIEW_STATE_CHANGED", "The review state changed; reload it.")
+        return self._result(self._version(version_id), changed=True)
 
     def approve(self, version_id: str, expected_hash: str, reviewer: str) -> ReviewResult:
         reviewer = self._reviewer(reviewer)
@@ -131,7 +171,7 @@ class ReviewService:
             )
         return self._result(self._version(version_id), changed=True)
 
-    def _validate_snapshot(self, row) -> None:
+    def _validate_snapshot(self, row) -> list[ParsedSegment]:
         try:
             raw = self._path(row["raw_path"]).read_bytes()
             segment_data = json.loads(self._path(row["segments_path"]).read_text(encoding="utf-8"))
@@ -153,6 +193,7 @@ class ReviewService:
             raise AppError(
                 "SNAPSHOT_INTEGRITY_FAILED", "The saved preview does not match its hash."
             )
+        return segments
 
     def _path(self, relative: str) -> Path:
         path = (self.snapshot_root / relative).resolve()

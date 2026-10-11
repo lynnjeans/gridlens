@@ -3,7 +3,7 @@ import sqlite3
 
 import pytest
 
-from gridlens.contracts import FetchedDocument, SearchHitDTO
+from gridlens.contracts import FetchedDocument, MetadataCorrection, SearchHitDTO
 from gridlens.documents.snapshots import SnapshotService
 from gridlens.errors import AppError
 from gridlens.repositories.research import ResearchRepository
@@ -149,3 +149,25 @@ def test_event_failure_rolls_back_state_change(db, tmp_path):
     assert row["review_status"] == "pending"
     assert row["approved_snapshot_sha256"] is None
     assert event_count(db) == 0
+
+
+def test_metadata_correction_rehashes_pending_only(db, tmp_path):
+    review, preview, sources = prepared(db, tmp_path)
+    correction = MetadataCorrection(
+        title="Reviewable guide", publisher="", jurisdiction="GLOBAL", source_type="technical"
+    )
+    with pytest.raises(AppError) as raised:
+        review.update_metadata(preview.version_id, "0" * 64, correction)
+    assert raised.value.code == "REVIEW_STALE"
+
+    updated = review.update_metadata(preview.version_id, preview.snapshot_sha256, correction)
+    assert updated.changed and updated.snapshot_sha256 != preview.snapshot_sha256
+    assert not review.update_metadata(
+        preview.version_id, updated.snapshot_sha256, correction
+    ).changed
+    assert review.load_snapshot(preview.version_id)
+    review.approve(preview.version_id, updated.snapshot_sha256, "Researcher")
+    with pytest.raises(AppError) as raised:
+        review.update_metadata(preview.version_id, updated.snapshot_sha256, correction)
+    assert raised.value.code == "REVIEW_STATE_INVALID"
+    assert event_count(db) == 1

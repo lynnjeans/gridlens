@@ -607,7 +607,7 @@
 
 ## T14 — 接通 Review 页面
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D3 / implementation
 **依赖：** T05, T13
 **PRD 对应：** AC-02
@@ -617,8 +617,10 @@
 
 ### 文件范围
 
-- `gridlens/ui/review.py`
-- `tests/ui/test_review.py`
+- `gridlens/ui/review.py`、`gridlens/ui/common.py`
+- `gridlens/services/review.py`（`load_snapshot`、`update_metadata`）、`gridlens/repositories/research.py`（审核历史）
+- `gridlens/contracts.py`（`MetadataCorrection`）、`gridlens/bootstrap.py`、`gridlens/providers/fakes.py`（`FakeDocumentFetcher`）
+- `tests/ui/test_review_page.py`（原定 `tests/ui/test_review.py` 与集成测试同名冲突）
 
 ### 实现步骤
 
@@ -641,9 +643,9 @@
 
 - 不批量审核，不增加登录系统。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, live=not_required, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/ui/test_review_page.py` 8 项 AppTest 通过：capture/预览/approve、reviewer 必填、reject 原因必填且原文保存、stale 预览需重新加载、不可读快照禁止批准、空文档不建版本、元数据修正改 hash 并绑定批准、revoke/reopen、rerun 不重复事件。`tests/integration/test_review.py` 7 项通过（含元数据修正）。完整回归 123 passed、1 live deselected；Ruff/format/pip check 通过。未执行真实浏览器手动检查；批准后入库触发待 T18。
 
 ## T15 — 实现确定性 token 分块
 

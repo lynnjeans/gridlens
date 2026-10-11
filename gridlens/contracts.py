@@ -133,6 +133,21 @@ class VersionPreview(DTO):
     reused: bool = False
 
 
+class MetadataCorrection(DTO):
+    title: str = Field(min_length=1, max_length=500)
+    publisher: str | None = Field(default=None, max_length=300)
+    published_at: str | None = Field(default=None, max_length=50)
+    jurisdiction: Literal["NZ", "US", "GLOBAL", "UNKNOWN"]
+    source_type: Literal["policy", "technical", "paper", "industry_report", "product", "unknown"]
+
+    @model_validator(mode="after")
+    def blank_optional_fields_are_unknown(self):
+        for name in ("publisher", "published_at"):
+            if getattr(self, name) == "":
+                object.__setattr__(self, name, None)
+        return self
+
+
 class ReviewResult(DTO):
     version_id: str
     review_status: ReviewStatus

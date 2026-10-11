@@ -115,7 +115,7 @@ class SnapshotService:
         existed_before = {path: path.exists() for path in target_paths}
         try:
             self.writer(raw_path, fetched.body)
-            self.writer(segments_path, _canonical_json(serial_segments))
+            self.writer(segments_path, canonical_json(serial_segments))
             with self.db.transaction() as connection:
                 connection.execute(
                     "INSERT INTO document_versions VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -126,10 +126,10 @@ class SnapshotService:
                         snapshot_sha256,
                         str(raw_relative),
                         str(segments_relative),
-                        _canonical_json(stored_metadata).decode(),
+                        canonical_json(stored_metadata).decode(),
                         metadata["published_at"],
                         fetched.fetched_at,
-                        _canonical_json(notes).decode(),
+                        canonical_json(notes).decode(),
                         "pending",
                         "not_started",
                         "candidate",
@@ -191,7 +191,7 @@ class SnapshotService:
         )
 
 
-def _canonical_json(value) -> bytes:
+def canonical_json(value) -> bytes:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode(
         "utf-8"
     )
@@ -205,4 +205,4 @@ def snapshot_digest(segments: list[ParsedSegment], metadata: dict, parser_versio
         "reviewed_metadata": {key: metadata.get(key) for key in REVIEWED_METADATA_KEYS},
         "parser_version": parser_version,
     }
-    return hashlib.sha256(_canonical_json(identity)).hexdigest()
+    return hashlib.sha256(canonical_json(identity)).hexdigest()

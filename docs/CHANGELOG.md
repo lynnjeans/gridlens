@@ -39,3 +39,5 @@ T01–T05、T33 完成，42项离线测试通过；四页本地浏览器导航�
 ## 首次 GitHub 发布 — 2026-10-11
 
 按用户明确要求，将当前 T01–T10、T33 实现、测试和同步文档提交并推送至现有 `lynnjeans/gridlens` 仓库的 `master`。推送前确认远端无分支、运行数据与凭证路径被忽略，未发现真实密钥。未创建 PR 或部署。
+
+完成 T14：Review 页面接通捕获、正文预览、元数据修正（重算 hash）、hash 绑定与过期重新加载、Approve/Reject/Revoke/Reopen 和审核历史；fixture 模式使用合成文档获取器。8 项 AppTest 与 7 项审核集成测试通过；完整回归 123 passed、1 live deselected。批准后入库待 T18。
