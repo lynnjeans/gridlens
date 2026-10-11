@@ -6,20 +6,25 @@ from gridlens.auth.credentials import FileCredentialStore
 from gridlens.config import Settings
 from gridlens.contracts import AnswerProvider, EmbeddingProvider, SearchProvider, VectorStore
 from gridlens.db import Database
+from gridlens.documents.chunking import index_fingerprint
 from gridlens.documents.fetch import DocumentFetcher
 from gridlens.documents.snapshots import SnapshotService
+from gridlens.errors import AppError
+from gridlens.providers.chroma_store import ChromaVectorStore
 from gridlens.providers.fakes import (
     FakeAnswerProvider,
     FakeDocumentFetcher,
     FakeEmbeddingProvider,
     FakeSearchProvider,
-    FakeVectorStore,
+    FakeTokenizer,
 )
+from gridlens.providers.local_embeddings import LocalEmbeddingProvider, read_manifest
 from gridlens.providers.tavily import TavilySearchProvider
 from gridlens.repositories.qa import QARepository
 from gridlens.repositories.research import ResearchRepository
 from gridlens.repositories.sources import SourceRepository
 from gridlens.services.discovery import DiscoveryService
+from gridlens.services.ingestion import IngestionService
 from gridlens.services.review import ReviewService
 
 
@@ -38,6 +43,7 @@ class Container:
     discovery: DiscoveryService
     snapshots: SnapshotService
     review: ReviewService
+    ingestion: IngestionService | None
 
 
 def build_container(settings: Settings) -> Container:
@@ -63,6 +69,8 @@ def build_container(settings: Settings) -> Container:
             timeout_seconds=settings.fetch_timeout_seconds,
         )
     )
+    review = ReviewService(db, source_repository, settings.data_dir)
+    embeddings, vectors, ingestion = _indexing(settings, db, review)
     return Container(
         settings=settings,
         db=db,
@@ -71,9 +79,9 @@ def build_container(settings: Settings) -> Container:
         qa=QARepository(db),
         credentials=FileCredentialStore(settings.auth_dir),
         search=search,
-        embeddings=FakeEmbeddingProvider() if is_fixture else None,
+        embeddings=embeddings,
         answers=FakeAnswerProvider() if is_fixture else None,
-        vectors=FakeVectorStore() if is_fixture else None,
+        vectors=vectors,
         discovery=DiscoveryService(
             db=db,
             sources=source_repository,
@@ -90,5 +98,39 @@ def build_container(settings: Settings) -> Container:
             max_pdf_pages=settings.max_pdf_pages,
             pdf_timeout_seconds=settings.fetch_timeout_seconds,
         ),
-        review=ReviewService(db, source_repository, settings.data_dir),
+        review=review,
+        ingestion=ingestion,
     )
+
+
+def _indexing(settings: Settings, db: Database, review: ReviewService):
+    """Builds lazy indexing parts; nothing loads a model or opens Chroma here."""
+    if settings.mode == "fixture":
+        embeddings = FakeEmbeddingProvider()
+        tokenizer = FakeTokenizer()
+        identity, dimensions, max_input = embeddings.identity(), 16, 512
+    else:
+        try:
+            manifest = read_manifest(settings)
+        except AppError:
+            # Live indexing stays unavailable until `gridlens prepare-model` has run.
+            return None, None, None
+        embeddings = tokenizer = LocalEmbeddingProvider(settings)
+        identity = embeddings.identity()
+        dimensions, max_input = settings.embedding_dimensions, manifest.max_seq_length
+    fingerprint = index_fingerprint(identity, settings.chunk_tokens, settings.chunk_overlap)
+    # Persistent per-mode index, so fixture and live vectors never share a collection.
+    vectors = ChromaVectorStore(settings.data_dir / "chroma", fingerprint, dimensions)
+    ingestion = IngestionService(
+        db,
+        review,
+        embeddings=embeddings,
+        tokenizer=tokenizer,
+        vectors=vectors,
+        embedding_identity=identity,
+        dimensions=dimensions,
+        chunk_tokens=settings.chunk_tokens,
+        chunk_overlap=settings.chunk_overlap,
+        max_input_tokens=max_input,
+    )
+    return embeddings, vectors, ingestion

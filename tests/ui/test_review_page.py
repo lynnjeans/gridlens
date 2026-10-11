@@ -15,7 +15,7 @@ def container(tmp_path):
     return build_container(Settings(project_root=Path(tmp_path)))
 
 
-def review_app(tmp_path, url=GUIDE):
+def review_app(tmp_path, url=GUIDE, setup=""):
     source_id = container(tmp_path).discovery.add_source(url).source_id
     script = (
         "from pathlib import Path\n"
@@ -25,6 +25,7 @@ def review_app(tmp_path, url=GUIDE):
         "from gridlens.ui.review import render\n"
         f"c=build_container(Settings(project_root=Path({str(tmp_path)!r})))\n"
         f"st.session_state.setdefault('selected_source_id', {source_id!r})\n"
+        f"{setup}"
         "render(c)\n"
     )
     return AppTest.from_string(script).run()
@@ -186,4 +187,54 @@ def test_revoke_and_reopen_from_review_page(tmp_path):
         ("approve", None),
         ("revoke", "Source withdrawn"),
         ("reopen", None),
+    ]
+
+
+def test_approval_indexes_once_and_rerun_does_not_reindex(tmp_path):
+    app = captured(tmp_path)
+    button(app, "Approve").click().run()
+    assert not app.exception
+    assert any("Indexed" in item.value and "searchable" in item.value for item in app.success)
+    assert rows(tmp_path, "SELECT ingestion_status, version_status FROM document_versions") == [
+        ("ready", "active")
+    ]
+    app.run()
+    app.run()
+    assert rows(tmp_path, "SELECT status FROM ingestion_runs") == [("completed",)]
+    assert not any(item.label == "Retry indexing" for item in app.button)
+
+
+def test_retry_indexing_for_approved_but_unindexed_version(tmp_path):
+    app = captured(tmp_path)
+    service = container(tmp_path)
+    [(version_id, snapshot)] = rows(tmp_path, "SELECT id, snapshot_sha256 FROM document_versions")
+    service.review.approve(version_id, snapshot, "Researcher A")
+    app.run()
+    button(app, "Retry indexing").click().run()
+    assert not app.exception
+    assert any("Retried. Indexed" in item.value for item in app.success)
+    assert rows(tmp_path, "SELECT ingestion_status FROM document_versions") == [("ready",)]
+
+
+def test_indexing_failure_keeps_approval_and_offers_retry(tmp_path):
+    setup = (
+        "from gridlens.providers.fakes import FakeEmbeddingProvider\n"
+        "if st.session_state.get('fail_indexing', True):\n"
+        "    c.ingestion.embeddings = FakeEmbeddingProvider('LOCAL_MODEL_MISSING')\n"
+    )
+    app = review_app(tmp_path, setup=setup)
+    app.text_input(key="review_reviewer").set_value("Researcher A")
+    button(app, "Capture document").click().run()
+    button(app, "Approve").click().run()
+    assert not app.exception
+    assert any("Indexing failed (LOCAL_MODEL_MISSING)" in item.value for item in app.warning)
+    assert rows(tmp_path, "SELECT review_status, ingestion_status FROM document_versions") == [
+        ("approved", "failed")
+    ]
+    app.session_state["fail_indexing"] = False
+    button(app, "Retry indexing").click().run()
+    assert any("Retried. Indexed" in item.value for item in app.success)
+    assert rows(tmp_path, "SELECT status FROM ingestion_runs ORDER BY attempt") == [
+        ("failed",),
+        ("completed",),
     ]

@@ -939,7 +939,7 @@
       "id": "T18",
       "title": "实现入库流水线与原子发布",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D4",
       "depends_on": [
         "T13",
@@ -951,9 +951,12 @@
       "kind": "implementation",
       "scope_paths": [
         "gridlens/services/ingestion.py",
-        "gridlens/repositories/sources.py",
+        "gridlens/contracts.py",
+        "gridlens/bootstrap.py",
         "gridlens/ui/review.py",
-        "tests/integration/test_ingestion.py"
+        "tests/integration/test_ingestion.py",
+        "tests/ui/test_review_page.py",
+        "tests/local_model/test_local_ingestion_smoke.py"
       ],
       "objective": "只有完整处理完成且仍获批准的版本才成为 Ready/Active。",
       "steps": [
@@ -979,12 +982,20 @@
         "AC-09"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/integration/test_ingestion.py: 10 passed（真实临时 Chroma + fake embedding/tokenizer）；覆盖成功发布 Ready/Active、操作键重放与 Ready no-op 无重复 chunk/vector、embedding 失败不可检索且重试不重复、第 2 批 upsert 失败的部分索引无资格、数量相同但 ID 不同不能通过校验、发布前撤销 REVIEW_CHANGED、第二个 tab INGESTION_IN_PROGRESS、新版本失败保留旧 Active 且成功后旧版 Superseded、发布事务失败整体回滚、未批准/配置不符拒绝。",
+        "tests/ui/test_review_page.py 新增 3 项（共 11 passed）：批准后入库一次且 rerun 不重复、未入库批准版本的 Retry indexing、入库失败保留批准并可重试。",
+        "local_model 组（禁网、真实 BGE + Chroma、live 模式装配）：4 passed；入库发布 2 块，白名单检索命中，空白名单返回空。",
+        "完整离线回归：176 passed, 5 deselected；Ruff、format 与 pip check 通过；装配 container 不加载 torch/chromadb。",
+        "fixture 模式改用 data/fixture/chroma 的持久 Chroma + FakeEmbeddingProvider；live 模式仅在已 prepare-model 时启用入库。崩溃后遗留 processing 运行的回收属于 T28。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
-        "human": "not_required"
-      }
+        "human": "not_required",
+        "local_model": "passed"
+      },
+      "completed_at": "2026-10-11"
     },
     {
       "id": "T19",
@@ -1882,7 +1893,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T18"
+      "T20"
     ],
     "completed_tasks": [
       "T01",
@@ -1902,6 +1913,7 @@
       "T15",
       "T16",
       "T17",
+      "T18",
       "T33"
     ],
     "repository": {
@@ -1912,7 +1924,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 163,
+      "offline_tests_passed": 176,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

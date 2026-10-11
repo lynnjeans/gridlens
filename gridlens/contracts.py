@@ -158,6 +158,17 @@ class ReviewResult(DTO):
     changed: bool
 
 
+class IngestionResult(DTO):
+    version_id: str
+    run_id: str | None = None
+    status: Literal["completed", "failed", "noop"]
+    ingestion_status: IngestionStatus
+    version_status: VersionStatus
+    expected_chunks: int = Field(default=0, ge=0)
+    indexed_chunks: int = Field(default=0, ge=0)
+    error_code: str | None = None
+
+
 class ChunkDTO(DTO):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=False)
 

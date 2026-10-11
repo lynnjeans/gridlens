@@ -21,7 +21,7 @@
 
 ## 2. 当前完成状态
 
-36 项任务中 **18 项 done，18 项 todo**。T01–T17、T33 已完成并通过离线验证；当前没有遗留的失败检查。
+36 项任务中 **19 项 done，17 项 todo**。T01–T18、T33 已完成并通过离线验证；当前没有遗留的失败检查。
 
 | 已完成 | 当前能力 | 主要文件 |
 | --- | --- | --- |
@@ -42,11 +42,13 @@
 | T16 | 固定 revision 的本地 BGE embedding（仅本地加载、长度预检、16 批、归一化/维度校验）与显式 `prepare-model` | `gridlens/providers/local_embeddings.py`、`cli.py` |
 | T15 | 按页/章节装箱、长段 offset 窗口的确定性 token 分块，index_fingerprint 与 chunk_id | `gridlens/documents/chunking.py` |
 | T17 | 本地持久 Chroma：按 fingerprint 的 cosine 集合、显式向量、白名单查询、按版本删除、配置不符报错 | `gridlens/providers/chroma_store.py` |
+| T18 | 入库流水线：处理锁、分块、批量 embedding/upsert、ID 集合核对、发布前复查审核、单事务替换 Active；Review 批准后入库与重试 | `gridlens/services/ingestion.py`、`bootstrap.py`、`ui/review.py` |
 | T33 | 稳定 host ID、按注册隔离的受保护原子凭证存储 | `gridlens/auth/host.py`、`credentials.py` |
 
 所有其他任务待实施，包括：真实搜索联调、抓取/解析服务、批准/拒绝操作、
 embedding/Chroma、RAG/引用服务、缺口管理/导出、OAuth、模型目录和评估。
-Discover 搜索在 fixture 模式可用，live 模式需本地 Tavily key。Review 可捕获并人工审核（fixture 使用合成文档）；批准后的入库尚未接通，
+Discover 搜索在 fixture 模式可用，live 模式需本地 Tavily key。Review 可捕获、人工审核并在批准后入库（fixture：合成文档 + fake embedding + 持久 Chroma；
+live：需先 prepare-model）；
 Knowledge Base 和 Ask 的主要操作仍不可用。凭证存储实现不等于 OAuth 登录已实现。
 
 ## 3. 已验证的基线
@@ -55,12 +57,12 @@ Knowledge Base 和 Ask 的主要操作仍不可用。凭证存储实现不等于
 
 | 命令 | 结果 |
 | --- | --- |
-| `.venv/bin/python -m pytest -q` | 163 passed，4 deselected（live/local_model），8.0s |
+| `.venv/bin/python -m pytest -q` | 176 passed，5 deselected（live/local_model），8.4s |
 | `.venv/bin/ruff check .` | All checks passed |
-| `.venv/bin/ruff format --check .` | 67 files already formatted |
+| `.venv/bin/ruff format --check .` | 70 files already formatted |
 | `.venv/bin/python -m pip check` | No broken requirements found |
 | `.venv/bin/python -m gridlens.cli doctor` | fixture；搜索 key 未配置；OAuth not_implemented；模型 prepared `5c38ec7c405e` |
-| `.venv/bin/python -m pytest -m local_model -q` | 3 passed（禁网；需本机已 prepare-model） |
+| `.venv/bin/python -m pytest -m local_model -q` | 4 passed（禁网；需本机已 prepare-model；含 live 装配端到端入库） |
 
 Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件。
 基础阶段还验证了干净环境安装 wheel、包内迁移资源加载和四页真实浏览器导航。
@@ -73,7 +75,7 @@ Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件�
 ## 4. 仓库与运行状态
 
 - `origin`：`https://github.com/lynnjeans/gridlens.git`。
-- 本地分支：`master`；T13–T17 已按用户要求提交并推送到 `origin/master`。
+- 本地分支：`master`；T13–T18 已按用户要求提交并推送到 `origin/master`。
   后续 Git 操作前先检查 `git status` 与 `git log origin/master..`。
 - 没有 PR 或部署。其他电脑可以从 GitHub 仓库 clone 当前实现；输出目录中的
   源码交接 ZIP 仍可用于离线交接。
@@ -88,7 +90,7 @@ Python 3.12.14、Streamlit 1.65.0、Pydantic 2.14.0；完整版本看锁文件�
 GitHub 地址和分支信息已在本文明确记录。解压后复用已有应用目录，
 避免覆盖另一份更新的 checkout。
 
-## 5. 下一项工作：T18
+## 5. 下一项工作：T20
 
 T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 
@@ -97,9 +99,9 @@ T06–T08 的“搜索候选来源并保存”里程碑已经完成：
 3. **T08 Discover UI 已完成**：表单、状态、rerun 幂等、手动来源和 Review 选择通过 UI 测试。
 
 T09–T14 的获取、解析、不可变快照、审核状态机和 Review 页面已完成。
-T15 分块、T16 本地 embedding、T17 Chroma 适配器已完成。接下来 T18 入库流水线与原子发布：
-接入 bootstrap（live 用 LocalEmbeddingProvider + ChromaVectorStore，fixture 用 fake），
-按规格 7.3 顺序处理锁、分块、embedding、ID 集合核对与 SQLite 原子发布，并在 Review 批准后触发一次入库。
+T15–T18 已完成：批准的版本可以入库并以 Ready/Active 发布。接下来 T20 仅限批准版本的检索
+（SQLite 资格白名单 → Chroma 查询 → SQLite 取权威正文，进入上下文前复查资格），随后 T19 Knowledge Base 页面。
+注意：T34 OAuth（排期 D2）尚未开始，它是 T21 生成的关键路径（T34 → T35 → T36 → T21）。
 T18 接好后在 Review 批准成功处触发一次入库。
 T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的共享文件
 进行未经安排的并发编辑。本交接不要求或启动多代理。
@@ -110,8 +112,9 @@ T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的�
 
 ## 6. 实现时容易误判的地方
 
-- `bootstrap.py` 目前每次渲染构建 container；fixture 的向量存储是内存 fake。
-  live search 只在配置 Tavily key 时建立；embeddings/answers/vectors 仍为 `None`。
+- `bootstrap.py` 每次渲染构建 container（只读 manifest，不加载模型、不打开 Chroma）。
+  fixture 向量存储是 `data/fixture/chroma` 的持久 Chroma；live 仅在 prepare-model 后
+  建立 embeddings/vectors/ingestion，answers 仍为 `None`。
 - 搜索运行记录已实现。文档版本、问答等表虽已存在，repository 仍只有基础方法；
   CLI prepare-model 已实现；evaluate 与处理锁尚未实现，需要在对应任务添加。
 - 若新增缓存，保持 OAuth/search secrets 不进入 UI session/cache keys；
@@ -131,10 +134,10 @@ T34 可以从已完成的 T33/T04 接续实现 OAuth，但不与 discovery 的�
 ## 7. 可复制的接手提示词
 
 ```text
-请接手已有 GridLens 项目，完成 T18 入库流水线与原子发布。
+请接手已有 GridLens 项目，完成 T20 仅限批准版本的检索。
 先读取根 AGENTS.md、docs/HANDOFF.md、docs/tasks.json 和对应任务卡，
 再检查真实代码及开发规格相关章节。
-T01–T17、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
+T01–T18、T33 已完成，请复用现有项目，不再初始化，不用空远端覆盖本地代码。
 按依赖顺序实现并验证，保持 fixture/live 隔离、有限调用预算和 UI rerun 幂等。
 抓取与解析先用离线 HTTP/DNS fixture 完成；真实任意网站不作为单元验收条件。
 不要索要聊天中的密钥，不自动批准资料，不虚构研究评估，不增加 P1。

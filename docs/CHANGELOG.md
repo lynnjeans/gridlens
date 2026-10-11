@@ -47,3 +47,5 @@ T01–T05、T33 完成，42项离线测试通过；四页本地浏览器导航�
 完成 T15：确定性 token 分块（按页/章节装箱、长段按 tokenizer offset 切窗、原文精确子串、index_fingerprint/chunk_id）；ChunkDTO 增加 ordinal、text_sha256、embedding_text、heading_path。14 项单元测试与真实 BGE tokenizer 禁网 smoke 通过；完整回归 154 passed、4 deselected。
 
 完成 T17：本地持久 Chroma 向量存储适配器（按 fingerprint 的 cosine 集合、显式向量、拒绝默认 embedding function、白名单查询、按版本删除、配置不符报错）；锁定 chromadb 1.5.9。9 项真实临时 Chroma 集成测试通过；完整回归 163 passed、4 deselected。
+
+完成 T18：入库流水线与原子发布（处理锁、分块、批量 embedding/upsert、ID 集合核对、发布前复查审核、单事务替换旧 Active，失败保留批准与旧版本）；Review 批准后入库一次并可重试；fixture 改用持久 Chroma。10 项故障注入集成测试、3 项 UI 测试与禁网真实模型端到端 smoke 通过；完整回归 176 passed、5 deselected。

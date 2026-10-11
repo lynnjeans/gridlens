@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T17、T33 完成；入库、检索、授权和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T18、T33 完成；检索、授权和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -365,6 +365,8 @@ Chroma 本地持久化适合本项目的本地开发场景；`$in` 可用于 ver
 5. 再次检查审核 hash 与状态。若中途撤销，结束为 Failed，禁止发布。
 6. 在一个 SQLite 事务里：旧 Active → Superseded；当前版本 ingestion=ready、version=active；run=completed。任一步失败全部回滚。
 7. 释放处理锁。向量旧记录可以保留，但所有检索必须使用资格白名单。
+
+实现（`gridlens/services/ingestion.py`）：返回 `IngestionResult(status=completed/failed/noop, ingestion_status, version_status, expected_chunks, indexed_chunks, error_code)`；同 operation_key 重放结果；chunk 行用 INSERT OR IGNORE 且核对 ID 集合；失败码包括 `REVIEW_REQUIRED`、`INGESTION_IN_PROGRESS`、`INDEX_CONFIG_MISMATCH`、`CHUNK_MISMATCH`、`INDEX_INCOMPLETE`、`REVIEW_CHANGED`、`INGESTION_FAILED`。fixture 使用 `data/fixture/chroma` 持久索引 + fake embedding；live 仅在 prepare-model 后启用。
 
 SQLite 与 Chroma 不共享事务，使用“向量先写、数据库最后发布”的策略。崩溃留下的向量不会自动有查询资格；相同版本重试 upsert 相同 ID。若数据库发布失败，旧 Active 仍可用。已 Ready 的同配置重复入库直接返回已有结果。
 

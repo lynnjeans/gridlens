@@ -239,6 +239,40 @@ created. Full offline regression **163 passed, 4 deselected**; `local_model` 3 p
 Ruff, format and pip check passed. Not yet wired into bootstrap or ingestion (T18).
 At the user's request T17 was committed and pushed. Next task: T18 ingestion and atomic publication.
 
+## T18 — Ingestion and atomic publication
+
+Status: **implemented and verified offline and end-to-end with the real local model**.
+`IngestionService.ingest(version_id, operation_key)` follows spec §7.3: a short
+`BEGIN IMMEDIATE` transaction requires Approved with matching approved/current hash,
+refuses superseded versions, returns `noop` for Ready with the same fingerprint (and
+`INDEX_CONFIG_MISMATCH` for another), rejects a second processing run
+(`INGESTION_IN_PROGRESS`, backed by the unique processing index) and creates the run.
+It then loads the verified snapshot, chunks it, saves chunk rows with INSERT OR IGNORE
+(cited chunks are never rewritten) and checks the saved ID set, embeds and upserts in
+batches of 16 recording `indexed_chunks`, and compares the Chroma ID set with the
+expected set (not counts). One publish transaction re-checks approval/hash/run state,
+supersedes the source's old Active version and marks this version Ready/Active and the
+run completed. Any failure marks only the run and this version's ingestion as failed;
+the approval and the old Active version stay. Operation keys replay their result.
+
+Wiring: `Container.ingestion`. Fixture mode uses the fake embedder/tokenizer with a
+persistent Chroma at `data/fixture/chroma` (replacing the per-rerun in-memory fake);
+live mode enables ingestion only after `prepare-model`, using `LocalEmbeddingProvider`
+and Chroma at `data/live/chroma`. Building the container loads neither torch nor chromadb.
+Review runs one ingestion after a successful approval (spinner, success/warning notice)
+and shows "Retry indexing" for approved versions whose ingestion failed or never ran.
+
+Checks: `tests/integration/test_ingestion.py` **10 passed** (fault injection at the
+embedding, upsert, verification and publication stages, revocation before publish,
+a second tab, old-Active retention and supersession, publish rollback via trigger).
+`tests/ui/test_review_page.py` **11 passed** (3 new). `pytest -m local_model` (IP sockets
+blocked) **4 passed**, including live-mode wiring with the real BGE model and Chroma:
+2 chunks published and found by a whitelisted query; an empty whitelist returned nothing.
+Full offline regression **176 passed, 5 deselected**; Ruff, format and pip check passed.
+Recovering processing runs left by a crash is T28. At the user's request T18 was
+committed and pushed.
+Next task: T20 approved-only retrieval (T34 OAuth is behind its D2 schedule).
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

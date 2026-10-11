@@ -1,4 +1,5 @@
 import json
+from uuid import uuid4
 
 import streamlit as st
 from pydantic import ValidationError
@@ -14,10 +15,35 @@ SOURCE_TYPES = ["policy", "technical", "paper", "industry_report", "product", "u
 MAX_PREVIEW_SEGMENTS = 200
 
 
-def _notice(message: str):
+def _notice(message: str, kind: str = "success"):
     # Shown once after an action's rerun; never stores review eligibility.
-    st.session_state["review_notice"] = message
+    st.session_state["review_notice"] = (kind, message)
     st.rerun()
+
+
+def _index(container: Container, version_id: str, prefix: str):
+    """Runs one indexing operation per click; failures never undo the approval."""
+    if container.ingestion is None:
+        _notice(
+            f"{prefix} Indexing needs the local model; run `gridlens prepare-model`.", "warning"
+        )
+        return
+    try:
+        with st.spinner("Indexing the approved text…"):
+            result = container.ingestion.ingest(version_id, str(uuid4()))
+    except AppError as error:
+        message, kind = f"{prefix} Indexing could not run ({error.code}).", "warning"
+    else:
+        if result.status == "failed":
+            message, kind = f"{prefix} Indexing failed ({result.error_code}).", "warning"
+        elif result.status == "noop":
+            message, kind = f"{prefix} This version is already indexed.", "success"
+        else:
+            message = f"{prefix} Indexed {result.indexed_chunks} chunk(s); it is now searchable."
+            kind = "success"
+    if kind == "warning":
+        message += " The approval is kept; retry indexing when ready."
+    _notice(message, kind)
 
 
 def _selected_source(container: Container):
@@ -134,7 +160,7 @@ def _pending_actions(container, version_id, seen_hash, reviewer, *, stale, reada
         except AppError as error:
             show_error(error)
         else:
-            _notice("Approved. Indexing into the knowledge base becomes available later.")
+            _index(container, version_id, "Approved.")
     with st.form(f"reject-{version_id}"):
         reason = st.text_area("Rejection reason", key=f"reject-reason-{version_id}")
         rejected = st.form_submit_button("Reject")
@@ -149,6 +175,9 @@ def _pending_actions(container, version_id, seen_hash, reviewer, *, stale, reada
 
 def _closed_actions(container, version_id, row, reviewer):
     status = row["review_status"]
+    if status == "approved" and row["ingestion_status"] in {"not_started", "failed"}:
+        if st.button("Retry indexing", key=f"ingest-{version_id}"):
+            _index(container, version_id, "Retried.")
     if status == "approved":
         action, label, done = "revoke", "Revoke approval", "Approval revoked."
     elif row["version_status"] != "superseded":
@@ -188,7 +217,8 @@ def _version_detail(container: Container, version_id: str, reviewer: str):
         f"version: {row['version_status']} · snapshot {current_hash[:12]}"
     )
     if notice := st.session_state.pop("review_notice", None):
-        st.success(notice)
+        kind, message = notice
+        (st.warning if kind == "warning" else st.success)(message)
     link_left, link_right = st.columns(2)
     link_left.link_button("Open original", meta["original_url"])
     if meta.get("final_url") and meta["final_url"] != meta["original_url"]:

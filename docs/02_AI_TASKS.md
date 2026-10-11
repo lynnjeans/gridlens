@@ -775,7 +775,7 @@
 
 ## T18 — 实现入库流水线与原子发布
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D4 / implementation
 **依赖：** T13, T14, T15, T16, T17
 **PRD 对应：** AC-03, AC-04, AC-09
@@ -785,10 +785,10 @@
 
 ### 文件范围
 
-- `gridlens/services/ingestion.py`
-- `gridlens/repositories/sources.py`
-- `gridlens/ui/review.py`
-- `tests/integration/test_ingestion.py`
+- `gridlens/services/ingestion.py`、`gridlens/contracts.py`（IngestionResult）、`gridlens/bootstrap.py`
+- `gridlens/ui/review.py`（批准后入库、Retry indexing）
+- `tests/integration/test_ingestion.py`、`tests/ui/test_review_page.py`、`tests/local_model/test_local_ingestion_smoke.py`
+- 未修改 `gridlens/repositories/sources.py`（入库 SQL 集中在服务的短事务内）
 
 ### 实现步骤
 
@@ -811,9 +811,9 @@
 
 - 不引入任务队列；不靠删除整库解决失败。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, local_model=passed, live=not_required, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/integration/test_ingestion.py` 10 项通过（各阶段故障注入、count 相同 ID 不同、撤销阻止发布、双 tab、旧 Active 保留与替换、发布事务回滚）。Review UI 新增 3 项通过。禁网真实 BGE + Chroma live 装配 smoke 通过（2 块发布、白名单检索命中）。完整回归 176 passed、5 deselected；Ruff/format/pip check 通过。遗留 processing 运行回收属于 T28。
 
 ## T19 — 接通 Knowledge Base 页面
 
