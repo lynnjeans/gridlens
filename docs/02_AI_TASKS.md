@@ -1496,7 +1496,7 @@
 
 ## T35 — 实现刷新、账户切换与退出
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / awaiting_input（离线完成，真实验证需 T34 登录）
 **日程/类别：** D4 / implementation
 **依赖：** T34
 **PRD 对应：** AC-09, AC-10
@@ -1506,9 +1506,10 @@
 
 ### 文件范围
 
-- `gridlens/auth/sessions.py`
+- `gridlens/auth/sessions.py`、`gridlens/auth/credentials.py`（clear_tokens keep_id_token）
+- `gridlens/cli.py`（`logout --account`）
 - `tests/unit/test_sessions.py`
-- `tests/live/test_sessions.py`
+- `tests/live/test_live_sessions.py`（原定文件名与单元测试同名冲突）
 
 ### 实现步骤
 
@@ -1531,9 +1532,9 @@
 
 - 不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。
 
-**验证状态：** offline=not_run, live=not_run, human=not_required
+**验证状态：** offline=passed, live=not_run, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** 已核对官方 sessions/errors 文档。`tests/unit/test_sessions.py` 19 项通过（旋转 token 并发、终止错误、账户隔离与切换、临时失败保留凭证、撤销重试/未确认仍清除、discovery 异常不发送 token）。完整回归 232 passed、7 deselected。**未运行真实刷新/退出**：需 T34 登录后执行 `APP_MODE=live GRIDLENS_LIVE_SESSION=1 .venv/bin/python -m pytest -m live -k live_sessions -s`。
 
 ## T36 — 接通账户侧栏和可用模型目录
 

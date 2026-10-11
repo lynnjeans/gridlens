@@ -67,7 +67,9 @@ APP_MODE=live .venv/bin/python -m gridlens.cli login
 
 It opens the official page in your browser; you sign in and approve GridLens yourself.
 Tokens are stored only in the owner-only `AUTH_DIR` (default `~/.config/gridlens`).
-A real sign-in has not been verified by the developers yet.
+Sign out with `python -m gridlens.cli logout --account <registration prefix>` (revokes the
+refresh token when confirmed, always clears local tokens). A real sign-in, refresh and
+sign-out have not been verified by the developers yet.
 Source discovery uses a separate Tavily search key. Embeddings use a pinned local
 `BAAI/bge-small-en-v1.5` model on CPU. Download it once, explicitly (about 134 MB, into
 the git-ignored `models/` or `LOCAL_MODEL_DIR`):
@@ -87,7 +89,7 @@ chromadb 1.5.9) is locked too; it runs locally with telemetry off and never uses
 embedding model.
 
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
-Next development milestone: T35 (sessions). The current
+Next development milestone: T36 (account sidebar and model catalog). The current
 source can be obtained from the configured GitHub repository.
 
 Read `docs/01_DEVELOPMENT_SPEC.md`, `docs/tasks.json` and `docs/progress.md` for

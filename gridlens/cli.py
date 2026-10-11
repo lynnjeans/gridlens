@@ -12,8 +12,10 @@ from gridlens.providers.local_embeddings import prepare_model, read_manifest
 
 def main():
     parser = argparse.ArgumentParser(description="GridLens local development tools")
-    parser.add_argument("command", choices=["init-db", "doctor", "prepare-model", "login"])
-    parser.add_argument("--account", help="registration ID to sign in again (login only)")
+    parser.add_argument(
+        "command", choices=["init-db", "doctor", "prepare-model", "login", "logout"]
+    )
+    parser.add_argument("--account", help="registration ID for login (sign in again) or logout")
     args = parser.parse_args()
     settings = Settings.from_env()
     if args.command == "init-db":
@@ -21,6 +23,8 @@ def main():
         print(f"Database initialized ({settings.mode}).")
     elif args.command == "login":
         _login(settings, args.account)
+    elif args.command == "logout":
+        _logout(settings, args.account)
     elif args.command == "prepare-model":
         # The only command that downloads model files; it runs only when invoked.
         print(f"Downloading {settings.embedding_model} into {settings.local_model_dir} ...")
@@ -76,6 +80,24 @@ def _login(settings: Settings, account: str | None) -> None:
         print("ChatGPT plan usage is authorized for this account.")
     else:
         print("Signed in, but ChatGPT plan usage was not granted; answers stay disabled.")
+
+
+def _logout(settings: Settings, account: str | None) -> None:
+    from gridlens.auth.credentials import FileCredentialStore
+    from gridlens.auth.sessions import SessionManager
+
+    store = FileCredentialStore(settings.auth_dir)
+    matches = [s for s in store.summaries() if account and s.registration_id.startswith(account)]
+    if len(matches) != 1:
+        print("Pass --account with a registration ID prefix shown by login.", file=sys.stderr)
+        raise SystemExit(1)
+    result = SessionManager(store).sign_out(matches[0].registration_id)
+    print(f"Signed out {matches[0].label}; local tokens cleared.")
+    if not result.remote_revocation_confirmed:
+        print(
+            "Remote revocation was not confirmed. You can also disconnect GridLens in "
+            "ChatGPT Settings."
+        )
 
 
 if __name__ == "__main__":

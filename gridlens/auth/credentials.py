@@ -107,14 +107,19 @@ class FileCredentialStore:
             )
         return summaries
 
-    def clear_tokens(self, registration: str) -> None:
+    def clear_tokens(self, registration: str, *, keep_id_token: bool = False) -> None:
+        """Removes usable tokens but keeps the client/host registration for signing in again.
+
+        After a terminal refresh error the ID token may be kept only as an `id_token_hint`;
+        sign-out clears it too.
+        """
         record = self.load(registration)
         self.save(
             record.model_copy(
                 update={
                     "access_token": None,
                     "refresh_token": None,
-                    "id_token": None,
+                    "id_token": record.id_token if keep_id_token else None,
                     "scopes": [],
                     "expires_at": 0,
                 }

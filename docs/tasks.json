@@ -1817,7 +1817,7 @@
       "id": "T35",
       "title": "实现刷新、账户切换与退出",
       "priority": "P0",
-      "status": "todo",
+      "status": "awaiting_input",
       "day": "D4",
       "depends_on": [
         "T34"
@@ -1825,8 +1825,10 @@
       "kind": "implementation",
       "scope_paths": [
         "gridlens/auth/sessions.py",
+        "gridlens/auth/credentials.py",
+        "gridlens/cli.py",
         "tests/unit/test_sessions.py",
-        "tests/live/test_sessions.py"
+        "tests/live/test_live_sessions.py"
       ],
       "objective": "稳定维护订阅会话，失败时停止请求，退出后清除凭证。",
       "steps": [
@@ -1851,12 +1853,18 @@
         "AC-10"
       ],
       "required_inputs": "离线实现合成会话；真实联调需T34本人授权。",
-      "evidence": [],
+      "evidence": [
+        "2026-10-12 核对官方 profiles-and-sessions 与 errors-and-recovery：refresh grant（issued client_id、refresh_token、resource、省略 scope）、旋转 refresh token、按会话串行；撤销使用 discovery revocation_endpoint（token、token_type_hint=refresh_token、client_id），网络/5xx 退避重试，未确认时仍清除本地 tokens 并提示；保留 client_id 与 host ID；临时失败不清除凭证；终止性刷新错误清除 tokens 并要求重新登录。",
+        "tests/unit/test_sessions.py: 19 passed；覆盖新鲜 token 不联网、临近过期刷新的精确表单与完整替换、3 线程并发只刷新 1 次且不复用旋转 token（跨进程 fcntl 锁）、3 种终止错误清除并保留 id_token 提示且不影响其他账户、503/invalid_client/不完整响应/网络失败保留旧凭证、切换账户 epoch 使旧 handle 失效且不混用 token、已退出账户不可选择、退出撤销表单精确并清除全部 tokens 保留注册、撤销网络失败 3 次退避后未确认仍清除、明确拒绝不重试、discovery 不可用/非 issuer 端点/缺失时不发送 token、强制刷新与 CLI logout 参数校验。",
+        "完整离线回归：232 passed, 7 deselected；live 组 3 项均按设计 skip；Ruff、format 与 pip check 通过。",
+        "未运行：真实刷新/退出（等待 T34 真实登录）。live 测试文件命名为 tests/live/test_live_sessions.py（避免与单元测试同名）。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_run",
         "human": "not_required"
-      }
+      },
+      "awaiting": "依赖 T34 本人真实登录；之后运行 APP_MODE=live GRIDLENS_LIVE_SESSION=1 .venv/bin/python -m pytest -m live -k live_sessions -s（可加 GRIDLENS_LIVE_SIGNOUT=1 验证撤销/清除），仅记录脱敏结果。"
     },
     {
       "id": "T36",
@@ -1925,7 +1933,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T35"
+      "T36"
     ],
     "completed_tasks": [
       "T01",
@@ -1958,7 +1966,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 213,
+      "offline_tests_passed": 232,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",
@@ -1967,7 +1975,8 @@
       "local_model": "passed"
     },
     "awaiting_input": [
-      "T34"
+      "T34",
+      "T35"
     ]
   }
 }

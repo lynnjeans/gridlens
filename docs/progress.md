@@ -355,6 +355,34 @@ passed, 6 deselected**; Ruff, format and pip check passed. Not run: manual brows
 Refresh to a new snapshot is T26. Committed and pushed under the user's "Auto, go to the
 end" instruction. Next: T35 sessions (offline; real check needs the T34 sign-in).
 
+## T35 — Session refresh, account switching and sign-out (awaiting real check)
+
+Status: **implemented and verified offline; real refresh/sign-out not run** (task
+`awaiting_input`, needs the T34 sign-in). Official profiles-and-sessions and
+errors-and-recovery pages re-checked 2026-10-12.
+
+`gridlens/auth/sessions.py` `SessionManager`: `select()` validates a connected
+registration and writes `active.json` with an incremented epoch; a `SessionHandle`
+from an older selection is rejected (`ACCOUNT_CHANGED`), so results and tokens never mix
+across accounts. `access_token(handle)` returns the stored token unless it expires within
+5 minutes; `refresh()` holds a per-registration `fcntl` lock (tabs and processes), reloads
+the record, posts `grant_type=refresh_token` with the issued client ID, refresh token and
+resource (no scope), validates the complete rotated set and replaces it atomically.
+Terminal errors (`invalid_grant`, `refresh_token_reused`, …) clear tokens — keeping the ID
+token only as a sign-in hint — and raise `AUTH_EXPIRED`; network/5xx/incomplete
+responses keep credentials (`AUTH_REFRESH_UNAVAILABLE`, retryable); `invalid_client` →
+`AUTH_CLIENT_INVALID`. `sign_out()` first deactivates the account, then revokes the
+refresh token at the discovery `revocation_endpoint` (must be on the issuer) with up to 3
+attempts and 1 s/2 s backoff on network/5xx, then clears access/refresh/ID tokens while
+keeping the client ID and host ID; unconfirmed revocation is reported. CLI:
+`gridlens logout --account <prefix>`.
+
+Checks: `tests/unit/test_sessions.py` **19 passed** (rotation-enforcing mock server,
+3-thread race → exactly one refresh). Full offline regression **232 passed, 7
+deselected**; live tests skip without opt-in; Ruff, format and pip check passed. Not run:
+real refresh/sign-out — after `gridlens login`, run `APP_MODE=live GRIDLENS_LIVE_SESSION=1 .venv/bin/python -m pytest -m live -k live_sessions -s`. Committed and pushed
+(user's "Auto" instruction). Next: T36 account sidebar and model catalog.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as
