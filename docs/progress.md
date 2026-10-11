@@ -305,6 +305,37 @@ check passed. Not run: real browser sign-in — the user chose to run it later w
 `APP_MODE=live .venv/bin/python -m gridlens.cli login` (or `APP_MODE=live GRIDLENS_LIVE_LOGIN=1 .venv/bin/python -m pytest -m live -k login -s`). The account sidebar is T36. At the user's request the T34 offline implementation was
 committed and pushed.
 
+## T20 — Approved-only retrieval (2026-10-12)
+
+Status: **implemented and verified offline and with the real local model**.
+`RetrievalService.retrieve(question, RetrievalFilters)` validates a 3–2000 character
+question, computes eligibility only from SQLite (`eligible_versions`: approved + matching
+approved hash + Ready + Active + index fingerprint) and filters on the reviewed metadata
+frozen with each version: NZ → NZ+GLOBAL, US → US+GLOBAL, GLOBAL → GLOBAL, ALL → all
+including UNKNOWN; optional source types. With no eligible version it calls neither the
+embedding model nor Chroma and reports `no_approved_sources` or `filters_excluded_all`
+with per-region/type exclusion counts (metadata only). Otherwise it embeds the question
+(role query), queries Top-10 with the version whitelist, loads authoritative chunk rows
+from SQLite, drops unknown/other-index/ineligible IDs (`dropped_out_of_scope`), keeps
+relevance order, skips the lower-ranked of adjacent overlapping windows (same version,
+adjacent ordinal, shared segment), and selects at most 5 chunks within 4000 tokens. It
+re-checks eligibility before returning; if everything selected became ineligible the
+reason is `stale_context`. No reranker, hybrid search or confidence percentage.
+
+Schema: migration `002_chunk_segments.sql` adds `chunks.source_segment_ids_json` (needed
+for `ChunkDTO` provenance and overlap detection); the runner now applies numbered
+migrations in order inside one transaction. Ingestion stores segment IDs and only fills
+provenance for rows indexed before 002 (content is never rewritten); retrieval drops such
+legacy rows with `dropped_without_provenance`. `Container.retrieval` is available
+whenever ingestion is.
+
+Checks: `tests/integration/test_retrieval.py` **9 passed** (real temporary Chroma with
+stale vectors for revoked/superseded versions, spy providers, a store returning foreign
+IDs, revocation during the query, reading-order store for overlap). `test_db.py` adds a
+v1→v2 in-place upgrade test. `local_model` **4 passed** — live wiring returns the approved
+"load forecast" chunk. Full offline regression **208 passed, 6 deselected**; Ruff, format
+and pip check passed. At the user's request T20 was committed and pushed. Next: T19 Knowledge Base page or T35.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

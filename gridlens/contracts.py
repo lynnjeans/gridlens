@@ -211,6 +211,19 @@ class VectorHit(DTO):
     distance: float
 
 
+class RetrievalFilters(DTO):
+    # NZ/US include explicitly GLOBAL material; ALL is the only choice that admits UNKNOWN.
+    region: Literal["NZ", "US", "GLOBAL", "ALL"] = "NZ"
+    source_types: list[
+        Literal["policy", "technical", "paper", "industry_report", "product", "unknown"]
+    ] = Field(default_factory=list)
+
+    def jurisdictions(self) -> set[str] | None:
+        if self.region == "ALL":
+            return None
+        return {self.region, "GLOBAL"}
+
+
 class RetrievalContext(DTO):
     chunks: list[ChunkDTO]
     eligible_version_ids: list[str]

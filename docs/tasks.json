@@ -1046,7 +1046,7 @@
       "id": "T20",
       "title": "实现仅限批准版本的检索",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D5",
       "depends_on": [
         "T18"
@@ -1054,8 +1054,15 @@
       "kind": "implementation",
       "scope_paths": [
         "gridlens/services/retrieval.py",
-        "gridlens/repositories/sources.py",
-        "tests/integration/test_retrieval.py"
+        "gridlens/repositories/research.py",
+        "gridlens/contracts.py",
+        "gridlens/bootstrap.py",
+        "gridlens/db.py",
+        "gridlens/migrations/002_chunk_segments.sql",
+        "gridlens/services/ingestion.py",
+        "tests/integration/test_retrieval.py",
+        "tests/integration/test_db.py",
+        "tests/local_model/test_local_ingestion_smoke.py"
       ],
       "objective": "为生成模型提供有资格、有限量、可定位的正文上下文。",
       "steps": [
@@ -1081,12 +1088,20 @@
         "AC-09"
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
-      "evidence": [],
+      "evidence": [
+        "tests/integration/test_retrieval.py: 9 passed（真实临时 Chroma + fake embedding）；混合状态语料中 Pending/Rejected/Failed/Revoked/Superseded 永不进入上下文（Revoked/Superseded 在 Chroma 留有旧向量）；NZ=NZ+GLOBAL、US=US+GLOBAL、GLOBAL 仅 GLOBAL、UNKNOWN 仅 ALL 时包含、类型筛选与排除诊断；空库与筛选全排除时不调用 embedding/向量库；store 返回未知/越界 ID 被丢弃并计数；查询中途撤销经复查丢弃并标 stale_context；最多 5 块、token 预算、相邻重叠窗口取高排名；正文/定位取自 SQLite；缺少 provenance 的旧行被丢弃；问题长度校验。",
+        "迁移 002 增加 chunks.source_segment_ids_json；迁移执行器改为按序应用；tests/integration/test_db.py 新增 v1 数据库原地升级测试。入库写入 segment IDs，并仅为旧行补齐 provenance（正文不改写）。",
+        "local_model（禁网，真实 BGE + Chroma，live 装配）：4 passed；Container.retrieval 返回含 load forecast 的已批准块。",
+        "完整离线回归：208 passed, 6 deselected；Ruff、format 与 pip check 通过。",
+        "与卡片差异：查询方法放在 repositories/research.py（eligible 谓词已在此），未改 repositories/sources.py。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
-        "human": "not_required"
-      }
+        "human": "not_required",
+        "local_model": "passed"
+      },
+      "completed_at": "2026-10-12"
     },
     {
       "id": "T21",
@@ -1883,7 +1898,7 @@
       }
     }
   ],
-  "updated_at": "2026-10-11",
+  "updated_at": "2026-10-12",
   "architecture": {
     "ui": "local_streamlit",
     "generation": "chatgpt_oauth_plan_usage",
@@ -1896,12 +1911,12 @@
   },
   "implementation_started_at": "2026-10-11",
   "handoff": {
-    "updated_at": "2026-10-11",
+    "updated_at": "2026-10-12",
     "timezone": "Pacific/Auckland",
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T20",
+      "T19",
       "T35"
     ],
     "completed_tasks": [
@@ -1923,6 +1938,7 @@
       "T16",
       "T17",
       "T18",
+      "T20",
       "T33"
     ],
     "repository": {
@@ -1933,7 +1949,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 198,
+      "offline_tests_passed": 208,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

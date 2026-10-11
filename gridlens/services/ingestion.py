@@ -154,9 +154,12 @@ class IngestionService:
         )
         model_id = self.embedding_identity.get("model_id", "unknown")
         with self.db.transaction() as c:
-            # Chunks of a published version may be cited, so rows are never rewritten.
+            # Chunks of a published version may be cited, so content is never rewritten;
+            # only provenance missing from rows indexed before migration 002 is filled in.
             c.executemany(
-                "INSERT OR IGNORE INTO chunks VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO chunks VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE "
+                "SET source_segment_ids_json=excluded.source_segment_ids_json "
+                "WHERE chunks.source_segment_ids_json='[]'",
                 [
                     (
                         chunk.chunk_id,
@@ -170,6 +173,7 @@ class IngestionService:
                         chunk.token_count,
                         model_id,
                         self.dimensions,
+                        json.dumps(chunk.source_segment_ids),
                     )
                     for chunk in chunks
                 ],

@@ -6,7 +6,7 @@ import pytest
 
 from gridlens.bootstrap import build_container
 from gridlens.config import Settings
-from gridlens.contracts import FetchedDocument, SearchHitDTO
+from gridlens.contracts import FetchedDocument, RetrievalFilters, SearchHitDTO
 from gridlens.documents.snapshots import SnapshotService
 from gridlens.errors import AppError
 from gridlens.providers.local_embeddings import read_manifest
@@ -69,4 +69,9 @@ def test_live_ingestion_publishes_and_whitelist_search_finds_it(tmp_path):
     hits = app.vectors.query(query.vectors[0], eligible, 5)
     assert hits and len(hits) == result.indexed_chunks
     assert app.vectors.query(query.vectors[0], [], 5) == []
+    context = app.retrieval.retrieve(
+        "What must a data centre submit before studies?", RetrievalFilters()
+    )
+    assert context.chunks and {c.version_id for c in context.chunks} == {preview.version_id}
+    assert "load forecast" in context.chunks[0].text
     print(f"chunks={result.indexed_chunks} top_distance={hits[0].distance:.3f}")

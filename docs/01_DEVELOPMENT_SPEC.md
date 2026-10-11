@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T18、T33 完成；检索、授权和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T18、T20、T33 完成，T34 待真实登录；会话、生成和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -191,7 +191,7 @@ Embedding 与生成独立：本地检索不消耗 ChatGPT 订阅额度；生成�
 | `document_versions` | `source_id, raw_sha256, snapshot_sha256, raw_path, segments_path, metadata_json, published_at?, fetched_at, extraction_notes_json, review_status, ingestion_status, version_status, approved_snapshot_sha256?, index_fingerprint?, created_at` | UNIQUE(source_id, snapshot_sha256)；批准 hash 必须匹配当前快照 |
 | `review_events` | `version_id, action, reviewer_label, reason?, created_at` | 拒绝必须 reason；历史只追加 |
 | `ingestion_runs` | `operation_key, version_id, stage, status, attempt INTEGER, expected_chunks INTEGER, indexed_chunks INTEGER, started_at, finished_at?, error_code?` | operation_key UNIQUE；status=`processing/completed/failed` |
-| `chunks` | `version_id, index_fingerprint, ordinal INTEGER, text, heading_path_json, locator_json, text_sha256, token_count INTEGER, embedding_model, embedding_dimension INTEGER` | UNIQUE(version_id, index_fingerprint, ordinal)；正文可来自已批准快照 |
+| `chunks` | `version_id, index_fingerprint, ordinal INTEGER, text, heading_path_json, locator_json, text_sha256, token_count INTEGER, embedding_model, embedding_dimension INTEGER, source_segment_ids_json`（迁移 002） | UNIQUE(version_id, index_fingerprint, ordinal)；正文可来自已批准快照 |
 | `qa_records` | `operation_key, question, filters_json, execution_status, evidence_status?, answer_json?, context_chunk_ids_json, context_version_ids_json, model_id?, output_mode?, account_registration_ref?, prompt_version, index_fingerprint?, created_at, latency_ms INTEGER, usage_json, error_code?` | operation_key UNIQUE；execution_status=`completed/failed/stale_context`；evidence_status=`answered/partial/insufficient` 或 null |
 | `citations` | `qa_id, claim_ref, chunk_id, quoted_span, locator_snapshot_json, source_metadata_snapshot_json` | UNIQUE(qa_id, claim_ref, chunk_id)；引用内容不可被新版本覆盖 |
 | `knowledge_gaps` | `qa_id, gap_key, question, scope_json, reason_type, missing_evidence, suggested_queries_json, status, resolution_note?, created_at, updated_at` | status=`open/resolved/dismissed`；仅 open 的 gap_key 唯一 |
@@ -383,6 +383,8 @@ SQLite 与 Chroma 不共享事务，使用“向量先写、数据库最后发�
 5. embed 问题，使用 version ID 白名单查询 Top-10；拒绝 provider 返回的越界 IDs；从数据库加载块。
 6. 保留按相关性排序的块；同文档相邻重叠内容优先取较高项，选最多 5 块且总正文 tokens 不超过 4000。不合并成一个无法定位的新块。
 7. 进入 LLM 之前重新计算资格，过滤失效块；全部失效则返回 stale_context 或重新开始一次完整用户操作，不在本次偷偷换成未审核证据。
+
+实现（2026-10-12）：`RetrievalFilters(region=NZ|US|GLOBAL|ALL, source_types=[])`；NZ/US 含 GLOBAL，GLOBAL 仅 GLOBAL，仅 ALL 含 UNKNOWN。诊断字段：approved_versions、eligible_versions、excluded_by_region、excluded_by_type、vector_hits、dropped_out_of_scope、skipped_overlapping、skipped_over_budget、context_tokens、dropped_after_recheck、reason（no_approved_sources / filters_excluded_all / no_relevant_chunks / stale_context）。相邻重叠 = 同版本、ordinal 相邻且共享 segment；segment IDs 存于迁移 002 的 `chunks.source_segment_ids_json`。
 
 默认不设置通用相似度门槛。语义上是否回答了问题由回答模型在给定证据中判断，随后用人工评估验证；距离不是答案正确概率。
 

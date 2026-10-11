@@ -25,6 +25,7 @@ from gridlens.repositories.research import ResearchRepository
 from gridlens.repositories.sources import SourceRepository
 from gridlens.services.discovery import DiscoveryService
 from gridlens.services.ingestion import IngestionService
+from gridlens.services.retrieval import RetrievalService
 from gridlens.services.review import ReviewService
 
 
@@ -44,6 +45,7 @@ class Container:
     snapshots: SnapshotService
     review: ReviewService
     ingestion: IngestionService | None
+    retrieval: RetrievalService | None
 
 
 def build_container(settings: Settings) -> Container:
@@ -71,11 +73,25 @@ def build_container(settings: Settings) -> Container:
     )
     review = ReviewService(db, source_repository, settings.data_dir)
     embeddings, vectors, ingestion = _indexing(settings, db, review)
+    research = ResearchRepository(db)
+    retrieval = (
+        RetrievalService(
+            research,
+            embeddings=embeddings,
+            vectors=vectors,
+            index_fingerprint=ingestion.fingerprint,
+            top_k=settings.retrieval_top_k,
+            context_k=settings.context_top_k,
+            max_context_tokens=settings.max_context_tokens,
+        )
+        if ingestion
+        else None
+    )
     return Container(
         settings=settings,
         db=db,
         sources=source_repository,
-        research=ResearchRepository(db),
+        research=research,
         qa=QARepository(db),
         credentials=FileCredentialStore(settings.auth_dir),
         search=search,
@@ -100,6 +116,7 @@ def build_container(settings: Settings) -> Container:
         ),
         review=review,
         ingestion=ingestion,
+        retrieval=retrieval,
     )
 
 

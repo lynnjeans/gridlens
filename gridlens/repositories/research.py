@@ -42,3 +42,15 @@ class ResearchRepository:
                 if jurisdiction is None
                 or (json.loads(r["metadata_json"]).get("jurisdiction") in {jurisdiction, "GLOBAL"})
             ]
+
+    def chunks_by_ids(self, chunk_ids: list[str], fingerprint: str) -> dict[str, dict]:
+        """Authoritative chunk rows (text, locator, provenance) for one index configuration."""
+        if not chunk_ids:
+            return {}
+        placeholders = ",".join("?" for _ in chunk_ids)
+        with self.db.connect() as c:
+            rows = c.execute(
+                f"SELECT * FROM chunks WHERE index_fingerprint=? AND id IN ({placeholders})",
+                (fingerprint, *chunk_ids),
+            )
+            return {row["id"]: dict(row) for row in rows}

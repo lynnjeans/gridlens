@@ -857,7 +857,7 @@
 
 ## T20 — 实现仅限批准版本的检索
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D5 / implementation
 **依赖：** T18
 **PRD 对应：** AC-04, AC-05, AC-09
@@ -867,9 +867,10 @@
 
 ### 文件范围
 
-- `gridlens/services/retrieval.py`
-- `gridlens/repositories/sources.py`
-- `tests/integration/test_retrieval.py`
+- `gridlens/services/retrieval.py`、`gridlens/contracts.py`（RetrievalFilters）、`gridlens/bootstrap.py`
+- `gridlens/repositories/research.py`（chunks_by_ids；eligible 谓词已在此，未改 sources.py）
+- `gridlens/migrations/002_chunk_segments.sql`、`gridlens/db.py`（按序迁移）、`gridlens/services/ingestion.py`（写入 segment IDs）
+- `tests/integration/test_retrieval.py`、`tests/integration/test_db.py`
 
 ### 实现步骤
 
@@ -892,9 +893,9 @@
 
 - 不实现 reranker、混合检索或所谓可信度百分比。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, local_model=passed, live=not_required, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/integration/test_retrieval.py` 9 项通过（混合状态且留有旧向量、地区/类型规则与诊断、空库与全排除不调用模型、越界 ID 丢弃、中途撤销复查、5 块与 token 预算、相邻重叠去重、正文取自 SQLite）。迁移 002 与 v1 升级测试通过。禁网真实 BGE + Chroma 检索 smoke 通过。完整回归 208 passed、6 deselected；Ruff/format/pip check 通过。
 
 ## T21 — 实现订阅授权的流式回答 Provider
 

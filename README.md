@@ -11,7 +11,9 @@ public URL as a pending lead. Bounded capture, HTML/PDF extraction, immutable sn
 and review-state rules are connected to the Review page (capture, preview, metadata
 correction, approve/reject/revoke/reopen). Approving a version on the Review page indexes it
 (deterministic chunking, pinned local BGE embeddings, local Chroma) and publishes it as
-Ready/Active only after a complete, verified index; live indexing needs `prepare-model`. Retrieval, ChatGPT generation
+Ready/Active only after a complete, verified index; live indexing needs `prepare-model`.
+Approved-only retrieval (SQLite eligibility whitelist, reviewed-metadata region rules) is
+implemented as a service. ChatGPT generation
 and real Q&A are **not connected yet**. No grid calculation or pandapower/OpenDSS is included.
 
 ## Run locally
@@ -84,7 +86,7 @@ chromadb 1.5.9) is locked too; it runs locally with telemetry off and never uses
 embedding model.
 
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
-Next development milestone: T20 (approved-only retrieval). The current
+Next development milestone: T19 (Knowledge Base page) or T35 (sessions). The current
 source can be obtained from the configured GitHub repository.
 
 Read `docs/01_DEVELOPMENT_SPEC.md`, `docs/tasks.json` and `docs/progress.md` for

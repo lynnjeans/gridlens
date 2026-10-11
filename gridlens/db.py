@@ -6,6 +6,9 @@ from datetime import UTC, datetime
 from importlib.resources import files
 from pathlib import Path
 
+# Forward-only, applied in order; never edit a shipped migration.
+MIGRATIONS = ("001_initial.sql", "002_chunk_segments.sql")
+
 
 def now() -> str:
     return datetime.now(UTC).isoformat()
@@ -38,7 +41,6 @@ class Database:
 
     def initialize(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        migration = files("gridlens").joinpath("migrations/001_initial.sql").read_text()
         with self.connect() as c:
             c.execute("BEGIN IMMEDIATE")
             try:
@@ -46,13 +48,16 @@ class Database:
                     "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_migrations'"
                 ).fetchone()
                 versions = (
-                    [r[0] for r in c.execute("SELECT version FROM schema_migrations")]
+                    {r[0] for r in c.execute("SELECT version FROM schema_migrations")}
                     if (exists)
-                    else []
+                    else set()
                 )
-                if any(v > 1 for v in versions):
+                if any(v > len(MIGRATIONS) for v in versions):
                     raise RuntimeError("Database schema is newer than this application")
-                if 1 not in versions:
+                for version, name in enumerate(MIGRATIONS, start=1):
+                    if version in versions:
+                        continue
+                    migration = files("gridlens").joinpath(f"migrations/{name}").read_text()
                     # executescript commits implicitly, so execute statements individually.
                     statement = ""
                     for line in migration.splitlines(keepends=True):
@@ -60,7 +65,7 @@ class Database:
                         if sqlite3.complete_statement(statement):
                             c.execute(statement)
                             statement = ""
-                    c.execute("INSERT INTO schema_migrations VALUES (?, ?)", (1, now()))
+                    c.execute("INSERT INTO schema_migrations VALUES (?, ?)", (version, now()))
                 c.commit()
             except BaseException:
                 c.rollback()

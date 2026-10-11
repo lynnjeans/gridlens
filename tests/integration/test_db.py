@@ -59,7 +59,31 @@ def test_initialize_idempotent_persistent_and_parameterized(db):
     reopened = Database(db.path)
     assert SourceRepository(reopened).list_sources()[0]["title"] == title
     with reopened.connect() as c:
-        assert c.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0] == 1
+        assert c.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0] == 2
+
+
+def test_version_one_database_upgrades_in_place(tmp_path):
+    from importlib.resources import files
+
+    path = tmp_path / "old.sqlite3"
+    with sqlite3.connect(path) as c:
+        c.executescript(files("gridlens").joinpath("migrations/001_initial.sql").read_text())
+        c.execute("INSERT INTO schema_migrations VALUES (1, 'then')")
+        c.execute(
+            "INSERT INTO sources VALUES ('s','https://a.example','https://a.example','t',NULL,"
+            "'unknown','NZ','[]','unknown','then')"
+        )
+    database = Database(path)
+    database.initialize()
+    database.initialize()
+    with database.connect() as c:
+        assert [r[0] for r in c.execute("SELECT version FROM schema_migrations ORDER BY 1")] == [
+            1,
+            2,
+        ]
+        columns = {r["name"] for r in c.execute("PRAGMA table_info(chunks)")}
+        assert "source_segment_ids_json" in columns
+        assert c.execute("SELECT title FROM sources").fetchone()[0] == "t"
 
 
 def test_foreign_key_unique_active_and_transaction_rollback(db):
