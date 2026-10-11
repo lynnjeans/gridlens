@@ -19,6 +19,7 @@ class Settings(BaseModel):
     mode: Literal["fixture", "live"] = "fixture"
     data_dir: Path | None = None
     auth_dir: Path | None = None
+    local_model_dir: Path | None = None
     tavily_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
     chatgpt_model_slug: str = ""
     embedding_model: str = "BAAI/bge-small-en-v1.5"
@@ -62,6 +63,8 @@ class Settings(BaseModel):
         object.__setattr__(self, "project_root", root)
         object.__setattr__(self, "data_dir", data)
         object.__setattr__(self, "auth_dir", auth.resolve())
+        model_dir = self.local_model_dir or root / "models"
+        object.__setattr__(self, "local_model_dir", model_dir.resolve())
         return self
 
     @classmethod
@@ -81,7 +84,7 @@ class Settings(BaseModel):
                     value if name != "normalize_embeddings" else str(value).lower() == "true"
                 )
         values["mode"] = env.get("APP_MODE", "fixture")
-        for name in ("data_dir", "auth_dir"):
+        for name in ("data_dir", "auth_dir", "local_model_dir"):
             if name in values:
                 path = Path(values[name]).expanduser()
                 values[name] = path if path.is_absolute() else project_root / path

@@ -9,7 +9,8 @@ milestone is implemented: the local web UI can search through Tavily when config
 store deduplicated candidate sources, select a source for review, and manually add a
 public URL as a pending lead. Bounded capture, HTML/PDF extraction, immutable snapshots
 and review-state rules are connected to the Review page (capture, preview, metadata
-correction, approve/reject/revoke/reopen). Indexing, ChatGPT OAuth
+correction, approve/reject/revoke/reopen). Pinned local BGE embeddings are implemented
+but not yet used for indexing. Indexing, ChatGPT OAuth
 and real Q&A are **not connected yet**. No grid calculation or pandapower/OpenDSS is included.
 
 ## Run locally
@@ -54,17 +55,25 @@ Future generation uses the official **Sign in with ChatGPT** plan-usage flow, wi
 the user's consent. It does not need an OpenAI platform API key. Tokens must live
 outside this repository in an owner-only user configuration directory; the first
 milestone implements storage but does not request or create a real session.
-Source discovery uses a separate Tavily search key. Embeddings will use a pinned
-local BGE model, downloaded explicitly in a later task. Neither model weights nor
-heavy model libraries are installed during this foundation milestone.
+Source discovery uses a separate Tavily search key. Embeddings use a pinned local
+`BAAI/bge-small-en-v1.5` model on CPU. Download it once, explicitly (about 134 MB, into
+the git-ignored `models/` or `LOCAL_MODEL_DIR`):
 
-`requirements.lock` pins the installed foundation/dev/auth dependencies on Python
-3.12. `requirements.lock` is generated from `pyproject.toml` with uv pip compile;
-commands and resolved environment details are in `docs/progress.md`. Model dependencies
-are declared in the optional `models` extra and will be locked/verified when implemented.
+```bash
+python -m gridlens.cli prepare-model
+python -m pytest -m local_model -q
+```
+
+Normal runs only load local files; nothing is downloaded automatically. The command
+prints the resolved commit, which can be pinned as `EMBEDDING_REVISION` in `.env`.
+
+`requirements.lock` pins the installed core/dev/auth/embeddings dependencies on Python
+3.12 (resolved on macOS; includes torch). `requirements.lock` is generated from `pyproject.toml` with uv pip compile;
+commands and resolved environment details are in `docs/progress.md`. Chroma is declared in
+the optional `vectors` extra and will be locked when T17 is implemented.
 
 For an AI handoff, read root `AGENTS.md` and `docs/HANDOFF.md` first.
-Next development milestone: T16 (local embeddings). The current
+Next development milestone: T15 (token chunking). The current
 source can be obtained from the configured GitHub repository.
 
 Read `docs/01_DEVELOPMENT_SPEC.md`, `docs/tasks.json` and `docs/progress.md` for

@@ -20,7 +20,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "ruff>=0.11,<1", "pytest-socket>=0.7,<1"]
 auth = ["PyJWT[crypto]>=2.10,<3", "openai>=2,<3"]
-models = ["sentence-transformers>=4,<6", "chromadb>=1,<2"]
+embeddings = ["sentence-transformers>=6.1,<7"]
+vectors = ["chromadb>=1,<2"]
+models = ["gridlens[embeddings,vectors]"]
 
 [project.scripts]
 gridlens = "gridlens.cli:main"

@@ -41,3 +41,5 @@ T01–T05、T33 完成，42项离线测试通过；四页本地浏览器导航�
 按用户明确要求，将当前 T01–T10、T33 实现、测试和同步文档提交并推送至现有 `lynnjeans/gridlens` 仓库的 `master`。推送前确认远端无分支、运行数据与凭证路径被忽略，未发现真实密钥。未创建 PR 或部署。
 
 完成 T14：Review 页面接通捕获、正文预览、元数据修正（重算 hash）、hash 绑定与过期重新加载、Approve/Reject/Revoke/Reopen 和审核历史；fixture 模式使用合成文档获取器。8 项 AppTest 与 7 项审核集成测试通过；完整回归 123 passed、1 live deselected。批准后入库待 T18。
+
+完成 T16：固定 revision 的本地 bge-small-en-v1.5 embedding（仅本地加载、长度预检、16 批、归一化与维度校验）和显式 `prepare-model`；`models` extra 拆为 `embeddings`/`vectors`，锁定 sentence-transformers 6.1.0。17 项单元测试与 2 项禁网真实模型 smoke 通过（revision `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`）；完整回归 140 passed、3 deselected。

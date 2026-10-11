@@ -4,7 +4,7 @@
 
 ## 1. 文档用途与范围
 
-本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T14、T33 完成；入库、授权和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
+本文件将 `00_PRD.md` 转成实现约定；`02_AI_TASKS.md` 将实现拆成 36 个任务；`03_AI_EXECUTION_GUIDE.md` 定义如何逐个交给 AI 开发。应用现已建立独立本地仓库，T01–T14、T16、T33 完成；分块、入库、授权和问答等后续功能仍待实施。实际证据见 progress.md，真实服务与研究评估尚未执行。
 
 产品范围遵循 PRD：公开来源自动发现 → 人工审核 → 文本型 HTML/PDF 入库 → 已批准资料检索 → 带引用问答 → 知识缺口与 Markdown 导出。默认 NZ、英文资料、单操作者、本地运行。保留 PRD 的 FR-01–FR-10、AC-01–AC-10 和 R01–R15 编号。
 
@@ -162,7 +162,7 @@ T21 的 HTTP 生成请求必须满足：
 
 ### 3.4 本地 embedding 与模型准备
 
-默认 SentenceTransformers + `BAAI/bge-small-en-v1.5`，CPU 推理、384 维、归一化向量。初次显式下载后记录实际 revision，正常运行使用固定本地缓存、`local_files_only=true`、`trust_remote_code=false`；缺缓存报 `LOCAL_MODEL_MISSING`，不悄悄联网下载。测试分 fake 与真实本地模型 smoke；后者不需要 ChatGPT 登录或平台 key。[模型卡](https://huggingface.co/BAAI/bge-small-en-v1.5)、[SentenceTransformers](https://sbert.net/docs/sentence_transformer/usage/usage.html)
+默认 SentenceTransformers + `BAAI/bge-small-en-v1.5`，CPU 推理、384 维、归一化向量。初次显式下载后记录实际 revision，正常运行使用固定本地缓存、`local_files_only=true`、`trust_remote_code=false`；缺缓存报 `LOCAL_MODEL_MISSING`，不悄悄联网下载。实现：`gridlens prepare-model` 是唯一下载入口，只取 SentenceTransformers 所需文件到 `LOCAL_MODEL_DIR`（默认 git 忽略的 `models/`），要求解析为 40 位 commit，并写 `gridlens-model.json` 清单（revision、tokenizer revision、维度、512 上限、prefix）；运行时按本地快照路径加载。query 使用模型卡指令 `Represent this sentence for searching relevant passages: `，文档无 prefix。依赖：`embeddings` extra 为 `sentence-transformers>=6.1,<7`（2026-10-11 锁定 6.1.0），Chroma 在 `vectors` extra。2026-10-11 实际准备 revision `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`。测试分 fake 与真实本地模型 smoke；后者不需要 ChatGPT 登录或平台 key。[模型卡](https://huggingface.co/BAAI/bge-small-en-v1.5)、[SentenceTransformers](https://sbert.net/docs/sentence_transformer/usage/usage.html)
 
 该默认模型面向英文，最大输入 512 tokens；分块采用其 tokenizer 的 350/50 起始值，计入标题、special tokens 后验证长度。问题使用模型建议的 retrieval query prefix，文档不用；prefix 与归一化策略固定到 fingerprint。长问题不得静默 truncate，提示缩短问题。中文备注可用，中文检索质量不属于首版验收。
 

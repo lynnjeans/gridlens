@@ -153,6 +153,43 @@ six later runs (likely a cold-start AppTest timeout). No manual browser check, l
 capture or real source review was run. At the user's request T13 and T14 were committed
 and pushed to `origin/master`. Next task: T16 local embeddings (T16 → T15, T17 → T18).
 
+## T16 — Local embeddings and model preparation
+
+Status: **implemented and verified offline and with the real local model**.
+`LocalEmbeddingProvider` loads a prepared SentenceTransformers snapshot by local path
+with `local_files_only=True`, `trust_remote_code=False` and CPU inference, only on first
+use (importing the app does not import torch). It rejects empty input, counts tokens with
+the model's own tokenizer including special tokens and rejects inputs over the model limit
+before encoding (no truncation), encodes in batches of at most 16 with normalization, and
+validates vector count, dimension, finite values and unit norm. Queries use the BGE v1.5
+model-card instruction prefix; documents use none. The fingerprint covers model,
+revision, tokenizer revision, dimensions, limit, prefixes, normalization and device.
+Missing manifest/files or a revision differing from `EMBEDDING_REVISION` raises
+`LOCAL_MODEL_MISSING`. Fixture mode still uses the fake provider; the local provider is
+not yet wired into bootstrap or ingestion (T18).
+
+`gridlens prepare-model` is the only download path. It fetches only the files needed by
+SentenceTransformers into `LOCAL_MODEL_DIR` (default git-ignored `models/`), requires a
+40-hex commit, checks the dimension, and writes `models/gridlens-model.json`.
+
+With the user's approval: the `models` extra was split into `embeddings`
+(`sentence-transformers>=6.1,<7`) and `vectors` (chromadb, still for T17).
+`.venv/bin/uv pip compile pyproject.toml --extra dev --extra auth --extra embeddings
+--python .venv/bin/python --output-file requirements.lock` added sentence-transformers
+6.1.0, torch 2.14.1, transformers 5.19.0, huggingface-hub 1.33.0 and their dependencies
+(existing pins unchanged), installed with `uv pip install -r requirements.lock`. The lock
+is resolved for this macOS/Python 3.12 environment. A dry run listed 10 files (134.4 MB);
+`prepare-model` then recorded revision `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`, 384 dimensions, 512 tokens.
+
+Checks: `tests/unit/test_embeddings.py` **17 passed** (injected fake model).
+`pytest -m local_model` with IP sockets still blocked: **2 passed** — 384-dim normalized
+vectors, reproducible output, over-long input rejected; a grid query scored 0.656 against
+a grid passage and 0.258 against an unrelated one. Full offline regression **140 passed,
+3 deselected**; Ruff, format and pip check passed. Before asking, one `pip download` probe
+resolved sentence-transformers 6.1.0 metadata and failed before saving a file. No ChatGPT
+login, Chroma or ingestion was run. At the user's request T16 was committed and pushed
+to `origin/master`. Next task: T15 chunking.
+
 ## Repository publication — 2026-10-11
 
 The user explicitly requested publication. Before committing, `origin` was verified as

@@ -813,7 +813,7 @@
       "id": "T16",
       "title": "实现本地 embedding 与模型准备",
       "priority": "P0",
-      "status": "todo",
+      "status": "done",
       "day": "D4",
       "depends_on": [
         "T02",
@@ -823,8 +823,12 @@
       "scope_paths": [
         "gridlens/providers/local_embeddings.py",
         "gridlens/cli.py",
+        "gridlens/config.py",
+        "pyproject.toml",
+        "requirements.lock",
+        ".env.example",
         "tests/unit/test_embeddings.py",
-        "tests/local_model/test_embeddings.py"
+        "tests/local_model/test_local_embeddings_smoke.py"
       ],
       "objective": "用固定本地缓存模型生成文档和查询向量，正常推理不出网。",
       "steps": [
@@ -849,12 +853,20 @@
         "AC-04"
       ],
       "required_inputs": "离线 mock 无凭证；实际模型 smoke 需首次下载的固定本地模型缓存，无 ChatGPT 登录或平台 key。",
-      "evidence": [],
+      "evidence": [
+        "tests/unit/test_embeddings.py: 17 passed（fake 模型注入）；覆盖缺缓存/revision 不符不加载、构造不加载、query prefix 仅用于 query、fingerprint 共享、16 项批次顺序与可复现、空输入、超长先拒绝、NaN/数量/未归一化/维度错误、loader 参数 local_files_only=True/trust_remote_code=False、prepare-model 记录 commit 与拒绝分支名/错维度。",
+        "显式下载：sentence-transformers 6.1.0（torch 2.14.1、transformers 5.19.0、huggingface-hub 1.33.0 等）按 embeddings extra 锁定；gridlens prepare-model 下载 BAAI/bge-small-en-v1.5 的 10 个文件（134.4 MB）到 git 忽略的 models/，revision 5c38ec7c405ec4b44b94cc5a9bb96e735b38267a。",
+        "pytest -m local_model（默认 --disable-socket 仍生效）：2 passed；实际 384 维、max_seq_length 512、向量归一化、重复结果一致、超长输入 EMBEDDING_INPUT_TOO_LONG；相关段落相似度 0.656 对无关段落 0.258。",
+        "完整离线回归：140 passed, 3 deselected；Ruff、format 与 pip check 通过；导入 bootstrap 不加载 torch。",
+        "真实 smoke 文件命名为 tests/local_model/test_local_embeddings_smoke.py，避免与单元测试同 basename 冲突。provider 尚未接入 bootstrap/入库（T18）。"
+      ],
       "validation_state": {
-        "offline": "not_run",
+        "offline": "passed",
         "live": "not_required",
-        "human": "not_required"
-      }
+        "human": "not_required",
+        "local_model": "passed"
+      },
+      "completed_at": "2026-10-11"
     },
     {
       "id": "T17",
@@ -1850,7 +1862,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T16"
+      "T15"
     ],
     "completed_tasks": [
       "T01",
@@ -1867,6 +1879,7 @@
       "T12",
       "T13",
       "T14",
+      "T16",
       "T33"
     ],
     "repository": {
@@ -1877,12 +1890,13 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 123,
+      "offline_tests_passed": 140,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",
       "live": "not_run",
-      "human_research_acceptance": "not_run"
+      "human_research_acceptance": "not_run",
+      "local_model": "passed"
     }
   }
 }

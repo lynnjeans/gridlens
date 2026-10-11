@@ -690,7 +690,7 @@
 
 ## T16 — 实现本地 embedding 与模型准备
 
-**优先级/状态：** P0 / todo
+**优先级/状态：** P0 / done
 **日程/类别：** D4 / implementation
 **依赖：** T02, T04
 **PRD 对应：** AC-03, AC-04
@@ -701,9 +701,10 @@
 ### 文件范围
 
 - `gridlens/providers/local_embeddings.py`
-- `gridlens/cli.py`
+- `gridlens/cli.py`（`prepare-model`、doctor 模型状态）、`gridlens/config.py`（`LOCAL_MODEL_DIR`）
+- `pyproject.toml`（`embeddings`/`vectors` extra）、`requirements.lock`、`.env.example`
 - `tests/unit/test_embeddings.py`
-- `tests/local_model/test_embeddings.py`
+- `tests/local_model/test_local_embeddings_smoke.py`（原定文件名与单元测试同名冲突）
 
 ### 实现步骤
 
@@ -726,9 +727,9 @@
 
 - 不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。
 
-**验证状态：** offline=not_run, live=not_required, human=not_required
+**验证状态：** offline=passed, local_model=passed, live=not_required, human=not_required
 
-**执行证据：** 尚无；完成开发后填写实际结果。
+**执行证据：** `tests/unit/test_embeddings.py` 17 项通过（缓存缺失、role/prefix、长度、有限数值、批次顺序、维度、本地-only loader、prepare-model）。经用户批准下载 sentence-transformers 6.1.0 依赖并锁定，`gridlens prepare-model` 下载 bge-small-en-v1.5（10 文件 134.4 MB）revision `5c38ec7c405ec4b44b94cc5a9bb96e735b38267a`。禁网 `pytest -m local_model` 2 项通过：384 维、512 tokens、归一化、可复现、超长拒绝。完整回归 140 passed、3 deselected；Ruff/format/pip check 通过。provider 尚未接入入库（T18）。
 
 ## T17 — 实现 Chroma 向量存储适配器
 
