@@ -1,0 +1,27 @@
+{
+  "synthetic": true,
+  "pdfs": [
+    {
+      "file": "readable.pdf",
+      "pages": 2,
+      "text_by_page": [
+        "Synthetic application stage.",
+        "Synthetic review stage."
+      ]
+    },
+    {
+      "file": "scan.pdf",
+      "pages": 1,
+      "text_by_page": [
+        ""
+      ]
+    }
+  ],
+  "files": [
+    "readable.html",
+    "instruction_interference.html",
+    "empty.html",
+    "scenarios.json",
+    "corrupt.pdf"
+  ]
+}

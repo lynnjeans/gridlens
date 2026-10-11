@@ -1,0 +1,99 @@
+{
+  "synthetic": true,
+  "duplicate_urls": [
+    "https://synthetic.example/guide",
+    "https://synthetic.example/guide#section"
+  ],
+  "parameter_urls": [
+    "https://synthetic.example/guide?utm_source=test",
+    "https://synthetic.example/guide?revision=2"
+  ],
+  "blocked_redirect": "http://127.0.0.1/private",
+  "versions": [
+    "Synthetic old edition.",
+    "Synthetic revised edition."
+  ],
+  "review_states": [
+    "pending",
+    "approved",
+    "rejected",
+    "revoked"
+  ],
+  "oauth": {
+    "state": "synthetic-state",
+    "nonce": "synthetic-nonce",
+    "client_id": "issued-synthetic-1",
+    "jwks": {
+      "keys": [
+        {
+          "kty": "RSA",
+          "key_ops": [
+            "verify"
+          ],
+          "n": "mG5uCMo9_L4HjRWwODh4cA7wDXve4v-YlNkH7-Gs0iA8m0WEzKW9Y1wnpfAl7VbFmBml6NyapS7w4DE4bYkCwrculG-CdmU5kacxTsk44plP6BdePULaxMvLlHeSmb9BuOzXhAmptaQIUfW06FaumRY11mBf-DnD6dyY7mhtW0DmOSEGBxqjXxMFEFWJ5vN2kjzCukZuQUWFBQF8Ck2nuD-5t91hvuPejAvXdJCyCKtU6dSxqsZ8nUaAhMcWCqBhhH-9FrtykJ9wC1bHS_DzTdtpFx9-jmC5gY0rXORO-UJsIzfU8C5-EMSvH1eCc487YQ4RBMwSadqzJPVcJJApXQ",
+          "e": "AQAB",
+          "kid": "synthetic-test-key",
+          "use": "sig",
+          "alg": "RS256"
+        }
+      ]
+    },
+    "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InN5bnRoZXRpYy10ZXN0LWtleSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2F1dGgub3BlbmFpLmNvbSIsInN1YiI6InN5bnRoZXRpYy1zdWJqZWN0IiwiYXVkIjoiaXNzdWVkLXN5bnRoZXRpYy0xIiwibm9uY2UiOiJzeW50aGV0aWMtbm9uY2UiLCJleHAiOjk5OTk5OTk5OTl9.IOSIj0_cAYTLT6NsdtJOrWv_cVLmdu6QXswm8TePMHojlMjqLm4p72ZbwVKGU2CVF2B6wLWUaXP4c76VRq_KmvCENqP9TP0txJ8LbZp7_bV3F09kL_UgsWTT3TUYvkQnxveuAFrcM5Zi63ftK521Yywj8TG7c-Bt1wQEoFTxZrFcI8RwkHUekaGpdQ-JZaiTH_FVTHXocFS7hMAdOci_2UmH8SExINn2xAxS-DZdL9iPWgeLW7IjpUBycqOhjK8YxmoCiPaRaYpcgLyIkfdMQvw1qa80MgESAqA0KWqGCXAbROEVEZ-jkpTmbK8-IclwVDTv7LuEN_MLgYGdsOD4ng",
+    "token_response": {
+      "access_token": "synthetic-access-only",
+      "refresh_token": "synthetic-refresh-1",
+      "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InN5bnRoZXRpYy10ZXN0LWtleSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2F1dGgub3BlbmFpLmNvbSIsInN1YiI6InN5bnRoZXRpYy1zdWJqZWN0IiwiYXVkIjoiaXNzdWVkLXN5bnRoZXRpYy0xIiwibm9uY2UiOiJzeW50aGV0aWMtbm9uY2UiLCJleHAiOjk5OTk5OTk5OTl9.IOSIj0_cAYTLT6NsdtJOrWv_cVLmdu6QXswm8TePMHojlMjqLm4p72ZbwVKGU2CVF2B6wLWUaXP4c76VRq_KmvCENqP9TP0txJ8LbZp7_bV3F09kL_UgsWTT3TUYvkQnxveuAFrcM5Zi63ftK521Yywj8TG7c-Bt1wQEoFTxZrFcI8RwkHUekaGpdQ-JZaiTH_FVTHXocFS7hMAdOci_2UmH8SExINn2xAxS-DZdL9iPWgeLW7IjpUBycqOhjK8YxmoCiPaRaYpcgLyIkfdMQvw1qa80MgESAqA0KWqGCXAbROEVEZ-jkpTmbK8-IclwVDTv7LuEN_MLgYGdsOD4ng",
+      "token_type": "Bearer",
+      "expires_in": 3600,
+      "scope": "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct"
+    },
+    "rotated_response": {
+      "access_token": "synthetic-access-2",
+      "refresh_token": "synthetic-refresh-2",
+      "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InN5bnRoZXRpYy10ZXN0LWtleSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2F1dGgub3BlbmFpLmNvbSIsInN1YiI6InN5bnRoZXRpYy1zdWJqZWN0IiwiYXVkIjoiaXNzdWVkLXN5bnRoZXRpYy0xIiwibm9uY2UiOiJzeW50aGV0aWMtbm9uY2UiLCJleHAiOjk5OTk5OTk5OTl9.IOSIj0_cAYTLT6NsdtJOrWv_cVLmdu6QXswm8TePMHojlMjqLm4p72ZbwVKGU2CVF2B6wLWUaXP4c76VRq_KmvCENqP9TP0txJ8LbZp7_bV3F09kL_UgsWTT3TUYvkQnxveuAFrcM5Zi63ftK521Yywj8TG7c-Bt1wQEoFTxZrFcI8RwkHUekaGpdQ-JZaiTH_FVTHXocFS7hMAdOci_2UmH8SExINn2xAxS-DZdL9iPWgeLW7IjpUBycqOhjK8YxmoCiPaRaYpcgLyIkfdMQvw1qa80MgESAqA0KWqGCXAbROEVEZ-jkpTmbK8-IclwVDTv7LuEN_MLgYGdsOD4ng",
+      "token_type": "Bearer",
+      "expires_in": 3600,
+      "scope": "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct"
+    },
+    "refresh_error": {
+      "error": "invalid_grant"
+    }
+  },
+  "catalog": {
+    "models": [
+      {
+        "slug": "synthetic-model",
+        "display_name": "Synthetic model",
+        "visibility": "list"
+      }
+    ]
+  },
+  "streams": {
+    "completed": [
+      {
+        "type": "response.completed"
+      }
+    ],
+    "incomplete": [
+      {
+        "type": "response.incomplete"
+      }
+    ],
+    "failed": [
+      {
+        "type": "response.failed",
+        "response": {
+          "error": {
+            "code": "subscription_sharing_usage_limit_exceeded"
+          }
+        }
+      }
+    ],
+    "interrupted": [
+      {
+        "type": "response.output_text.delta",
+        "delta": "unfinished"
+      }
+    ]
+  }
+}

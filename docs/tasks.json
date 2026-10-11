@@ -1,0 +1,1860 @@
+{
+  "schema_version": "1.1",
+  "project": "GridLens",
+  "name_status": "provisional",
+  "created_at": "2026-10-11",
+  "timezone": "Pacific/Auckland",
+  "scope": "implementation",
+  "execution_policy": {
+    "default_mode": "one_task_at_a_time",
+    "auto_approve_real_sources": false,
+    "default_network": "off_for_tests",
+    "task_statuses": [
+      "todo",
+      "in_progress",
+      "awaiting_input",
+      "blocked",
+      "done"
+    ],
+    "done_requires": [
+      "acceptance_evidence",
+      "required_checks_passed",
+      "no_unresolved_P0_for_task"
+    ],
+    "documentation_sync": {
+      "trigger": "after_each_feature_or_task",
+      "before": [
+        "completion_report",
+        "next_feature"
+      ],
+      "automatic": true,
+      "files": [
+        "docs/tasks.json",
+        "docs/02_AI_TASKS.md",
+        "docs/progress.md",
+        "docs/HANDOFF.md"
+      ],
+      "record_incomplete_and_failed_work": true,
+      "update_spec_and_readme_when_changed": true,
+      "refresh_available_output_mirrors_and_archives": true
+    }
+  },
+  "tasks": [
+    {
+      "id": "T01",
+      "title": "初始化独立仓库与可安装项目",
+      "priority": "P0",
+      "status": "done",
+      "day": "D1",
+      "depends_on": [],
+      "kind": "implementation",
+      "scope_paths": [
+        "pyproject.toml",
+        "requirements.lock",
+        ".gitignore",
+        ".env.example",
+        "README.md",
+        "gridlens/__init__.py",
+        "docs/"
+      ],
+      "objective": "建立可继续开发的独立本地项目，不在 ChatGPT 同步 sources 目录里写应用。",
+      "steps": [
+        "检查指定工作目录和现有 Git 状态；若已有实现先复用，避免嵌套仓库。",
+        "建立 Python 3.12 环境、最小 package、开发依赖与可重复安装的锁文件。",
+        "复制开发文档和 PRD 到 docs；忽略 .env、data、artifacts、.venv，保留 .env.example。",
+        "为本地模型、OAuth/JWT 校验与 Responses streaming 选择兼容依赖并锁定；忽略凭证与模型缓存，不把 tokens 放入 .env.example。"
+      ],
+      "acceptance_criteria": [
+        "全新环境可按 README 安装并 import gridlens。",
+        "无真实密钥、数据库或运行快照被纳入 Git；原 PRD 与 sources 未被改写。",
+        "本地 Git 状态可检查；远端仓库不是本任务完成前提。"
+      ],
+      "verification": [
+        "执行 import、依赖一致性和 Ruff 配置检查。",
+        "人工检查 git status 与忽略规则；不为 README 或空 package 写单元测试。"
+      ],
+      "out_of_scope": [
+        "不创建/推送 GitHub 仓库，除非用户已给出目标及授权。",
+        "不实现业务页面或先安装全部无关框架。"
+      ],
+      "prd_refs": [
+        "AC-10"
+      ],
+      "required_inputs": "目标应用目录；若未指定，使用工作区下独立 gridlens 目录并在记录中说明。",
+      "evidence": [
+        "docs/progress.md: Foundation milestone; offline tests and actual local browser verification"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_required",
+        "human": "not_required"
+      },
+      "completed_at": "2026-10-11"
+    },
+    {
+      "id": "T02",
+      "title": "定义配置、DTO、错误码和端口接口",
+      "priority": "P0",
+      "status": "done",
+      "day": "D1",
+      "depends_on": [
+        "T01"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/config.py",
+        "gridlens/contracts.py",
+        "gridlens/errors.py",
+        ".env.example",
+        "tests/unit/test_contracts.py"
+      ],
+      "objective": "使后续任务共同使用明确输入输出和配置，不各自发明数据结构。",
+      "steps": [
+        "按开发规格定义状态枚举、SearchHitDTO、ParsedSegment、Locator、ChunkDTO、AnswerDraft 和端口 Protocol。",
+        "实现 fixture/live 配置隔离、限额校验和按功能检查缺失密钥。",
+        "固定 AppError 格式、JSON extra=forbid 和 nullable 字段。",
+        "新增 AccountSummary/AuthState/ModelChoice 与 CredentialStore/SessionProvider 接口；embedding role、revision、归一化和 tokenizer 配置按规格固定，错误区分授权、额度、缓存与证据不足。"
+      ],
+      "acceptance_criteria": [
+        "缺少真实密钥仍可加载 fixture 配置。",
+        "overlap>=chunk size、负限额、未知状态和额外模型字段会被拒绝。",
+        "AnswerDraft 的 answered/partial/insufficient 与 claims/missing_evidence 关系可校验。"
+      ],
+      "verification": [
+        "契约边界测试：非法枚举、空字段、状态组合、配置模式。",
+        "Ruff；不要测试 Pydantic 自身的普通字段赋值。"
+      ],
+      "out_of_scope": [
+        "不实现外部 API 或数据库。",
+        "不选用未明确配置的生成模型。"
+      ],
+      "prd_refs": [
+        "AC-03",
+        "AC-05",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [
+        "docs/progress.md: Foundation milestone; offline tests and actual local browser verification"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_required",
+        "human": "not_required"
+      },
+      "completed_at": "2026-10-11"
+    },
+    {
+      "id": "T03",
+      "title": "建立 SQLite schema 和基础 repository",
+      "priority": "P0",
+      "status": "done",
+      "day": "D1",
+      "depends_on": [
+        "T02"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/db.py",
+        "gridlens/migrations/001_initial.sql",
+        "gridlens/repositories/",
+        "gridlens/cli.py",
+        "tests/integration/test_db.py"
+      ],
+      "objective": "实现规格中的实体、约束、迁移和可靠持久化，提供后续 repository 方法的基础。",
+      "steps": [
+        "创建全部最小表、外键、状态 CHECK 和 unique/partial indexes；EvaluationRecord 留文件存储。",
+        "实现连接生命周期、显式事务、init-db、migration version 记录和常用读写。",
+        "添加 eligibility 查询入口，方法通过事务或注入连接组合；不在 repository 内联网。"
+      ],
+      "acceptance_criteria": [
+        "初始化重复执行不丢数据；关闭后重开仍有记录。",
+        "同来源不能同时有两个 Active；open gap key 不重复；失效外键被拒绝。",
+        "失败事务回滚；参数化输入不能改变 SQL 结构。"
+      ],
+      "verification": [
+        "临时 SQLite 中验证唯一约束、FK、rollback 和重启读取。",
+        "init-db 冒烟；测试只用临时目录。"
+      ],
+      "out_of_scope": [
+        "不使用删库重建代替迁移。",
+        "不在此实现所有未来 UI 查询的抽象层。"
+      ],
+      "prd_refs": [
+        "AC-04",
+        "AC-09",
+        "AC-10"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [
+        "docs/progress.md: Foundation milestone; offline tests and actual local browser verification"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_required",
+        "human": "not_required"
+      },
+      "completed_at": "2026-10-11"
+    },
+    {
+      "id": "T04",
+      "title": "建立合成资料与 Fake Providers",
+      "priority": "P0",
+      "status": "done",
+      "day": "D1",
+      "depends_on": [
+        "T02"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/providers/fakes.py",
+        "tests/conftest.py",
+        "tests/fixtures/",
+        "tests/unit/test_fakes.py"
+      ],
+      "objective": "为所有后续任务提供可复现、默认不出网的输入。",
+      "steps": [
+        "准备合成 HTML、两页文本 PDF、扫描/损坏 PDF、重复 URL、新旧版本和来源指令干扰样本。",
+        "实现确定性搜索、embedding、回答 fake；支持超时、429、无效引用、截断等故障开关。",
+        "所有样本写 synthetic 标记；测试默认阻断网络。",
+        "补充 OAuth state/nonce/JWKS/issued-ID、refresh rotation、model catalog、SSE completed/failed/incomplete/断流合成 mocks，不记录真实 token。"
+      ],
+      "acceptance_criteria": [
+        "相同输入产生相同 fake 输出；可准确触发指定故障。",
+        "每个 PDF 的预期页数、可读文本和定位记录在 fixture manifest。",
+        "fixtures 与 live 存储隔离，不冒用真实出版机构。"
+      ],
+      "verification": [
+        "fixture manifest 校验及 fake 输出契约检查。",
+        "一次意外外部请求被测试环境拒绝。"
+      ],
+      "out_of_scope": [
+        "不把 fake 成功算作真实搜索或模型联调。",
+        "不构建通用模拟服务平台。"
+      ],
+      "prd_refs": [
+        "AC-03",
+        "AC-09",
+        "AC-10"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [
+        "docs/progress.md: Foundation milestone; offline tests and actual local browser verification"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_required",
+        "human": "not_required"
+      },
+      "completed_at": "2026-10-11"
+    },
+    {
+      "id": "T05",
+      "title": "建立四页 UI 导航与依赖组装",
+      "priority": "P0",
+      "status": "done",
+      "day": "D1",
+      "depends_on": [
+        "T02",
+        "T04"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "app.py",
+        "gridlens/bootstrap.py",
+        "gridlens/ui/",
+        "tests/ui/test_navigation.py"
+      ],
+      "objective": "建立可启动的应用入口，四个页面共用同一服务配置。",
+      "steps": [
+        "用 st.navigation/st.Page 建 Discover、Review、Knowledge Base、Ask & Gaps 页面。",
+        "实现 fixture/live 模式标识、页面选择和公共错误/状态组件。",
+        "只保存 UI session state；未完成模块显示空状态，不伪装成已经可用。"
+      ],
+      "acceptance_criteria": [
+        "四页可切换，刷新不调用搜索或模型。",
+        "缺少凭证时应用仍可启动；真实功能有明确配置提示。",
+        "页面不直接调用供应商 SDK 或写审核状态。"
+      ],
+      "verification": [
+        "启动并逐页人工检查或使用 AppTest。",
+        "检查 bootstrap 可注入 fake provider。"
+      ],
+      "out_of_scope": [
+        "不做视觉精修、登录或 dashboard。"
+      ],
+      "prd_refs": [
+        "AC-09",
+        "AC-10"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [
+        "docs/progress.md: Foundation milestone; offline tests and actual local browser verification"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_required",
+        "human": "not_required"
+      },
+      "completed_at": "2026-10-11"
+    },
+    {
+      "id": "T06",
+      "title": "实现 Tavily 搜索适配器",
+      "priority": "P0",
+      "status": "done",
+      "day": "D2",
+      "depends_on": [
+        "T02",
+        "T04"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/providers/tavily.py",
+        "tests/unit/test_tavily.py",
+        "tests/live/test_search_provider.py"
+      ],
+      "objective": "把一个真实搜索 API 映射成统一候选结构。",
+      "steps": [
+        "按规格配置 basic/general 和禁用生成答案、raw content、自动参数。",
+        "映射 title/url/content/rank；未知 publisher/date 为 null；保留必要 provider metadata。",
+        "将 401/429/5xx/timeout 转稳定错误；适配器不自行无限重试。"
+      ],
+      "acceptance_criteria": [
+        "请求参数与结果映射可通过 mock HTTP 校验。",
+        "空结果为成功空列表；服务错误不是空结果。",
+        "单次调用不隐式获取正文、不产生自动答案。"
+      ],
+      "verification": [
+        "HTTP 契约测试覆盖成功、空列表、畸形记录、认证失败和限流。",
+        "有凭证时一次显式 live smoke；否则记录尚未运行。"
+      ],
+      "out_of_scope": [
+        "不实现第二家搜索服务。",
+        "不自动购买配额。"
+      ],
+      "prd_refs": [
+        "AC-01"
+      ],
+      "required_inputs": "离线实现无需密钥；真实 smoke 需要 TAVILY_API_KEY。",
+      "evidence": [
+        "tests/unit/test_tavily.py: 9 passed；覆盖请求参数、结果映射、空/畸形结果、401/429/432/500/400、timeout、无隐式重试。",
+        "Ruff check 与 format check 通过；tests/live/test_search_provider.py 已建立，因未配置 TAVILY_API_KEY 未执行真实 smoke。"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_run",
+        "human": "not_required"
+      },
+      "completed_at": "2026-10-11"
+    },
+    {
+      "id": "T07",
+      "title": "实现搜索编排、排序与去重保存",
+      "priority": "P0",
+      "status": "done",
+      "day": "D2",
+      "depends_on": [
+        "T03",
+        "T06"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/services/discovery.py",
+        "gridlens/repositories/research.py",
+        "tests/unit/test_discovery.py",
+        "tests/integration/test_search_runs.py"
+      ],
+      "objective": "用户一次操作得到最多十条真实候选，并能追踪搜索过程。",
+      "steps": [
+        "用规则生成最多三条保留问题含义的搜索 query。",
+        "规范 URL、合并重复、稳定排序、最多保留十条，保存 Source/SearchHit/SearchRun。",
+        "所有调用含重试共计最多三次，支持 partial/failed，使用 operation_key 防重复提交。"
+      ],
+      "acceptance_criteria": [
+        "相同提交 key 重放不再次调用 provider。",
+        "功能参数被保留，跟踪参数可去除；同一结果在单次搜索不重复出现。",
+        "部分服务失败保留成功结果与原因；未知日期不伪造。"
+      ],
+      "verification": [
+        "重复 URL、有效 query 参数、少结果、多结果与部分失败测试。",
+        "验证三次总调用预算和持久化字段。"
+      ],
+      "out_of_scope": [
+        "不做 LLM 搜索词规划或全网爬虫。"
+      ],
+      "prd_refs": [
+        "AC-01",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [
+        "tests/unit/test_discovery.py 与 tests/integration/test_search_runs.py: 11 passed；覆盖查询预算、URL 规范化、去重排序、partial/failed、十条上限、持久化与 operation_key 重放。"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_required",
+        "human": "not_required"
+      },
+      "completed_at": "2026-10-11"
+    },
+    {
+      "id": "T08",
+      "title": "接通 Discover 页面",
+      "priority": "P0",
+      "status": "done",
+      "day": "D2",
+      "depends_on": [
+        "T05",
+        "T07"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/ui/discover.py",
+        "gridlens/ui/common.py",
+        "tests/ui/test_discover.py"
+      ],
+      "objective": "用户可输入主题、启动搜索、打开候选并手动添加 URL。",
+      "steps": [
+        "实现表单、地区/类型筛选、loading 和错误提示。",
+        "候选显示标题、机构、日期、摘要依据、相关性理由、原始链接。",
+        "手动 URL 经服务保存为待审核线索；选择候选把 source_id 带到 Review。"
+      ],
+      "acceptance_criteria": [
+        "一次 Search 提交仅触发一次 operation。",
+        "无结果、partial、failed、缺凭证显示不同状态。",
+        "手动来源不自动批准、抓取或入库。"
+      ],
+      "verification": [
+        "fixture 模式操作主路径与错误路径。",
+        "检查 rerun 不重复搜索及输入校验。"
+      ],
+      "out_of_scope": [
+        "不做批量审核或复杂筛选器。"
+      ],
+      "prd_refs": [
+        "AC-01",
+        "AC-02"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [
+        "tests/ui/test_discover.py 与 test_navigation.py: 10 passed；覆盖搜索、rerun 幂等、候选选择、Review 接收、手动 URL、输入/配置错误及空/partial/failed 状态。",
+        "完整离线回归：67 passed, 1 deselected；Ruff、format、pip check 通过。"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_required",
+        "human": "not_required"
+      },
+      "completed_at": "2026-10-11"
+    },
+    {
+      "id": "T09",
+      "title": "实现有边界的公开 URL 获取",
+      "priority": "P0",
+      "status": "done",
+      "day": "D3",
+      "depends_on": [
+        "T02",
+        "T04"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/documents/fetch.py",
+        "tests/unit/test_fetch.py"
+      ],
+      "objective": "取得可审核的原始 HTML/PDF，限制网络目标和资源消耗。",
+      "steps": [
+        "校验 URL、DNS 结果、scheme/port/userinfo；拒绝私网和保留地址。",
+        "手动处理最多三跳 redirect，每一跳重新检查；设置总超时和流式体积上限。",
+        "记录 final URL、content type、抓取时间和 raw SHA256；响应错误统一映射。"
+      ],
+      "acceptance_criteria": [
+        "localhost、IPv4/IPv6 私网、私网重定向均不继续请求。",
+        "超大或解压后超限数据中止；超时有明确信息。",
+        "正常公开 HTML/PDF 可返回受限 bytes 和 metadata。"
+      ],
+      "verification": [
+        "用 HTTP mock 与 DNS stub 检查每跳目标、大小和超时。",
+        "不依赖实时任意网站验证本单元任务。"
+      ],
+      "out_of_scope": [
+        "不绕过登录、执行网页脚本或承诺生产级 DNS 对抗隔离。"
+      ],
+      "prd_refs": [
+        "AC-02",
+        "AC-03",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [
+        "tests/unit/test_fetch.py: 24 passed；覆盖 URL/DNS/端口/私网边界、每跳 redirect、HTML/PDF、压缩和流式大小限制、总 timeout 与 HTTP 错误。",
+        "完整离线回归：91 passed, 1 live deselected；Ruff 与 format check 通过。"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_required",
+        "human": "not_required"
+      },
+      "completed_at": "2026-10-11"
+    },
+    {
+      "id": "T10",
+      "title": "实现 HTML 正文与段落定位",
+      "priority": "P0",
+      "status": "done",
+      "day": "D3",
+      "depends_on": [
+        "T02",
+        "T04"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/documents/html.py",
+        "tests/unit/test_html_parser.py"
+      ],
+      "objective": "从 HTML 得到可审核、可引用的正文段落。",
+      "steps": [
+        "优先 main/article，回退内容段落；去除脚本、导航、样式。",
+        "保存标题路径、稳定 paragraph_index 和正文；保留数字、单位、条件与 Unicode。",
+        "返回提取警告，正文为空报错；不把网页指令当成程序指令。"
+      ],
+      "acceptance_criteria": [
+        "两种布局 fixture 均可得到预期正文而不含导航噪声。",
+        "每个片段能映射章节/段落；同输入解析结果确定。",
+        "不支持内容有警告，不能返回搜索摘要假装正文。"
+      ],
+      "verification": [
+        "正文完整性、标题和段落定位、空正文用例。",
+        "包含恶意指令文字时仅保留为文本。"
+      ],
+      "out_of_scope": [
+        "不做浏览器渲染、OCR 或完整表格重建。"
+      ],
+      "prd_refs": [
+        "AC-02",
+        "AC-03",
+        "AC-06"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [
+        "tests/unit/test_html_parser.py: 5 passed；覆盖 main/article/body fallback、噪声移除、标题路径、段落定位、Unicode/数字、表格警告、空正文和指令干扰。",
+        "完整离线回归：96 passed, 1 live deselected；Ruff 与 format check 通过。"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_required",
+        "human": "not_required"
+      },
+      "completed_at": "2026-10-11"
+    },
+    {
+      "id": "T11",
+      "title": "实现 PDF 提取与页码定位",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D3",
+      "depends_on": [
+        "T02",
+        "T04"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/documents/pdf.py",
+        "tests/unit/test_pdf_parser.py"
+      ],
+      "objective": "支持文本 PDF，并明确拒绝或标注不能可靠解析的内容。",
+      "steps": [
+        "用 pypdf 逐页提取；file_page 从 1 开始，不等同于印刷页码。",
+        "限制页数和解析耗时；用可终止子进程隔离异常解析。",
+        "空文本、扫描件、损坏/加密文件给稳定错误；复杂布局记录限制。"
+      ],
+      "acceptance_criteria": [
+        "两页 fixture 的文本和对应 file_page 准确。",
+        "扫描件不被判为成功正文；超限和损坏文件不会卡死主应用。",
+        "解析不重新编号或合并丢失页面来源。"
+      ],
+      "verification": [
+        "文本 PDF、扫描 PDF、损坏 PDF、页数超限测试。",
+        "超时用受控解析 stub 验证，不依赖真实卡死文件。"
+      ],
+      "out_of_scope": [
+        "不加 OCR，不声称自动保证复杂表格正确。"
+      ],
+      "prd_refs": [
+        "AC-03",
+        "AC-06",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T12",
+      "title": "保存可审核的不可变文档快照",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D3",
+      "depends_on": [
+        "T03",
+        "T09",
+        "T10",
+        "T11"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/documents/snapshots.py",
+        "gridlens/repositories/sources.py",
+        "tests/integration/test_snapshots.py"
+      ],
+      "objective": "把原始抓取和解析正文绑定成有稳定 hash 的版本。",
+      "steps": [
+        "实现 capture 流程、类型分发、受控路径及 temp file → atomic rename。",
+        "按规范算法计算 snapshot_sha256，保存 metadata、segments 和 extraction notes。",
+        "同来源同快照复用版本；不同快照 Candidate/Pending；未取到正文只保留失败线索。"
+      ],
+      "acceptance_criteria": [
+        "重复 capture 不多建版本；仅抓取时间变化不影响快照 hash。",
+        "影响引用的 metadata 变化形成不同审核快照。",
+        "目录路径不接受用户文件名拼接；失败不产生可批准的半文件。"
+      ],
+      "verification": [
+        "重抓去重、内容变化、元数据变化和写文件失败测试。",
+        "验证原文文件、数据库记录和 hash 一致。"
+      ],
+      "out_of_scope": [
+        "不做 embedding，也不修改已批准快照。"
+      ],
+      "prd_refs": [
+        "AC-02",
+        "AC-03",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T13",
+      "title": "实现审核状态机与即时撤销",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D3",
+      "depends_on": [
+        "T03",
+        "T12"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/services/review.py",
+        "gridlens/repositories/sources.py",
+        "tests/integration/test_review.py"
+      ],
+      "objective": "用服务端规则控制来源资格，并保存人工决定。",
+      "steps": [
+        "实现 approve/reject/reopen/revoke，校验允许状态、预览 expected_hash 和正文；reopen 清空批准 hash 并重置 Candidate/Not started。",
+        "批准保存 approved_snapshot_sha256；拒绝需 reason；事件与状态同事务提交。",
+        "撤销即时改变 SQLite 资格；后续索引清理可独立失败。"
+      ],
+      "acceptance_criteria": [
+        "没有可读正文、hash 过期、非法状态不能批准。",
+        "重复相同操作幂等；重新开启后必须再人工批准并重新入库，不能继承旧 Ready 资格。",
+        "撤销提交后 eligibility 查询立即排除该来源。"
+      ],
+      "verification": [
+        "完整合法状态转移与关键非法转移测试。",
+        "事务失败 rollback、重复批准、撤销后资格与重新开启后重新入库检查。"
+      ],
+      "out_of_scope": [
+        "不自动批准真实来源，不伪造 reviewer。"
+      ],
+      "prd_refs": [
+        "AC-02",
+        "AC-04",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T14",
+      "title": "接通 Review 页面",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D3",
+      "depends_on": [
+        "T05",
+        "T13"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/ui/review.py",
+        "tests/ui/test_review.py"
+      ],
+      "objective": "用户可查看对应正文和版本，然后明确批准或拒绝。",
+      "steps": [
+        "展示候选列表、正文预览、元数据修正、提取限制和原链接。",
+        "保存待审核字段后更新快照 hash；动作绑定用户当前看到的 hash。",
+        "批准成功后显示已批准状态；入库服务接好后再触发一次入库，错误不改成人工拒绝。"
+      ],
+      "acceptance_criteria": [
+        "Reject 无理由无法提交；不可读正文不能批准。",
+        "预览过期时要求重新查看，不批准后台已经改变的内容。",
+        "刷新页面不重复审核或创建事件。"
+      ],
+      "verification": [
+        "AppTest 或人工 fixture 流程：approve/reject/stale/unreadable。",
+        "检查 reviewer 标签与用户输入准确保存。"
+      ],
+      "out_of_scope": [
+        "不批量审核，不增加登录系统。"
+      ],
+      "prd_refs": [
+        "AC-02"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T15",
+      "title": "实现确定性 token 分块",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D4",
+      "depends_on": [
+        "T02",
+        "T12",
+        "T16"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/documents/chunking.py",
+        "tests/unit/test_chunking.py"
+      ],
+      "objective": "将已审核正文切成带稳定定位的可重建片段。",
+      "steps": [
+        "使用固定本地 embedding tokenizer 按页/段落组合，长段落 token 窗口分割；初始 350/50，含标题/special tokens 不超512。",
+        "计算 index_fingerprint、text hash 和确定性 chunk_id。",
+        "保留 locator 与 segment IDs；不跨页、跨文档或跨版本。"
+      ],
+      "acceptance_criteria": [
+        "所有块在预算内、没有空块，正文覆盖满足 overlap 规则。",
+        "同输入同配置 IDs 一致；模型/切分配置变化 fingerprint 改变。",
+        "长 Unicode 段落仍可溯源，文件页序不丢失。",
+        "模型/tokenizer revision、query prefix 和 normalization 变化也会改变 fingerprint；检索问题超长时拒绝而不 truncate。"
+      ],
+      "verification": [
+        "短文、长段、跨页、中文/英文 token 边界和确定性测试。",
+        "验证拼接/overlap 不遗漏非空原文段落。"
+      ],
+      "out_of_scope": [
+        "不调研高级语义 chunker，不用字符数冒充 token 数。"
+      ],
+      "prd_refs": [
+        "AC-03",
+        "AC-04",
+        "AC-06"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T16",
+      "title": "实现本地 embedding 与模型准备",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D4",
+      "depends_on": [
+        "T02",
+        "T04"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/providers/local_embeddings.py",
+        "gridlens/cli.py",
+        "tests/unit/test_embeddings.py",
+        "tests/local_model/test_embeddings.py"
+      ],
+      "objective": "用固定本地缓存模型生成文档和查询向量，正常推理不出网。",
+      "steps": [
+        "提供显式 prepare-model 步骤，下载 BAAI/bge-small-en-v1.5，记录实际 revision 和 tokenizer revision；运行时 local_files_only=true、trust_remote_code=false。",
+        "CPU 归一化推理384维，最多16项一批；document/query role 采用同一权重和不同 prefix 策略；长度先检查。",
+        "校验数量、维度、有限数值和顺序，返回本地耗时/token count，不伪造 API usage。"
+      ],
+      "acceptance_criteria": [
+        "缺缓存、输入过长、维度错误或空文本不返回成功批次；绝不静默下载/截断/换模型。",
+        "固定配置同输入输出可复现；fixture 与实际本地模型隔离。",
+        "文档和问题 fingerprint 一致，query prefix 不污染原文引用。"
+      ],
+      "verification": [
+        "离线 mock 验证缓存缺失、role、长度、有限数值和批次顺序。",
+        "模型显式准备后在禁网环境做真实本地 smoke，记录实际384维与revision；此检查不等于 ChatGPT live 验证。"
+      ],
+      "out_of_scope": [
+        "不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。"
+      ],
+      "prd_refs": [
+        "AC-03",
+        "AC-04"
+      ],
+      "required_inputs": "离线 mock 无凭证；实际模型 smoke 需首次下载的固定本地模型缓存，无 ChatGPT 登录或平台 key。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T17",
+      "title": "实现 Chroma 向量存储适配器",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D4",
+      "depends_on": [
+        "T02",
+        "T03",
+        "T04"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/providers/chroma_store.py",
+        "tests/integration/test_vector_store.py"
+      ],
+      "objective": "提供可持久化、可白名单查询且幂等的向量存储。",
+      "steps": [
+        "以 fingerprint 创建/打开本地集合，显式关闭默认 embedding function。",
+        "实现 upsert/query/stored_ids/delete_version，传入显式 embeddings。",
+        "query 强制要求非空 eligible_version_ids，空集直接空结果，禁止退化为全库检索。"
+      ],
+      "acceptance_criteria": [
+        "同 ID upsert 不增加重复记录；重开后仍能检索。",
+        "查询只返回白名单版本；配置 mismatch 明确报错。",
+        "metadata 不携带假定审核资格，返回正文以数据库为准。"
+      ],
+      "verification": [
+        "用临时真实 Chroma 和合成向量验证持久化、过滤、删除。",
+        "检查没有调用外部模型或下载默认 embedding。"
+      ],
+      "out_of_scope": [
+        "不使用 Chroma Cloud，不开发多租户。"
+      ],
+      "prd_refs": [
+        "AC-03",
+        "AC-04",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T18",
+      "title": "实现入库流水线与原子发布",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D4",
+      "depends_on": [
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/services/ingestion.py",
+        "gridlens/repositories/sources.py",
+        "gridlens/ui/review.py",
+        "tests/integration/test_ingestion.py"
+      ],
+      "objective": "只有完整处理完成且仍获批准的版本才成为 Ready/Active。",
+      "steps": [
+        "校验批准 hash，建立运行锁，分块、存 chunk、分批 embedding/upsert，记录阶段。",
+        "校验预期 ID 集合等于实际索引集合；发布前再检查审批。",
+        "SQLite 单事务替换旧 Active、标记 Ready 和运行 completed；失败保留旧版本可用。"
+      ],
+      "acceptance_criteria": [
+        "中途 embedding/索引失败时新版本不能被检索。",
+        "重试同版本无重复 chunk/vector；Ready 重复处理 no-op。",
+        "处理过程中撤销不能发布；两个 tab 的重复操作不启动双任务。"
+      ],
+      "verification": [
+        "故障注入到每个阶段，检查旧版本和发布事务。",
+        "验证 count 相同但 IDs 不同也不能通过完整性检查。"
+      ],
+      "out_of_scope": [
+        "不引入任务队列；不靠删除整库解决失败。"
+      ],
+      "prd_refs": [
+        "AC-03",
+        "AC-04",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T19",
+      "title": "接通 Knowledge Base 页面",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D6",
+      "depends_on": [
+        "T05",
+        "T18"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/ui/knowledge_base.py",
+        "tests/ui/test_knowledge_base.py"
+      ],
+      "objective": "展示真正可用的资料，以及处理阶段和恢复操作。",
+      "steps": [
+        "列表显示三种状态、版本、地区/类型与入库限制。",
+        "实现详情、Retry、Revoke；按钮调用服务而非直接改数据库。",
+        "显示真实阶段与数量，Approved 未 Ready 明确区分。"
+      ],
+      "acceptance_criteria": [
+        "Failed 的批准资料可以 retry，但不能被标成可问答。",
+        "撤销后列表与查询资格一致。",
+        "处理中的操作禁用重复提交，页面状态可刷新。"
+      ],
+      "verification": [
+        "fixture 数据覆盖所有状态，人工检查主要交互。",
+        "验证 Retry 和 Revoke 的调用参数与 operation_key。"
+      ],
+      "out_of_scope": [
+        "不开发统计 dashboard 或批处理队列。"
+      ],
+      "prd_refs": [
+        "AC-03",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T20",
+      "title": "实现仅限批准版本的检索",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D5",
+      "depends_on": [
+        "T18"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/services/retrieval.py",
+        "gridlens/repositories/sources.py",
+        "tests/integration/test_retrieval.py"
+      ],
+      "objective": "为生成模型提供有资格、有限量、可定位的正文上下文。",
+      "steps": [
+        "按 reviewed metadata 和唯一 eligible 谓词筛选地区/类型。",
+        "问题 embedding、Top-10 白名单检索、数据库读取正文、相邻块去重、最多五块/4000 tokens。",
+        "空库不调用向量或生成服务；越界 ID 丢弃并记录；返回前再检查资格。"
+      ],
+      "acceptance_criteria": [
+        "Pending/Rejected/Revoked/Failed/Superseded 永不出现在上下文。",
+        "NZ 查询的地区筛选与 GLOBAL 规则符合规格，UNKNOWN 默认排除。",
+        "即便向量库留有旧记录，也不会因空过滤或缓存绕过限制。"
+      ],
+      "verification": [
+        "混合状态语料和故意返回越界 ID 的 provider 测试。",
+        "验证空库、状态中途变化、上下文预算和地区错配诊断。"
+      ],
+      "out_of_scope": [
+        "不实现 reranker、混合检索或所谓可信度百分比。"
+      ],
+      "prd_refs": [
+        "AC-04",
+        "AC-05",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T21",
+      "title": "实现订阅授权的流式回答 Provider",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D5",
+      "depends_on": [
+        "T02",
+        "T04",
+        "T35",
+        "T36"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/providers/chatgpt_oauth.py",
+        "gridlens/prompts/answer_v1.txt",
+        "tests/unit/test_answer_provider.py",
+        "tests/live/test_answer_provider.py"
+      ],
+      "objective": "使用选中账户订阅授权生成 AnswerDraft，仅在完整流和校验成功后返回。",
+      "steps": [
+        "从 SessionProvider 取得当前账户 token，与该账户 catalog slug 一起调用公开 Responses endpoint；store=false、stream=true、input数组、instructions/developer，关闭 SDK 隐式重试。",
+        "遵循规格3.3请求字段白名单；不发送 system message、max_output_tokens、temperature、metadata、历史ID或工具。",
+        "缓冲SSE到completed，处理failed/incomplete/断流与额度错误；记录脱敏request ID和可用usage。",
+        "对实际所选模型验证 schema 能力；支持则schema，不支持记录prompt-JSON模式，两者均严格Pydantic校验，不接受自由文本。"
+      ],
+      "acceptance_criteria": [
+        "未获plan权限、无模型、失效或额度耗尽有独立错误；不自动转平台收费调用。",
+        "流未completed或schema失败不返回可信答案；无额外URL/page字段。",
+        "证据只作数据，不允许文档指令改变行为，引用校验仍在T22。"
+      ],
+      "verification": [
+        "mock验证请求字段及SSE完整/终止/额度错误在流开始后到达的场景。",
+        "用户授权后用合成证据做真实smoke，记录slug、output mode和terminal event，不能用mock替代。"
+      ],
+      "out_of_scope": [
+        "不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。"
+      ],
+      "prd_refs": [
+        "AC-05",
+        "AC-06"
+      ],
+      "required_inputs": "离线实现无凭证；真实smoke需合资格ChatGPT账户、本人OAuth plan授权、可用额度与所选catalog模型。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_run",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T22",
+      "title": "实现问答服务、引用校验与保存",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D5",
+      "depends_on": [
+        "T20",
+        "T21"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/services/answers.py",
+        "gridlens/services/citations.py",
+        "gridlens/repositories/qa.py",
+        "tests/integration/test_answers.py"
+      ],
+      "objective": "把检索、生成、引用验证和 QA 保存连成可信的一次操作。",
+      "steps": [
+        "读取上下文，生成 draft；对每项引用验证 ID 属于上下文、quote 为原文子串、来源仍有效。",
+        "服务端生成链接/页码/编号；从 claims 渲染，不增加无引用 summary。",
+        "总生成尝试最多两次；成功同事务保存 QA/citations；为后续缺口服务保留事务扩展点。"
+      ],
+      "acceptance_criteria": [
+        "虚构 ID、错误 quote、失效来源均不能发布正常答案。",
+        "operation_key 重放不重复收费；错误保存 failure，不伪装成 insufficient。",
+        "空库直接 completed/insufficient；历史引用锁定实际版本。"
+      ],
+      "verification": [
+        "伪造引用、来源中途撤销、格式修复一次后失败、空库测试。",
+        "检查 QA/citation 保存失败时整笔回滚。"
+      ],
+      "out_of_scope": [
+        "不在问答时自动联网补证据。",
+        "不声称程序已验证语义蕴含。"
+      ],
+      "prd_refs": [
+        "AC-05",
+        "AC-06",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T23",
+      "title": "接通 Ask 与引用查看",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D5",
+      "depends_on": [
+        "T05",
+        "T22"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/ui/ask.py",
+        "gridlens/ui/common.py",
+        "tests/ui/test_ask.py"
+      ],
+      "objective": "用户能提问并核查每个论断的原文证据。",
+      "steps": [
+        "实现问题表单、地区/类型、回答结构和历史列表。",
+        "显示 fact/inference、partial/insufficient、限制和 citation 展开区。",
+        "错误、缺凭证、空库分别显示；每次读历史数据重新检查来源状态。",
+        "集成账户侧栏与登录/权限/额度/断流状态；仅显示最终已验证答案，进度与回答分开。"
+      ],
+      "acceptance_criteria": [
+        "点击引用可看到正确短摘录、文件页序或章节段落、原始链接。",
+        "重新渲染页面不会重新请求模型。",
+        "界面不把检索距离当置信度，不隐藏证据不足。"
+      ],
+      "verification": [
+        "fixture 模式正常、partial、insufficient、failure 四条 UI 路径。",
+        "检查引用与对应 claim 的映射。"
+      ],
+      "out_of_scope": [
+        "不实现多轮聊天或视觉动画。"
+      ],
+      "prd_refs": [
+        "AC-05",
+        "AC-06"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T24",
+      "title": "实现知识缺口规则、保存与去重",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D7",
+      "depends_on": [
+        "T03",
+        "T22"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/services/gaps.py",
+        "gridlens/services/answers.py",
+        "gridlens/repositories/qa.py",
+        "tests/integration/test_gaps.py"
+      ],
+      "objective": "将回答中的证据不足转成可操作、可复查的研究记录。",
+      "steps": [
+        "实现无上下文规则和已校验 draft 的六种缺口类型。",
+        "按规范 question/filters/reason/subquestion 建 gap_key，open 唯一，关闭后可再次生成新 open。",
+        "将自动 gap 保存接入 QA/citations 同一事务；编辑/关闭需明确用户动作。"
+      ],
+      "acceptance_criteria": [
+        "相同 open 缺口合并；数字、否定词或地域不同的问题不误合并。",
+        "服务故障不产生领域缺口；每条有效草稿有 scope 和建议词。",
+        "resolved 需要 resolution_note，不能由模型自动设定。"
+      ],
+      "verification": [
+        "去重、close/reopen、关键语义保留、事务 rollback 测试。",
+        "空库、地区不匹配及模型误报可 dismiss 的案例。"
+      ],
+      "out_of_scope": [
+        "不扫描全库推断整个行业没有答案。"
+      ],
+      "prd_refs": [
+        "AC-07",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T25",
+      "title": "接通缺口列表与补充搜索入口",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D7",
+      "depends_on": [
+        "T08",
+        "T23",
+        "T24"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/ui/ask.py",
+        "gridlens/ui/discover.py",
+        "tests/ui/test_gaps.py"
+      ],
+      "objective": "让用户检查缺口、编辑原因并启动下一轮研究。",
+      "steps": [
+        "Ask & Gaps 加列表、详情、编辑、Resolved/Dismissed 与备注。",
+        "显示问题范围、已有证据、缺少证据和建议 query。",
+        "选择建议词只跳转并填入 Discover，点击 Search 后才发起搜索。"
+      ],
+      "acceptance_criteria": [
+        "不会因查看缺口自动发搜索请求。",
+        "重复问题看到同一 open 记录；关闭状态可追踪。",
+        "不使用“行业无研究”等超出当前知识库的措辞。"
+      ],
+      "verification": [
+        "编辑/关闭/跳转主流程和空列表检查。",
+        "验证未点击 Search 时 provider 调用数不变。"
+      ],
+      "out_of_scope": [
+        "不自动发邮件或联系专家。"
+      ],
+      "prd_refs": [
+        "AC-07"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T26",
+      "title": "补齐刷新版本与历史引用状态",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D6",
+      "depends_on": [
+        "T19",
+        "T23"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/ui/knowledge_base.py",
+        "gridlens/services/review.py",
+        "gridlens/services/citations.py",
+        "tests/integration/test_version_lifecycle.py"
+      ],
+      "objective": "让资料更新不覆盖旧证据，撤销后历史答案也能正确解释。",
+      "steps": [
+        "接通手动 Refresh：同 hash no-op、新 hash Candidate/Pending。",
+        "显示存在待审核更新；新版本发布前旧版本继续有效，发布后旧版 Superseded。",
+        "历史 QA 动态标记 revoked/superseded，引用依然对应原快照；撤销向量删除失败仍排除检索。"
+      ],
+      "acceptance_criteria": [
+        "新内容不能继承旧批准；已批准元数据修正也重新审核。",
+        "旧答案文本、quote 和定位不被新版本替换。",
+        "撤销不自动恢复另一旧版本，也不依赖物理向量删除成功。"
+      ],
+      "verification": [
+        "完整 v1→v2→revoke 生命周期回归。",
+        "模拟清理失败和批准后修改 hash，确保资格不泄漏。"
+      ],
+      "out_of_scope": [
+        "不做自动监测更新或可视化 diff。"
+      ],
+      "prd_refs": [
+        "AC-02",
+        "AC-06",
+        "AC-09"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T27",
+      "title": "实现 Markdown research log 导出",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D8",
+      "depends_on": [
+        "T24",
+        "T26"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/services/export.py",
+        "gridlens/ui/knowledge_base.py",
+        "tests/integration/test_export.py"
+      ],
+      "objective": "将可追溯研究记录导出供团队整理笔记。",
+      "steps": [
+        "支持选择来源/问答/缺口，导出 UTF-8 Markdown、时间、模式和审核备注。",
+        "当前有效证据与待审核线索分区；撤销来源不导出正文摘录，历史版本明确标注。",
+        "转义用户文本，URL 仅 HTTP(S)，排除本地路径、密钥和 provider 原始请求。"
+      ],
+      "acceptance_criteria": [
+        "中文和特殊 Markdown 字符不会破坏文档结构。",
+        "每条引用指向对应元数据，状态与当前数据库一致。",
+        "Pending/Rejected 正文、被撤销摘录与密钥不出现在输出。"
+      ],
+      "verification": [
+        "用包含状态变化和恶意 Markdown 的 fixture 验证导出边界。",
+        "人工打开一次导出文件，核查可读性。"
+      ],
+      "out_of_scope": [
+        "不自动生成未经核实的 research note 结论。"
+      ],
+      "prd_refs": [
+        "AC-08"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T28",
+      "title": "实现中断恢复、调用限额与运行记录",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D8",
+      "depends_on": [
+        "T18",
+        "T22"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/services/recovery.py",
+        "gridlens/bootstrap.py",
+        "gridlens/config.py",
+        "gridlens/cli.py",
+        "tests/integration/test_recovery.py"
+      ],
+      "objective": "重启后能够解释失败、保留有效数据，并避免隐形重复调用。",
+      "steps": [
+        "启动识别已退出 owner 的 processing runs，转 Interrupted/Failed 并释放过期锁。",
+        "统一计量 stage/耗时/调用次数/usage；有限重试预算包含 SDK 内部行为。",
+        "增加本地 doctor 检查配置和存储，默认不出网，不打印密钥。",
+        "日志脱敏OAuth tokens、id_token_hint授权URL及callback code；错误计量区分本地推理、搜索配额与ChatGPT计划用量，未知剩余额度不推算。"
+      ],
+      "acceptance_criteria": [
+        "中断任务不冒充 Ready，用户可重试；活跃进程锁不被错误回收。",
+        "已有效来源、历史问答重启后仍在。",
+        "日志无密钥或整篇正文，模型重试不会超过两次总调用。"
+      ],
+      "verification": [
+        "模拟崩溃/重启/仍活跃 owner、重复 operation 和 429 链式失败。",
+        "检查 doctor 输出与日志脱敏。"
+      ],
+      "out_of_scope": [
+        "不加监控平台、自动清库或无人值守重跑。"
+      ],
+      "prd_refs": [
+        "AC-09",
+        "AC-10"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T29",
+      "title": "建立 15 题与评估运行工具",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D8",
+      "depends_on": [
+        "T22",
+        "T24"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "evals/questions.json",
+        "evals/gold.json",
+        "gridlens/cli.py",
+        "gridlens/evaluation.py",
+        "tests/unit/test_evaluation.py"
+      ],
+      "objective": "把 PRD 题库和评分方法变成可重复运行、不会制造假通过的工具。",
+      "steps": [
+        "原样整理 R01–R15，正式评估仅 R01–R12，保存 split 和预期行为。",
+        "gold 为人工填充的证据段落/要点；报告要求 corpus fingerprint、model、prompt、分子分母和失败项。",
+        "实现 evaluate 命令，fixture 输出显著标记；领域正确性与引用语义支持率留人工评分。"
+      ],
+      "acceptance_criteria": [
+        "未填写 gold 或评审分数时报告 incomplete/awaiting_input，不输出 pass。",
+        "R01–R08 和 R09–R12 分组统计，指标与 PRD 一致。",
+        "自动引用定位率不被误用为语义支持率。"
+      ],
+      "verification": [
+        "评分边界、缺失评分、分母为零、7/8与4/4门槛检查。",
+        "fixture evaluate 可运行并明确不能用于真实验收。"
+      ],
+      "out_of_scope": [
+        "不由 AI 填造真实 gold 或人工评审者。"
+      ],
+      "prd_refs": [
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-10"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T30",
+      "title": "执行完整闭环与可信性回归",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D9",
+      "depends_on": [
+        "T14",
+        "T19",
+        "T23",
+        "T25",
+        "T26",
+        "T27",
+        "T28",
+        "T29",
+        "T36"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "tests/integration/test_workflow.py",
+        "tests/integration/test_trust_boundaries.py",
+        "docs/progress.md",
+        "artifacts/test-results/"
+      ],
+      "objective": "证明已实现模块组合后仍符合审核隔离和引用规则。",
+      "steps": [
+        "从搜索候选到审核、入库、问答、缺口和导出执行一条合成端到端路径。",
+        "覆盖 Pending/Rejected/Revoked/Failed 泄漏、来源指令干扰、伪造引用、索引部分失败和更新历史。",
+        "运行现有相关测试及质量检查；发现问题在对应服务修复并回归。"
+      ],
+      "acceptance_criteria": [
+        "合成测试全部通过，关键身份/状态过滤直接检查上下文，而非只看最终回答没有某句话。",
+        "测试没有使用 live credentials，运行结果与 fake 使用情况可复现。",
+        "未修复的 P0 缺陷阻止本任务 done。"
+      ],
+      "verification": [
+        "全套非 live pytest 与 Ruff。",
+        "人工 UI 主流程检查一次，结果留档。",
+        "回归授权拒绝、账户切换、刷新竞争/失效、退出/撤销网络失败、SSE失败/断流和额度耗尽，检查不泄露凭证或保存半截答案。"
+      ],
+      "out_of_scope": [
+        "不把通过合成测试写成真实研究质量通过。"
+      ],
+      "prd_refs": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08",
+        "AC-09",
+        "AC-10"
+      ],
+      "required_inputs": "无需外部凭证；使用合成 fixture。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T31",
+      "title": "完成真实语料与人工评估验收",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D9",
+      "depends_on": [
+        "T06",
+        "T16",
+        "T21",
+        "T29",
+        "T30"
+      ],
+      "kind": "human_gated_acceptance",
+      "scope_paths": [
+        "artifacts/evals/",
+        "artifacts/research-log.md",
+        "evals/gold.json",
+        "docs/progress.md"
+      ],
+      "objective": "用真实公开资料与人工评分验证 PRD 目标，明确代码完成与研究验收的区别。",
+      "steps": [
+        "收集三次真实查询结果；人工审核至少十份资料、覆盖三类并成功入库，记录 source/version IDs。",
+        "由人填写或确认 R01–R12 gold，运行冻结配置问答，逐项检查论断和引用。",
+        "输出实际发现相关性、7/8回答/检索、4/4不足处理、引用率和至少三条有效缺口；记录失败。"
+      ],
+      "acceptance_criteria": [
+        "真实请求、已批准来源、人工评审身份与评分均可核查，fixture 不计入指标。",
+        "达到开发规格第12.3节门槛；不够样本或未达标就注明未通过。",
+        "缺凭证、未批准语料或未评分时状态 awaiting_input；AI 不替人批准来源。"
+      ],
+      "verification": [
+        "运行显式 live evaluation，并人工核对全部引用支持关系。",
+        "记录用量、耗时、失败案例和语料/模型/提示词配置。",
+        "记录登录模型slug与实际output mode、本地embedding revision及禁网推理结果；验证额度失败不会计为知识缺口或成功问答。"
+      ],
+      "out_of_scope": [
+        "不为凑足数量伪造日期、文档、审核记录或评分。",
+        "不自动购买账户或发送评估结果给他人。"
+      ],
+      "prd_refs": [
+        "AC-01",
+        "AC-03",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-10"
+      ],
+      "required_inputs": "真实搜索key、合资格ChatGPT本人OAuth plan授权/可用额度、固定本地模型缓存、至少10份人工批准资料、gold参考与人工评分。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_run",
+        "human": "not_run"
+      }
+    },
+    {
+      "id": "T32",
+      "title": "整理运行说明、限制和 demo 交付",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D10",
+      "depends_on": [
+        "T30",
+        "T31"
+      ],
+      "kind": "delivery",
+      "scope_paths": [
+        "README.md",
+        "docs/DEMO.md",
+        "docs/KNOWN_LIMITATIONS.md",
+        "docs/progress.md",
+        ".env.example"
+      ],
+      "objective": "把已经验证的应用交给下一位使用者，并明确完成范围。",
+      "steps": [
+        "按全新环境演练安装、配置、初始化、启动和评估；记录实际版本。",
+        "按 PRD 编写6–8分钟 demo：搜索、审核、入库、引用、缺口、导出、实际结果。",
+        "记录限制、未达标项、下一步和数据备份方式；回放材料标时间/版本。",
+        "说明本地网页启动、显式模型下载、Continue with ChatGPT/权限与Usage、token刷新/退出、资格限制和搜索独立费用；演示前验证授权与模型缓存。"
+      ],
+      "acceptance_criteria": [
+        "按说明可启动并重复演示；没有真实密钥进入交付。",
+        "文档区分代码测试、真实联调和人工验收结果。",
+        "只有全部P0满足且T31通过，才能宣称MVP验收通过。"
+      ],
+      "verification": [
+        "干净环境安装/启动一次；核对 demo 与真实界面。",
+        "检查任务证据、遗留问题与PRD验收编号对应。"
+      ],
+      "out_of_scope": [
+        "不发布公网、不推送远端或通知外部人员，除非已有相应用户授权。"
+      ],
+      "prd_refs": [
+        "AC-10"
+      ],
+      "required_inputs": "T31真实验收结果；若未通过，可先准备文档，但最终交付状态必须反映未通过。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_required",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T33",
+      "title": "建立本机注册与受保护凭证存储",
+      "priority": "P0",
+      "status": "done",
+      "day": "D1",
+      "depends_on": [
+        "T02"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/auth/host.py",
+        "gridlens/auth/credentials.py",
+        "tests/unit/test_credentials.py"
+      ],
+      "objective": "稳定保存本机host标识和账户注册，不把凭证混入研究数据。",
+      "steps": [
+        "创建并持久化稳定opaque ext_agent_host_id；使用用户配置目录。",
+        "按issued client ID+已验证subject分别保存credential records，Unix 0700/0600，原子写入完整token set。",
+        "返回仅含脱敏labels的AccountSummary，读写限制到受控文件路径；无token日志/导出。"
+      ],
+      "acceptance_criteria": [
+        "重启host ID不变，账户同email不同注册不覆盖。",
+        "写入失败不会破坏旧token set；fixture用临时目录。",
+        "研究SQLite、Git、UI/browser state和export均不含tokens。"
+      ],
+      "verification": [
+        "临时目录权限、原子失败、并行读与账户隔离测试。",
+        "检查敏感值不进入日志/摘要。"
+      ],
+      "out_of_scope": [
+        "不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。"
+      ],
+      "prd_refs": [
+        "AC-09",
+        "AC-10"
+      ],
+      "required_inputs": "无需真实账户；合成tokens与临时配置目录。",
+      "evidence": [
+        "docs/progress.md: Foundation milestone; offline tests and actual local browser verification"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_required",
+        "human": "not_required"
+      },
+      "completed_at": "2026-10-11"
+    },
+    {
+      "id": "T34",
+      "title": "实现OAuth登录和callback校验",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D2",
+      "depends_on": [
+        "T33",
+        "T04"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/auth/oauth.py",
+        "tests/unit/test_oauth.py",
+        "tests/live/test_login.py"
+      ],
+      "objective": "完成本机PKCE登录，验证身份与计划权限再激活账户。",
+      "steps": [
+        "先启动127.0.0.1 listener；每次state/nonce/verifier随机，S256；pending attempt设置到期和单次消费。",
+        "按规格3.3发起新注册或返回登录；callback state先验证，用issued ID交换code，exact redirect URI不变。",
+        "使用官方OIDC discovery/JWKS与JWT库验签，检查issuer/audience/expiry/nonce，返回登录检查原subject；检查token response granted scopes。",
+        "拒绝授权、错误或missing issued ID不替换当前账户；只在全部通过时保存凭证。"
+      ],
+      "acceptance_criteria": [
+        "错误state、nonce、签名、scope、issued-ID错配、重复callback和过期attempt都被拒绝。",
+        "首次dynamic_agent_client不能被保存为实际client ID。",
+        "callback timeout关闭listener并允许新attempt，tokens不进入页面或日志。"
+      ],
+      "verification": [
+        "mock各callback/JWKS/交换失败场景；系统浏览器打开与listener生命周期冒烟。",
+        "本人在合资格账户做真实登录，确认plan授权；仅记脱敏证据。"
+      ],
+      "out_of_scope": [
+        "不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。"
+      ],
+      "prd_refs": [
+        "AC-09",
+        "AC-10"
+      ],
+      "required_inputs": "mock无账户；真实联调需本人在官方浏览器页面完成登录与授权。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_run",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T35",
+      "title": "实现刷新、账户切换与退出",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D4",
+      "depends_on": [
+        "T34"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/auth/sessions.py",
+        "tests/unit/test_sessions.py",
+        "tests/live/test_sessions.py"
+      ],
+      "objective": "稳定维护订阅会话，失败时停止请求，退出后清除凭证。",
+      "steps": [
+        "串行刷新选中session，refresh grant使用issued ID/resource；完整原子替换旋转token set。",
+        "刷新invalid_grant提示重新授权；不覆盖其他账户。切换前校验目标注册，取消/隔离旧账户正在执行的结果。",
+        "退出停止请求，discovery取得revocation endpoint，有限重试撤销refresh token，清除local access/refresh/ID tokens，保留client/host映射。"
+      ],
+      "acceptance_criteria": [
+        "两个刷新不竞用旧refresh token，失败不发布不完整token set。",
+        "切换账户没有token/client/catalog混用，退出后不能继续请求。",
+        "远端撤销未确认明确提示；本地tokens仍清除，保留注册可再次登录。"
+      ],
+      "verification": [
+        "旋转token竞争、invalid_grant、账户隔离和logout网络失败mock。",
+        "授权账户验证刷新/退出，证据不含tokens。"
+      ],
+      "out_of_scope": [
+        "不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。"
+      ],
+      "prd_refs": [
+        "AC-09",
+        "AC-10"
+      ],
+      "required_inputs": "离线实现合成会话；真实联调需T34本人授权。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_run",
+        "human": "not_required"
+      }
+    },
+    {
+      "id": "T36",
+      "title": "接通账户侧栏和可用模型目录",
+      "priority": "P0",
+      "status": "todo",
+      "day": "D4",
+      "depends_on": [
+        "T05",
+        "T35"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/auth/catalog.py",
+        "gridlens/ui/account.py",
+        "gridlens/ui/common.py",
+        "tests/unit/test_catalog.py",
+        "tests/ui/test_account.py"
+      ],
+      "objective": "用户能看见当前授权账户并选择该账户真实可用模型。",
+      "steps": [
+        "OAuth Bearer GET /v1/models，解析models/visibility=list/slug/display_name，缓存绑定账户且支持刷新。",
+        "侧栏Continue with ChatGPT、账户picker、模型picker、重新授权、退出与Usage链接；不展示tokens。",
+        "换账户失效旧catalog/模型选择；错误和plan permission状态清晰，不影响已保存研究资料查看。"
+      ],
+      "acceptance_criteria": [
+        "不硬编码模型或把另一账户模型用于当前请求；空catalog要求重选/稍后刷新。",
+        "未授权/额度不足不生成live答案，fixture仍可启动。",
+        "Streamlit rerun不重复注册、登录或模型请求；callback通过服务通信不写浏览器token。"
+      ],
+      "verification": [
+        "目录字段/空目录/账户切换与UI连接状态mock。",
+        "真实账户读取catalog并完成一次选择，记录脱敏结果。"
+      ],
+      "out_of_scope": [
+        "不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。"
+      ],
+      "prd_refs": [
+        "AC-09",
+        "AC-10"
+      ],
+      "required_inputs": "mock无账户；真实catalog需要T35可用OAuth会话。",
+      "evidence": [],
+      "validation_state": {
+        "offline": "not_run",
+        "live": "not_run",
+        "human": "not_required"
+      }
+    }
+  ],
+  "updated_at": "2026-10-11",
+  "architecture": {
+    "ui": "local_streamlit",
+    "generation": "chatgpt_oauth_plan_usage",
+    "embedding": "local_sentence_transformers",
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "dimensions": 384,
+    "chunk_tokens": 350,
+    "chunk_overlap": 50,
+    "platform_api_key_required": false
+  },
+  "implementation_started_at": "2026-10-11",
+  "handoff": {
+    "updated_at": "2026-10-11",
+    "timezone": "Pacific/Auckland",
+    "document": "docs/HANDOFF.md",
+    "instructions": "AGENTS.md",
+    "next_recommended_tasks": [
+      "T11",
+      "T12",
+      "T13",
+      "T14"
+    ],
+    "completed_tasks": [
+      "T01",
+      "T02",
+      "T03",
+      "T04",
+      "T05",
+      "T06",
+      "T07",
+      "T08",
+      "T09",
+      "T10",
+      "T33"
+    ],
+    "repository": {
+      "url": "https://github.com/lynnjeans/gridlens.git",
+      "local_branch": "master",
+      "local_head_commit": "use git rev-parse HEAD",
+      "local_files_committed": true,
+      "pushed": true
+    },
+    "verification": {
+      "offline_tests_passed": 96,
+      "ruff": "passed",
+      "format": "passed",
+      "dependency_check": "passed",
+      "live": "not_run",
+      "human_research_acceptance": "not_run"
+    }
+  }
+}
