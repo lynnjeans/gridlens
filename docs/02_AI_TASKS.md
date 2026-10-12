@@ -656,6 +656,8 @@
 
 **缺陷修复（2026-10-12）：** 2026-10-12 缺陷修复（用户 live 使用时发现）：原 Select for review 只写单个 session_state.selected_source_id，多选时互相覆盖、刷新后丢失，Review 只显示最后一条。改为 SQLite app_state 中的持久 review_queue：Discover 选择/手动 URL 入队（重复选择不重复），Review 顶部列出全部 Waiting for capture，逐条 Capture 或 Remove from queue，捕获后自动离开队列。修复前的选择未持久化，需在 Discover 重新选择。新增 UI 测试覆盖多选、刷新后保留、移除和捕获出队；完整离线回归 361 passed、9 deselected；Ruff/format 通过。
 
+**可用性改进（2026-10-12）：** 2026-10-12 可用性改进（用户反馈：待审核文档显示在捕获队列下方，不便查看、难理解）：Review 页改为三个步骤选项 `1 · To capture (N)`、`2 · To review (N)`、`Reviewed (N)`，每步一句说明；捕获成功后自动跳到第 2 步并打开该文档；批准/拒绝/撤销/重开后跟随该文档到其所在步骤（可见 Retry indexing 等）；默认有待审核时进入第 2 步。跳转在控件创建前应用（review_focus）。完整离线回归 362 passed、9 deselected。
+
 ## T15 — 实现确定性 token 分块
 
 **优先级/状态：** P0 / done

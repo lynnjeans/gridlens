@@ -858,3 +858,14 @@ request the model catalog). `app.py` now wraps the page in `main()` behind
 `__mp_main__` with `build_container`/`set_page_config` forbidden. The capture itself had
 succeeded (one pending version). Checks: **362 passed, 9 deselected**; Ruff/format passed.
 Not run: re-capturing a live PDF after the fix (the user should restart `./run.sh`).
+
+## Review page steps (T14) — 2026-10-12
+
+Status: **implemented and verified offline.** User feedback: documents to review were listed
+below the capture queue, hard to find and to understand. Review now has three step options —
+"1 · To capture (N)", "2 · To review (N)", "Reviewed (N)" — each with a one-line explanation.
+A successful capture jumps to step 2 with that document open; approve/reject/revoke/reopen keep
+the acted-on document in view in the step where it now belongs (so Retry indexing stays
+visible). It opens on step 2 when anything is pending. Changed `gridlens/ui/review.py` and its
+UI tests. Checks: **362 passed, 9 deselected**; Ruff/format passed. Not run: the user's look at
+the restarted live app.

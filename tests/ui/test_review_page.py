@@ -50,7 +50,10 @@ def captured(tmp_path, reviewer="Researcher A"):
 
 def test_capture_preview_and_approve_saves_reviewer_once(tmp_path):
     app = captured(tmp_path)
-    assert any("waiting for review" in item.value for item in app.success)
+    assert any("Snapshot saved" in item.value for item in app.success)
+    # The captured document opens in step 2 and has left the capture queue.
+    assert app.radio(key="review_section").value == "review"
+    assert "To capture (0)" in app.radio(key="review_section").options[0]
     assert any("fictional operator" in item.value for item in app.text)
     assert any("Open original" == item.label for item in app.get("link_button"))
     button(app, "Approve").click().run()
@@ -210,6 +213,8 @@ def test_retry_indexing_for_approved_but_unindexed_version(tmp_path):
     [(version_id, snapshot)] = rows(tmp_path, "SELECT id, snapshot_sha256 FROM document_versions")
     service.review.approve(version_id, snapshot, "Researcher A")
     app.run()
+    assert any("No captured documents are waiting" in item.value for item in app.info)
+    app.radio(key="review_section").set_value("reviewed").run()
     button(app, "Retry indexing").click().run()
     assert not app.exception
     assert any("Retried. Indexed" in item.value for item in app.success)

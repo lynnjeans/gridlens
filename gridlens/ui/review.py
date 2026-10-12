@@ -12,11 +12,23 @@ STATUS_ORDER = {"pending": 0, "rejected": 1, "revoked": 2, "approved": 3}
 JURISDICTIONS = ["NZ", "US", "GLOBAL", "UNKNOWN"]
 SOURCE_TYPES = ["policy", "technical", "paper", "industry_report", "product", "unknown"]
 MAX_PREVIEW_SEGMENTS = 200
+SECTIONS = ("capture", "review", "reviewed")
+SECTION_HELP = {
+    "capture": "Step 1 · Capture saves a fixed copy of each selected source's current text.",
+    "review": "Step 2 · Read each captured document, correct its metadata, then approve or reject.",
+    "reviewed": "Approved, rejected and revoked documents. Approval adds a document to the "
+    "knowledge base.",
+}
+_CURRENT = object()
 
 
-def _notice(message: str, kind: str = "success"):
-    # Shown once after an action's rerun; never stores review eligibility.
+def _notice(message: str, kind: str = "success", *, focus=_CURRENT):
+    # Shown once after an action's rerun; never stores review eligibility. `focus` is the
+    # version to show next (default: the one acted on), applied before widgets are created.
+    if focus is _CURRENT:
+        focus = st.session_state.get("review_version_id")
     st.session_state["review_notice"] = (kind, message)
+    st.session_state["review_focus"] = focus
     st.rerun()
 
 
@@ -25,14 +37,12 @@ def _index(container: Container, version_id: str, prefix: str):
     _notice(f"{prefix} {message}", kind)
 
 
-def _capture_queue(container: Container):
+def _capture_queue(container: Container, queue: list[dict]):
     # The queue is persisted in SQLite, so every selection survives reruns and reloads;
     # a source leaves the queue once it has a captured version.
-    queue = container.sources.review_queue()
     if not queue:
+        empty_state("Nothing to capture. Select sources in Discover with Select for review.")
         return
-    st.subheader(f"Waiting for capture ({len(queue)})")
-    st.caption("Capture saves a fixed copy of the current text for you to read and review.")
     for source in queue:
         source_id = source["id"]
         with st.container(border=True):
@@ -46,16 +56,18 @@ def _capture_queue(container: Container):
                 except AppError as error:
                     show_error(error)
                     continue
-                st.session_state["review_version_id"] = preview.version_id
                 st.session_state.pop("review_seen", None)
                 _notice(
                     "This text was already captured; the existing version is shown."
                     if preview.reused
-                    else "Snapshot saved and waiting for review."
+                    else "Snapshot saved. Read it below, then approve or reject.",
+                    focus=preview.version_id,
                 )
             if right.button("Remove from queue", key=f"dequeue-{source_id}"):
                 container.sources.remove_from_review_queue(source_id)
-                _notice("Removed from the Review queue. The search result is kept.", "info")
+                _notice(
+                    "Removed from the Review queue. The search result is kept.", "info", focus=None
+                )
 
 
 def _label(version: dict) -> str:
@@ -254,22 +266,9 @@ def _version_detail(container: Container, version_id: str, reviewer: str):
         )
 
 
-def render(container: Container):
-    st.title("Review")
-    st.write("Read the original document before approving it for the knowledge base.")
-    reviewer = st.text_input(
-        "Reviewer label", key="review_reviewer", placeholder="Your name or initials"
-    )
-    if notice := st.session_state.pop("review_notice", None):
-        kind, message = notice
-        {"warning": st.warning, "info": st.info}.get(kind, st.success)(message)
-    _capture_queue(container)
-    versions = sorted(
-        container.research.list_versions(),
-        key=lambda v: STATUS_ORDER.get(v["review_status"], 9),
-    )
+def _version_list(container: Container, versions: list[dict], reviewer: str, empty: str):
     if not versions:
-        empty_state("No documents are waiting for review.")
+        empty_state(empty)
         return
     labels = {v["id"]: _label(v) for v in versions}
     if st.session_state.get("review_version_id") not in labels:
@@ -277,10 +276,61 @@ def render(container: Container):
     left, right = st.columns([1, 2])
     with left:
         version_id = st.radio(
-            "Captured versions",
+            "Documents",
             list(labels),
             format_func=labels.__getitem__,
             key="review_version_id",
         )
     with right:
         _version_detail(container, version_id, reviewer)
+
+
+def render(container: Container):
+    st.title("Review")
+    st.write("Read the original document before approving it for the knowledge base.")
+    reviewer = st.text_input(
+        "Reviewer label", key="review_reviewer", placeholder="Your name or initials"
+    )
+    queue = container.sources.review_queue()
+    versions = sorted(
+        container.research.list_versions(),
+        key=lambda v: STATUS_ORDER.get(v["review_status"], 9),
+    )
+    pending = [v for v in versions if v["review_status"] == "pending"]
+    reviewed = [v for v in versions if v["review_status"] != "pending"]
+    if focus := st.session_state.pop("review_focus", None):
+        # Follow the document just captured or acted on into the step where it now is.
+        status = next((v["review_status"] for v in versions if v["id"] == focus), None)
+        if status:
+            st.session_state["review_section"] = "review" if status == "pending" else "reviewed"
+            st.session_state["review_version_id"] = focus
+    if st.session_state.get("review_section") not in SECTIONS:
+        st.session_state["review_section"] = "review" if pending or not queue else "capture"
+    if notice := st.session_state.pop("review_notice", None):
+        kind, message = notice
+        {"warning": st.warning, "info": st.info}.get(kind, st.success)(message)
+    titles = {
+        "capture": f"1 · To capture ({len(queue)})",
+        "review": f"2 · To review ({len(pending)})",
+        "reviewed": f"Reviewed ({len(reviewed)})",
+    }
+    section = st.radio(
+        "Review step",
+        SECTIONS,
+        format_func=titles.__getitem__,
+        horizontal=True,
+        key="review_section",
+        label_visibility="collapsed",
+    )
+    st.caption(SECTION_HELP[section])
+    if section == "capture":
+        _capture_queue(container, queue)
+    elif section == "review":
+        _version_list(
+            container,
+            pending,
+            reviewer,
+            "No captured documents are waiting for review. Capture a source first.",
+        )
+    else:
+        _version_list(container, reviewed, reviewer, "No documents have been reviewed yet.")
