@@ -8,6 +8,7 @@ from gridlens.providers.tavily import TavilySearchProvider
 
 
 @pytest.mark.live
+@pytest.mark.enable_socket
 def test_explicit_tavily_smoke():
     key = os.environ.get("TAVILY_API_KEY", "")
     if not key:
@@ -17,6 +18,7 @@ def test_explicit_tavily_smoke():
 
 
 @pytest.mark.live
+@pytest.mark.enable_socket
 def test_explicit_serpapi_smoke():
     """Spends one SerpApi search (cached repeats within an hour are free)."""
     key = os.environ.get("SERPAPI_API_KEY", "")

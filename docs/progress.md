@@ -822,3 +822,10 @@ Checks: `tests/unit/test_serpapi.py` 12 passed; full offline suite **360 passed,
 deselected**; Ruff check passed; format check 108 files; pip check passed.
 Not run: real SerpApi smoke (`SERPAPI_API_KEY` not configured). Next: the user's live checks
 (T34 → T35 → T36 → T21) and T31.
+
+Live update (2026-10-12): the user ran the real SerpApi smoke with their own key —
+**1 passed** in 1.39s, one search spent. It confirms authentication, the request and
+response parsing; it does not count or judge results (T31 relevance labelling does).
+The first attempt failed with `SocketBlockedError` before any request because the live
+search smokes lacked `@pytest.mark.enable_socket`; added it to the Tavily and SerpApi
+smokes. Offline suite unchanged: 360 passed, 9 deselected (network still blocked by default).

@@ -114,7 +114,7 @@ GitHub 地址和分支信息已在本文明确记录。解压后复用已有应�
 T34 登录、T35 会话、T36 账户/目录、T21 真实生成 smoke、T31 真实语料与人工评估、
 T32 最终交付（文档已完成，待 T31 结果）。不能宣称 MVP 验收通过。
 
-真实搜索 smoke（花一次 SerpApi 搜索）：`SERPAPI_API_KEY=... .venv/bin/python -m pytest -m live -k serpapi -s`，或在 live Discover 页面搜索一次。
+真实搜索 smoke 已于 2026-10-12 由用户运行通过（1 passed）。复跑（花一次 SerpApi 搜索）：`SERPAPI_API_KEY=... .venv/bin/python -m pytest -m live -k serpapi -s`，或在 live Discover 页面搜索一次。
 
 先做真实账户验证：
 

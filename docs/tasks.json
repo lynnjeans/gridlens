@@ -2058,11 +2058,11 @@
         "tests/unit/test_serpapi.py: 12 passed（请求参数/无 Authorization 头、字段映射与 publisher 为空、无结果、畸形记录、limit 截断、401/403/429/500/503/400 映射且不重试不泄露 key、timeout、非 JSON/非对象/error/缺字段、输入校验、端点）。",
         "新增配置选择、bootstrap 只构造所选 provider、search_runs.provider=serpapi、api_key= 日志脱敏、doctor 报告 search_provider 的测试。",
         "完整离线回归：360 passed, 9 deselected；Ruff check、format check（108 files）与 pip check 通过。",
-        "未运行：真实 SerpApi smoke（尚未配置 SERPAPI_API_KEY）。"
+        "2026-10-12 用户本人运行真实 SerpApi smoke（`-m live -k serpapi`）：1 passed（1.39s），消耗 1 次搜索；认证、请求与响应解析成功。该 smoke 只断言 ≤3 条且 provider=serpapi，未记录结果条数或相关性（留给 T31 人工标注）。首次运行因 live 搜索测试缺少 enable_socket 被默认禁网拦截（未发出请求、未消耗额度），已为 Tavily 与 SerpApi smoke 补上该标记。"
       ],
       "validation_state": {
         "offline": "passed",
-        "live": "not_run",
+        "live": "passed",
         "human": "not_required"
       }
     }

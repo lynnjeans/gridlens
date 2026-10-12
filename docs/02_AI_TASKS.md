@@ -1626,6 +1626,6 @@ T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或
 
 - 不抓取 Google 或 Programmable Search 网页；不自动购买配额；不使用付费 SerpApi 功能。
 
-**验证状态：** offline=passed, live=not_run, human=not_required
+**验证状态：** offline=passed, live=passed, human=not_required
 
-**执行证据：** `tests/unit/test_serpapi.py` 12 项通过；另有配置选择、bootstrap、search_runs.provider、日志脱敏与 doctor 测试。完整离线回归 360 passed、9 deselected；Ruff、format、pip check 通过。真实 SerpApi smoke 因未配置 key 未运行。
+**执行证据：** `tests/unit/test_serpapi.py` 12 项通过；另有配置选择、bootstrap、search_runs.provider、日志脱敏与 doctor 测试。完整离线回归 360 passed、9 deselected；Ruff、format、pip check 通过。2026-10-12 用户本人运行真实 SerpApi smoke（`-m live -k serpapi`）：1 passed（1.39s），消耗 1 次搜索；认证、请求与响应解析成功。该 smoke 只断言 ≤3 条且 provider=serpapi，未记录结果条数或相关性（留给 T31 人工标注）。首次运行因 live 搜索测试缺少 enable_socket 被默认禁网拦截（未发出请求、未消耗额度），已为 Tavily 与 SerpApi smoke 补上该标记。
