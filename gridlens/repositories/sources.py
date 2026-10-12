@@ -122,6 +122,21 @@ class SourceRepository:
                     sources.append(dict(row))
             return sources
 
+    def get_preference(self, name: str) -> str | None:
+        # Local UI conveniences only (e.g. the last reviewer label); never credentials.
+        with self.db.connect() as c:
+            row = c.execute("SELECT value_json FROM app_state WHERE key=?", (f"pref:{name}",))
+            row = row.fetchone()
+            return json.loads(row["value_json"]) if row else None
+
+    def save_preference(self, name: str, value: str) -> None:
+        with self.db.transaction() as c:
+            c.execute(
+                "INSERT INTO app_state (key, value_json) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json",
+                (f"pref:{name}", json.dumps(value)),
+            )
+
     @staticmethod
     def _review_queue_ids(c) -> list[str]:
         row = c.execute("SELECT value_json FROM app_state WHERE key='review_queue'").fetchone()

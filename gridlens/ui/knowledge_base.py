@@ -6,7 +6,13 @@ from gridlens.bootstrap import Container
 from gridlens.contracts import MetadataCorrection
 from gridlens.errors import AppError
 from gridlens.services.export import ExportSelection
-from gridlens.ui.common import empty_state, index_version, revoke_version, show_error
+from gridlens.ui.common import (
+    empty_state,
+    index_version,
+    reviewer_input,
+    revoke_version,
+    show_error,
+)
 
 
 def _status(version: dict, run: dict | None, searchable: bool) -> str:
@@ -214,7 +220,7 @@ def render(container: Container):
         st.info("Indexing needs the local model; run `gridlens prepare-model` for live mode.")
 
     st.divider()
-    reviewer = st.text_input("Reviewer label", key="kb_reviewer", placeholder="Name or initials")
+    reviewer = reviewer_input(container, "kb_reviewer", "Name or initials")
     labels = {v["id"]: f"{r['Title']} · {r['Status']}" for v, r in zip(versions, rows, strict=True)}
     version_id = st.selectbox(
         "Version details", list(labels), format_func=labels.__getitem__, key="kb_version_id"

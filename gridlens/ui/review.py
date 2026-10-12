@@ -7,7 +7,13 @@ from pydantic import ValidationError
 from gridlens.bootstrap import Container
 from gridlens.contracts import MetadataCorrection
 from gridlens.errors import AppError
-from gridlens.ui.common import empty_state, index_version, revoke_version, show_error
+from gridlens.ui.common import (
+    empty_state,
+    index_version,
+    reviewer_input,
+    revoke_version,
+    show_error,
+)
 
 STATUS_ORDER = {"pending": 0, "rejected": 1, "revoked": 2, "approved": 3}
 JURISDICTIONS = ["NZ", "US", "GLOBAL", "UNKNOWN"]
@@ -301,9 +307,7 @@ def _version_list(container: Container, versions: list[dict], reviewer: str, emp
 def render(container: Container):
     st.title("Review")
     st.write("Read the original document before approving it for the knowledge base.")
-    reviewer = st.text_input(
-        "Reviewer label", key="review_reviewer", placeholder="Your name or initials"
-    )
+    reviewer = reviewer_input(container, "review_reviewer", "Your name or initials")
     queue = container.sources.review_queue()
     versions = sorted(
         container.research.list_versions(),

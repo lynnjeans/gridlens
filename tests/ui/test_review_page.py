@@ -252,3 +252,15 @@ def test_preview_reflows_hard_line_breaks_for_display_only():
     assert _reflow(text) == (
         "Title: Working Together to Ensure Our Electricity System\n\nSecond  paragraph ends."
     )
+
+
+def test_reviewer_label_is_remembered_for_new_sessions(tmp_path):
+    app = review_app(tmp_path)
+    assert app.text_input(key="review_reviewer").value == ""
+    app.text_input(key="review_reviewer").set_value("  Lei ").run()
+    assert not app.exception
+
+    # A new browser session (reload or restart) starts with the last label used.
+    fresh = review_app(tmp_path)
+    assert fresh.text_input(key="review_reviewer").value == "Lei"
+    assert container(tmp_path).sources.get_preference("reviewer_label") == "Lei"

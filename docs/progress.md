@@ -878,3 +878,11 @@ whole row; the text sits in a 560px scroll box; hard line breaks from extraction
 within a paragraph for display only (snapshot and citations unchanged; the page says so).
 Checked in a temporary fixture instance in the browser (full width, scroll box) and removed
 its data afterwards. Checks: **363 passed, 9 deselected**; Ruff passed.
+
+## Remembered reviewer label (T14/T19) — 2026-10-12
+
+User feedback: the Reviewer label had to be typed again after every reload or restart.
+Review and Knowledge Base now prefill it with the last label used on this machine, stored in
+SQLite `app_state` as `pref:reviewer_label` when edited (trimmed; a UI convenience, not a
+credential). An empty label still blocks review actions. Checks: **364 passed, 9 deselected**;
+Ruff passed.

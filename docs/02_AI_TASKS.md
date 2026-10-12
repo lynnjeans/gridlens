@@ -660,6 +660,8 @@
 
 **可读性改进（2026-10-12）：** 2026-10-12 可读性改进（用户反馈：正文区太窄导致过高）：文档选择由左侧 1/3 列的单选改为顶部全宽下拉框，详情占满整行；正文放入固定高度 560px 的滚动区；显示时合并段内由提取产生的硬换行（仅显示，快照/引用文本不变，页面注明）。合成数据实例浏览器走查确认全宽与滚动区。完整离线回归 363 passed、9 deselected。
 
+**便利性改进（2026-10-12）：** 2026-10-12 便利性改进（用户反馈：每次都要填 Reviewer label）：Review 与 Knowledge Base 的 Reviewer label 预填本机上次使用的值（SQLite app_state `pref:reviewer_label`，修改时保存，去除首尾空格；仅 UI 便利项，不是凭证）。仍可随时修改，空值仍禁止审核动作。完整离线回归 364 passed、9 deselected。
+
 ## T15 — 实现确定性 token 分块
 
 **优先级/状态：** P0 / done
@@ -868,6 +870,8 @@
 **验证状态：** offline=passed, live=not_required, human=not_run（人工浏览器检查未执行）
 
 **执行证据：** `tests/ui/test_knowledge_base.py` 5 项 AppTest 通过（全部状态、Searchable 仅来自 SQLite 资格、失败 Retry 的 kb-retry- operation_key、处理中禁用与真实阶段/计数、Revoke 需 reviewer 且与检索资格一致、rerun 不重复、空库）。完整回归 213 passed、6 deselected。未执行人工浏览器检查；Refresh 属于 T26。
+
+**便利性改进（2026-10-12）：** 2026-10-12 便利性改进（用户反馈：每次都要填 Reviewer label）：Review 与 Knowledge Base 的 Reviewer label 预填本机上次使用的值（SQLite app_state `pref:reviewer_label`，修改时保存，去除首尾空格；仅 UI 便利项，不是凭证）。仍可随时修改，空值仍禁止审核动作。完整离线回归 364 passed、9 deselected。
 
 ## T20 — 实现仅限批准版本的检索
 

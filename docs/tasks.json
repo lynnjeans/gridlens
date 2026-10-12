@@ -758,7 +758,8 @@
         "未执行真实浏览器手动检查和真实网站抓取；入库触发待 T18。",
         "2026-10-12 缺陷修复（用户 live 使用时发现）：原 Select for review 只写单个 session_state.selected_source_id，多选时互相覆盖、刷新后丢失，Review 只显示最后一条。改为 SQLite app_state 中的持久 review_queue：Discover 选择/手动 URL 入队（重复选择不重复），Review 顶部列出全部 Waiting for capture，逐条 Capture 或 Remove from queue，捕获后自动离开队列。修复前的选择未持久化，需在 Discover 重新选择。新增 UI 测试覆盖多选、刷新后保留、移除和捕获出队；完整离线回归 361 passed、9 deselected；Ruff/format 通过。",
         "2026-10-12 可用性改进（用户反馈：待审核文档显示在捕获队列下方，不便查看、难理解）：Review 页改为三个步骤选项 `1 · To capture (N)`、`2 · To review (N)`、`Reviewed (N)`，每步一句说明；捕获成功后自动跳到第 2 步并打开该文档；批准/拒绝/撤销/重开后跟随该文档到其所在步骤（可见 Retry indexing 等）；默认有待审核时进入第 2 步。跳转在控件创建前应用（review_focus）。完整离线回归 362 passed、9 deselected。",
-        "2026-10-12 可读性改进（用户反馈：正文区太窄导致过高）：文档选择由左侧 1/3 列的单选改为顶部全宽下拉框，详情占满整行；正文放入固定高度 560px 的滚动区；显示时合并段内由提取产生的硬换行（仅显示，快照/引用文本不变，页面注明）。合成数据实例浏览器走查确认全宽与滚动区。完整离线回归 363 passed、9 deselected。"
+        "2026-10-12 可读性改进（用户反馈：正文区太窄导致过高）：文档选择由左侧 1/3 列的单选改为顶部全宽下拉框，详情占满整行；正文放入固定高度 560px 的滚动区；显示时合并段内由提取产生的硬换行（仅显示，快照/引用文本不变，页面注明）。合成数据实例浏览器走查确认全宽与滚动区。完整离线回归 363 passed、9 deselected。",
+        "2026-10-12 便利性改进（用户反馈：每次都要填 Reviewer label）：Review 与 Knowledge Base 的 Reviewer label 预填本机上次使用的值（SQLite app_state `pref:reviewer_label`，修改时保存，去除首尾空格；仅 UI 便利项，不是凭证）。仍可随时修改，空值仍禁止审核动作。完整离线回归 364 passed、9 deselected。"
       ],
       "validation_state": {
         "offline": "passed",
@@ -1048,7 +1049,8 @@
         "tests/ui/test_knowledge_base.py: 5 passed（AppTest，fixture 覆盖 pending/rejected/revoked/未入库/入库失败/处理中/Searchable/Superseded）；三种状态分列与 Searchable 仅来自 SQLite 资格；失败版本 Retry 通过 IngestionService，operation_key 前缀 kb-retry- 且每次新生成，rerun 不重复；处理中 Retry 禁用并显示真实阶段与 1/4 计数；Revoke 需 reviewer、事件记录 reviewer/原因、撤销后检索资格即时排除、rerun 不重复事件；空库状态。",
         "Review 与 Knowledge Base 共用 ui/common.index_version；Review UI 测试仍通过。",
         "完整离线回归：213 passed, 6 deselected；Ruff、format 与 pip check 通过。",
-        "未运行：人工浏览器交互检查。Refresh（新快照）属于 T26。"
+        "未运行：人工浏览器交互检查。Refresh（新快照）属于 T26。",
+        "2026-10-12 便利性改进（用户反馈：每次都要填 Reviewer label）：Review 与 Knowledge Base 的 Reviewer label 预填本机上次使用的值（SQLite app_state `pref:reviewer_label`，修改时保存，去除首尾空格；仅 UI 便利项，不是凭证）。仍可随时修改，空值仍禁止审核动作。完整离线回归 364 passed、9 deselected。"
       ],
       "validation_state": {
         "offline": "passed",
@@ -2139,7 +2141,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 363,
+      "offline_tests_passed": 364,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

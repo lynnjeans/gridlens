@@ -22,6 +22,17 @@ def sidebar(container: Container):
         st.caption("Searches, captures and sign-in run only when you ask")
 
 
+def reviewer_input(container: Container, key: str, placeholder: str) -> str:
+    """Reviewer label prefilled with the last one used on this machine."""
+    if key not in st.session_state:
+        st.session_state[key] = container.sources.get_preference("reviewer_label") or ""
+
+    def remember():
+        container.sources.save_preference("reviewer_label", st.session_state[key].strip())
+
+    return st.text_input("Reviewer label", key=key, placeholder=placeholder, on_change=remember)
+
+
 def empty_state(message: str):
     st.info(message)
 
