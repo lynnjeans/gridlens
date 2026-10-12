@@ -1,4 +1,5 @@
 import json
+import re
 
 import streamlit as st
 from pydantic import ValidationError
@@ -75,8 +76,22 @@ def _label(version: dict) -> str:
     return f"{title} · {version['review_status']}"
 
 
+def _reflow(text: str) -> str:
+    # Display only: joins hard line breaks left by PDF/HTML extraction inside a paragraph so
+    # the preview reads at full width. The captured snapshot and citations are unchanged.
+    paragraphs = re.split(r"\n\s*\n", text)
+    return "\n\n".join(
+        " ".join(line.strip() for line in paragraph.splitlines() if line.strip())
+        for paragraph in paragraphs
+        if paragraph.strip()
+    )
+
+
 def _segments(segments):
     with st.expander(f"Document text · {len(segments)} segment(s)", expanded=True):
+        st.caption("Line breaks are joined for reading; the saved text is unchanged.")
+        body = st.container(height=560)
+    with body:
         for segment in segments[:MAX_PREVIEW_SEGMENTS]:
             locator = segment.locator
             place = (
@@ -85,7 +100,7 @@ def _segments(segments):
                 else f"paragraph {locator.paragraph_index}"
             )
             st.caption(" › ".join([*segment.heading_path, place]))
-            st.text(segment.text)
+            st.text(_reflow(segment.text))
         if len(segments) > MAX_PREVIEW_SEGMENTS:
             st.caption(
                 f"{len(segments) - MAX_PREVIEW_SEGMENTS} more segment(s) are not shown. "
@@ -273,16 +288,14 @@ def _version_list(container: Container, versions: list[dict], reviewer: str, emp
     labels = {v["id"]: _label(v) for v in versions}
     if st.session_state.get("review_version_id") not in labels:
         st.session_state["review_version_id"] = versions[0]["id"]
-    left, right = st.columns([1, 2])
-    with left:
-        version_id = st.radio(
-            "Documents",
-            list(labels),
-            format_func=labels.__getitem__,
-            key="review_version_id",
-        )
-    with right:
-        _version_detail(container, version_id, reviewer)
+    version_id = st.selectbox(
+        f"Document ({len(labels)})",
+        list(labels),
+        format_func=labels.__getitem__,
+        key="review_version_id",
+    )
+    st.divider()
+    _version_detail(container, version_id, reviewer)
 
 
 def render(container: Container):

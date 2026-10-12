@@ -869,3 +869,12 @@ the acted-on document in view in the step where it now belongs (so Retry indexin
 visible). It opens on step 2 when anything is pending. Changed `gridlens/ui/review.py` and its
 UI tests. Checks: **362 passed, 9 deselected**; Ruff/format passed. Not run: the user's look at
 the restarted live app.
+
+## Review preview layout (T14) — 2026-10-12
+
+User feedback: the document text was squeezed into two-thirds of the width and very tall.
+The document picker is now a full-width dropdown above the detail, so the detail uses the
+whole row; the text sits in a 560px scroll box; hard line breaks from extraction are joined
+within a paragraph for display only (snapshot and citations unchanged; the page says so).
+Checked in a temporary fixture instance in the browser (full width, scroll box) and removed
+its data afterwards. Checks: **363 passed, 9 deselected**; Ruff passed.

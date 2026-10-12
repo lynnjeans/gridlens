@@ -157,7 +157,7 @@ def test_empty_document_capture_creates_no_version(tmp_path):
 def test_metadata_correction_updates_hash_bound_to_approval(tmp_path):
     app = captured(tmp_path)
     [(original_hash,)] = rows(tmp_path, "SELECT snapshot_sha256 FROM document_versions")
-    app.selectbox[0].set_value("GLOBAL")
+    next(item for item in app.selectbox if item.label == "Jurisdiction").set_value("GLOBAL")
     app.text_input[3].set_value("2026-01-15")
     button(app, "Save metadata").click().run()
     assert not app.exception
@@ -243,3 +243,12 @@ def test_indexing_failure_keeps_approval_and_offers_retry(tmp_path):
         ("failed",),
         ("completed",),
     ]
+
+
+def test_preview_reflows_hard_line_breaks_for_display_only():
+    from gridlens.ui.review import _reflow
+
+    text = "Title: Working Together to Ensure\nOur Electricity System\n\nSecond  paragraph\nends."
+    assert _reflow(text) == (
+        "Title: Working Together to Ensure Our Electricity System\n\nSecond  paragraph ends."
+    )
