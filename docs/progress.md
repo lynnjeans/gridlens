@@ -829,3 +829,19 @@ response parsing; it does not count or judge results (T31 relevance labelling do
 The first attempt failed with `SocketBlockedError` before any request because the live
 search smokes lacked `@pytest.mark.enable_socket`; added it to the Tavily and SerpApi
 smokes. Offline suite unchanged: 360 passed, 9 deselected (network still blocked by default).
+
+## Fix — persistent Review queue (T08/T14) — 2026-10-12
+
+Status: **fixed and verified offline.** In live use the user selected several search
+results, but Review showed none of them (at most the last). Cause: "Select for review"
+stored one `session_state.selected_source_id`, overwritten by each click and lost on reload;
+Review showed only that one uncaptured source. Now selections and manual URLs are added to a
+persistent `review_queue` in SQLite `app_state` (no migration), deduplicated, in selection
+order. Review lists every queued source under "Waiting for capture (N)" with Capture and
+Remove from queue; a captured source leaves the queue. Action notices now render at the top
+of Review. Selections made before the fix were never saved and must be re-selected.
+
+Changed: `gridlens/repositories/sources.py`, `gridlens/ui/discover.py`, `gridlens/ui/review.py`,
+`tests/ui/test_discover.py`, `tests/ui/test_review_page.py`, spec §UI table.
+Checks: full offline suite **361 passed, 9 deselected**; Ruff check and format passed.
+Not run: a human check in the live UI (the user can re-select results and open Review).

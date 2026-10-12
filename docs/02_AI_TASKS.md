@@ -404,6 +404,8 @@
 
 **执行证据：** Discover 与导航 UI 测试 10 项通过；覆盖搜索/刷新幂等、候选展示与选择、Review 接收来源、手动 pending lead、输入/缺 key 错误和 empty/partial/failed 状态。完整回归 67 passed、1 live deselected；Ruff/format/pip check 通过。
 
+**缺陷修复（2026-10-12）：** 2026-10-12 缺陷修复（用户 live 使用时发现）：原 Select for review 只写单个 session_state.selected_source_id，多选时互相覆盖、刷新后丢失，Review 只显示最后一条。改为 SQLite app_state 中的持久 review_queue：Discover 选择/手动 URL 入队（重复选择不重复），Review 顶部列出全部 Waiting for capture，逐条 Capture 或 Remove from queue，捕获后自动离开队列。修复前的选择未持久化，需在 Discover 重新选择。新增 UI 测试覆盖多选、刷新后保留、移除和捕获出队；完整离线回归 361 passed、9 deselected；Ruff/format 通过。
+
 ## T09 — 实现有边界的公开 URL 获取
 
 **优先级/状态：** P0 / done
@@ -647,6 +649,8 @@
 **验证状态：** offline=passed, live=not_required, human=not_required
 
 **执行证据：** `tests/ui/test_review_page.py` 8 项 AppTest 通过：capture/预览/approve、reviewer 必填、reject 原因必填且原文保存、stale 预览需重新加载、不可读快照禁止批准、空文档不建版本、元数据修正改 hash 并绑定批准、revoke/reopen、rerun 不重复事件。`tests/integration/test_review.py` 7 项通过（含元数据修正）。完整回归 123 passed、1 live deselected；Ruff/format/pip check 通过。未执行真实浏览器手动检查；批准后入库触发待 T18。
+
+**缺陷修复（2026-10-12）：** 2026-10-12 缺陷修复（用户 live 使用时发现）：原 Select for review 只写单个 session_state.selected_source_id，多选时互相覆盖、刷新后丢失，Review 只显示最后一条。改为 SQLite app_state 中的持久 review_queue：Discover 选择/手动 URL 入队（重复选择不重复），Review 顶部列出全部 Waiting for capture，逐条 Capture 或 Remove from queue，捕获后自动离开队列。修复前的选择未持久化，需在 Discover 重新选择。新增 UI 测试覆盖多选、刷新后保留、移除和捕获出队；完整离线回归 361 passed、9 deselected；Ruff/format 通过。
 
 ## T15 — 实现确定性 token 分块
 

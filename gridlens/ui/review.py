@@ -25,29 +25,37 @@ def _index(container: Container, version_id: str, prefix: str):
     _notice(f"{prefix} {message}", kind)
 
 
-def _selected_source(container: Container):
-    source_id = st.session_state.get("selected_source_id")
-    source = container.sources.get_source(source_id) if source_id else None
-    if not source:
+def _capture_queue(container: Container):
+    # The queue is persisted in SQLite, so every selection survives reruns and reloads;
+    # a source leaves the queue once it has a captured version.
+    queue = container.sources.review_queue()
+    if not queue:
         return
-    with st.container(border=True):
-        st.subheader("Selected source")
-        st.write(source["title"])
-        st.link_button("Open original", source["original_url"])
-        st.caption("Capture saves a fixed copy of the current text for you to read and review.")
-        if st.button("Capture document", key=f"capture-{source_id}"):
-            try:
-                preview = container.snapshots.capture(source_id)
-            except AppError as error:
-                show_error(error)
-                return
-            st.session_state["review_version_id"] = preview.version_id
-            st.session_state.pop("review_seen", None)
-            _notice(
-                "This text was already captured; the existing version is shown."
-                if preview.reused
-                else "Snapshot saved and waiting for review."
-            )
+    st.subheader(f"Waiting for capture ({len(queue)})")
+    st.caption("Capture saves a fixed copy of the current text for you to read and review.")
+    for source in queue:
+        source_id = source["id"]
+        with st.container(border=True):
+            st.write(source["title"])
+            st.caption(source["original_url"])
+            left, middle, right = st.columns(3)
+            left.link_button("Open original", source["original_url"])
+            if middle.button("Capture document", key=f"capture-{source_id}"):
+                try:
+                    preview = container.snapshots.capture(source_id)
+                except AppError as error:
+                    show_error(error)
+                    continue
+                st.session_state["review_version_id"] = preview.version_id
+                st.session_state.pop("review_seen", None)
+                _notice(
+                    "This text was already captured; the existing version is shown."
+                    if preview.reused
+                    else "Snapshot saved and waiting for review."
+                )
+            if right.button("Remove from queue", key=f"dequeue-{source_id}"):
+                container.sources.remove_from_review_queue(source_id)
+                _notice("Removed from the Review queue. The search result is kept.", "info")
 
 
 def _label(version: dict) -> str:
@@ -198,9 +206,6 @@ def _version_detail(container: Container, version_id: str, reviewer: str):
         f"Review: {row['review_status']} · ingestion: {row['ingestion_status']} · "
         f"version: {row['version_status']} · snapshot {current_hash[:12]}"
     )
-    if notice := st.session_state.pop("review_notice", None):
-        kind, message = notice
-        (st.warning if kind == "warning" else st.success)(message)
     link_left, link_right = st.columns(2)
     link_left.link_button("Open original", meta["original_url"])
     if meta.get("final_url") and meta["final_url"] != meta["original_url"]:
@@ -255,7 +260,10 @@ def render(container: Container):
     reviewer = st.text_input(
         "Reviewer label", key="review_reviewer", placeholder="Your name or initials"
     )
-    _selected_source(container)
+    if notice := st.session_state.pop("review_notice", None):
+        kind, message = notice
+        {"warning": st.warning, "info": st.info}.get(kind, st.success)(message)
+    _capture_queue(container)
     versions = sorted(
         container.research.list_versions(),
         key=lambda v: STATUS_ORDER.get(v["review_status"], 9),

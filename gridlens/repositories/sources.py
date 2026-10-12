@@ -93,6 +93,48 @@ class SourceRepository:
         with self.db.connect() as c:
             return [dict(r) for r in c.execute("SELECT * FROM sources ORDER BY created_at DESC")]
 
+    def queue_for_review(self, source_id: str) -> None:
+        """Adds a source to the persistent capture queue; repeated selection is a no-op."""
+        with self.db.transaction() as c:
+            if not c.execute("SELECT 1 FROM sources WHERE id=?", (source_id,)).fetchone():
+                raise ValueError("Unknown source")
+            queue = self._review_queue_ids(c)
+            if source_id not in queue:
+                self._save_review_queue(c, [*queue, source_id])
+
+    def remove_from_review_queue(self, source_id: str) -> None:
+        with self.db.transaction() as c:
+            queue = self._review_queue_ids(c)
+            if source_id in queue:
+                self._save_review_queue(c, [item for item in queue if item != source_id])
+
+    def review_queue(self) -> list[dict]:
+        """Queued sources in selection order that have not been captured yet."""
+        with self.db.connect() as c:
+            sources = []
+            for source_id in self._review_queue_ids(c):
+                row = c.execute(
+                    "SELECT s.* FROM sources s WHERE s.id=? AND NOT EXISTS "
+                    "(SELECT 1 FROM document_versions v WHERE v.source_id=s.id)",
+                    (source_id,),
+                ).fetchone()
+                if row:
+                    sources.append(dict(row))
+            return sources
+
+    @staticmethod
+    def _review_queue_ids(c) -> list[str]:
+        row = c.execute("SELECT value_json FROM app_state WHERE key='review_queue'").fetchone()
+        return json.loads(row["value_json"]) if row else []
+
+    @staticmethod
+    def _save_review_queue(c, queue: list[str]) -> None:
+        c.execute(
+            "INSERT INTO app_state (key, value_json) VALUES ('review_queue', ?) "
+            "ON CONFLICT(key) DO UPDATE SET value_json=excluded.value_json",
+            (json.dumps(queue),),
+        )
+
     def get_source(self, source_id: str) -> dict | None:
         with self.db.connect() as c:
             row = c.execute("SELECT * FROM sources WHERE id=?", (source_id,)).fetchone()

@@ -16,7 +16,8 @@ def container(tmp_path):
 
 
 def review_app(tmp_path, url=GUIDE, setup=""):
-    source_id = container(tmp_path).discovery.add_source(url).source_id
+    c = container(tmp_path)
+    c.sources.queue_for_review(c.discovery.add_source(url).source_id)
     script = (
         "from pathlib import Path\n"
         "import streamlit as st\n"
@@ -24,7 +25,6 @@ def review_app(tmp_path, url=GUIDE, setup=""):
         "from gridlens.bootstrap import build_container\n"
         "from gridlens.ui.review import render\n"
         f"c=build_container(Settings(project_root=Path({str(tmp_path)!r})))\n"
-        f"st.session_state.setdefault('selected_source_id', {source_id!r})\n"
         f"{setup}"
         "render(c)\n"
     )

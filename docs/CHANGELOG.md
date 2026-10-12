@@ -85,3 +85,7 @@ T21 离线完成（awaiting_input，2026-10-12）：ChatGPT 计划用量流式�
 ## SerpApi 搜索适配器（T37）— 2026-10-12
 
 用户不愿为 Tavily 绑定银行卡，选择 SerpApi（Google 结果）。新增 `gridlens/providers/serpapi.py` 与 `SEARCH_PROVIDER=tavily|serpapi`、`SERPAPI_API_KEY` 配置；默认仍为 tavily。SerpApi 仅支持查询参数认证，日志过滤新增 `api_key=` 脱敏。完整离线回归 360 passed、9 deselected；真实 SerpApi smoke 未运行（未配置 key）。
+
+## Review 待捕获队列修复 — 2026-10-12
+
+Discover 多选时只保留最后一条且刷新丢失的缺陷：改为 SQLite 持久队列，Review 列出全部待捕获来源。361 passed、9 deselected。

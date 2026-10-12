@@ -439,7 +439,8 @@
       "required_inputs": "无需外部凭证；使用合成 fixture。",
       "evidence": [
         "tests/ui/test_discover.py 与 test_navigation.py: 10 passed；覆盖搜索、rerun 幂等、候选选择、Review 接收、手动 URL、输入/配置错误及空/partial/failed 状态。",
-        "完整离线回归：67 passed, 1 deselected；Ruff、format、pip check 通过。"
+        "完整离线回归：67 passed, 1 deselected；Ruff、format、pip check 通过。",
+        "2026-10-12 缺陷修复（用户 live 使用时发现）：原 Select for review 只写单个 session_state.selected_source_id，多选时互相覆盖、刷新后丢失，Review 只显示最后一条。改为 SQLite app_state 中的持久 review_queue：Discover 选择/手动 URL 入队（重复选择不重复），Review 顶部列出全部 Waiting for capture，逐条 Capture 或 Remove from queue，捕获后自动离开队列。修复前的选择未持久化，需在 Discover 重新选择。新增 UI 测试覆盖多选、刷新后保留、移除和捕获出队；完整离线回归 361 passed、9 deselected；Ruff/format 通过。"
       ],
       "validation_state": {
         "offline": "passed",
@@ -752,7 +753,8 @@
         "tests/integration/test_review.py: 7 passed（新增元数据修正 stale/幂等/仅 pending 测试）。",
         "完整离线回归：123 passed, 1 live deselected；Ruff、format 与 pip check 通过。",
         "测试文件命名为 tests/ui/test_review_page.py，因与 tests/integration/test_review.py 同 basename 导致 pytest 收集冲突。",
-        "未执行真实浏览器手动检查和真实网站抓取；入库触发待 T18。"
+        "未执行真实浏览器手动检查和真实网站抓取；入库触发待 T18。",
+        "2026-10-12 缺陷修复（用户 live 使用时发现）：原 Select for review 只写单个 session_state.selected_source_id，多选时互相覆盖、刷新后丢失，Review 只显示最后一条。改为 SQLite app_state 中的持久 review_queue：Discover 选择/手动 URL 入队（重复选择不重复），Review 顶部列出全部 Waiting for capture，逐条 Capture 或 Remove from queue，捕获后自动离开队列。修复前的选择未持久化，需在 Discover 重新选择。新增 UI 测试覆盖多选、刷新后保留、移除和捕获出队；完整离线回归 361 passed、9 deselected；Ruff/format 通过。"
       ],
       "validation_state": {
         "offline": "passed",
@@ -2133,7 +2135,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 360,
+      "offline_tests_passed": 361,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

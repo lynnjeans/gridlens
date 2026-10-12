@@ -15,7 +15,7 @@ SOURCE_TYPES = {
 }
 
 
-def _show_results(result: SearchRunDetail):
+def _show_results(container: Container, result: SearchRunDetail):
     if result.status == "partial":
         st.warning("Some searches failed. Successful candidates are shown below.")
     elif result.status == "failed":
@@ -38,8 +38,8 @@ def _show_results(result: SearchRunDetail):
             if right.button(
                 "Select for review", key=f"review-{result.run_id}-{candidate.source_id}"
             ):
-                st.session_state["selected_source_id"] = candidate.source_id
-                st.success("Source selected. Open Review from the navigation.")
+                container.sources.queue_for_review(candidate.source_id)
+                st.success("Added to the Review queue. Open Review to capture it.")
 
 
 def render(container: Container):
@@ -87,7 +87,7 @@ def render(container: Container):
         except AppError as error:
             show_error(error)
     if data := st.session_state.get("discover_last_result"):
-        _show_results(SearchRunDetail.model_validate(data))
+        _show_results(container, SearchRunDetail.model_validate(data))
 
     st.divider()
     st.subheader("Add a public URL")
@@ -97,7 +97,10 @@ def render(container: Container):
     if add_submitted:
         try:
             candidate = container.discovery.add_source(manual_url)
-            st.session_state["selected_source_id"] = candidate.source_id
-            st.success("Source saved as a pending lead. It has not been fetched or approved.")
+            container.sources.queue_for_review(candidate.source_id)
+            st.success(
+                "Source added to the Review queue as a pending lead. "
+                "It has not been fetched or approved."
+            )
         except AppError as error:
             show_error(error)
