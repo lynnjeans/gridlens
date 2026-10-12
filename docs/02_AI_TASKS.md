@@ -662,6 +662,8 @@
 
 **便利性改进（2026-10-12）：** 2026-10-12 便利性改进（用户反馈：每次都要填 Reviewer label）：Review 与 Knowledge Base 的 Reviewer label 预填本机上次使用的值（SQLite app_state `pref:reviewer_label`，修改时保存，去除首尾空格；仅 UI 便利项，不是凭证）。仍可随时修改，空值仍禁止审核动作。完整离线回归 364 passed、9 deselected。
 
+**审核防漏（2026-10-12）：** 2026-10-12 审核防漏（用户批准后 Region 仍为 UNKNOWN：Approve 只使用已保存元数据，表单中未点 Save metadata 的修改被静默丢弃）：Approve 上方显示“Approve with saved metadata: region · type”及“未保存修改不会被批准”提示；Region 为 UNKNOWN 时警告该文档不会用于 NZ/US/GLOBAL 筛选的问题，类型 unknown 时也警告（仅提示，不阻止）。按用户要求界面标签 Jurisdiction 统一改为 Region（Review 表单与 KB 修正表单；数据字段仍为 jurisdiction）。完整离线回归 365 passed、9 deselected。
+
 ## T15 — 实现确定性 token 分块
 
 **优先级/状态：** P0 / done
@@ -1168,6 +1170,8 @@
 **验证状态：** offline=passed, live=not_required, human=not_required
 
 **执行证据：** `tests/integration/test_version_lifecycle.py` 3 项（v1→v2→revoke 全周期、清理失败、批准后修正与 hash 篡改）与 KB Refresh UI 测试通过。行为变更：刷新沿用已审核元数据，T12 测试相应更新。完整回归 306 passed、8 deselected。
+
+**审核防漏（2026-10-12）：** 2026-10-12 审核防漏（用户批准后 Region 仍为 UNKNOWN：Approve 只使用已保存元数据，表单中未点 Save metadata 的修改被静默丢弃）：Approve 上方显示“Approve with saved metadata: region · type”及“未保存修改不会被批准”提示；Region 为 UNKNOWN 时警告该文档不会用于 NZ/US/GLOBAL 筛选的问题，类型 unknown 时也警告（仅提示，不阻止）。按用户要求界面标签 Jurisdiction 统一改为 Region（Review 表单与 KB 修正表单；数据字段仍为 jurisdiction）。完整离线回归 365 passed、9 deselected。
 
 ## T27 — 实现 Markdown research log 导出
 

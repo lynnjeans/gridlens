@@ -131,7 +131,7 @@ def _revise_form(container: Container, version: dict, meta: dict):
             regions = ["NZ", "US", "GLOBAL", "UNKNOWN"]
             types = ["policy", "technical", "paper", "industry_report", "product", "unknown"]
             region = st.selectbox(
-                "Jurisdiction", regions, index=regions.index(meta.get("jurisdiction", "UNKNOWN"))
+                "Region", regions, index=regions.index(meta.get("jurisdiction", "UNKNOWN"))
             )
             source_type = st.selectbox(
                 "Source type", types, index=types.index(meta.get("source_type", "unknown"))

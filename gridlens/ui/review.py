@@ -130,7 +130,7 @@ def _metadata_form(container: Container, version_id: str, seen_hash: str, meta: 
             key=f"published-{suffix}",
         )
         jurisdiction = left.selectbox(
-            "Jurisdiction",
+            "Region",
             JURISDICTIONS,
             index=JURISDICTIONS.index(meta.get("jurisdiction", "UNKNOWN")),
             key=f"jurisdiction-{suffix}",
@@ -168,7 +168,23 @@ def _metadata_form(container: Container, version_id: str, seen_hash: str, meta: 
         st.info("No metadata changed.")
 
 
-def _pending_actions(container, version_id, seen_hash, reviewer, *, stale, readable):
+def _approval_check(meta: dict):
+    # Approve uses the saved metadata, not unsaved edits in the form above.
+    region = meta.get("jurisdiction", "UNKNOWN")
+    source_type = meta.get("source_type", "unknown")
+    st.markdown(f"**Approve with saved metadata:** region {region} · type {source_type}")
+    st.caption("Changed the form? Click Save metadata first; unsaved edits are not approved.")
+    if region == "UNKNOWN":
+        st.warning(
+            "Region is UNKNOWN: questions filtered to NZ, US or GLOBAL will not use this "
+            "document. Set the region and save before approving if it is known."
+        )
+    if source_type == "unknown":
+        st.warning("Source type is unknown. Set it and save before approving if it is known.")
+
+
+def _pending_actions(container, version_id, seen_hash, reviewer, *, meta, stale, readable):
+    _approval_check(meta)
     if st.button(
         "Approve",
         type="primary",
@@ -266,7 +282,13 @@ def _version_detail(container: Container, version_id: str, reviewer: str):
     if row["review_status"] == "pending":
         _metadata_form(container, version_id, seen_hash, meta, stale)
         _pending_actions(
-            container, version_id, seen_hash, reviewer, stale=stale, readable=bool(segments)
+            container,
+            version_id,
+            seen_hash,
+            reviewer,
+            meta=meta,
+            stale=stale,
+            readable=bool(segments),
         )
     else:
         _closed_actions(container, version_id, row, reviewer)

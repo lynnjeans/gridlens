@@ -886,3 +886,14 @@ Review and Knowledge Base now prefill it with the last label used on this machin
 SQLite `app_state` as `pref:reviewer_label` when edited (trimmed; a UI convenience, not a
 credential). An empty label still blocks review actions. Checks: **364 passed, 9 deselected**;
 Ruff passed.
+
+## Approval metadata check and Region label (T14/T26) — 2026-10-12
+
+The user's first approved document kept region UNKNOWN although they had fixed title,
+publisher and type: Approve uses saved metadata, and an unsaved form edit was silently
+dropped. Above Approve the page now states the saved region and type, says unsaved edits are
+not approved, and warns when region is UNKNOWN (excluded from NZ/US/GLOBAL-filtered
+questions) or type is unknown (warning only). At the user's request the UI label
+"Jurisdiction" is now "Region" in the Review and Knowledge Base forms (stored field unchanged).
+The approved document still needs a corrected version (Knowledge Base → Propose corrected
+metadata → Region NZ). Checks: **365 passed, 9 deselected**; Ruff passed.

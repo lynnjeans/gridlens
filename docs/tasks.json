@@ -759,7 +759,8 @@
         "2026-10-12 缺陷修复（用户 live 使用时发现）：原 Select for review 只写单个 session_state.selected_source_id，多选时互相覆盖、刷新后丢失，Review 只显示最后一条。改为 SQLite app_state 中的持久 review_queue：Discover 选择/手动 URL 入队（重复选择不重复），Review 顶部列出全部 Waiting for capture，逐条 Capture 或 Remove from queue，捕获后自动离开队列。修复前的选择未持久化，需在 Discover 重新选择。新增 UI 测试覆盖多选、刷新后保留、移除和捕获出队；完整离线回归 361 passed、9 deselected；Ruff/format 通过。",
         "2026-10-12 可用性改进（用户反馈：待审核文档显示在捕获队列下方，不便查看、难理解）：Review 页改为三个步骤选项 `1 · To capture (N)`、`2 · To review (N)`、`Reviewed (N)`，每步一句说明；捕获成功后自动跳到第 2 步并打开该文档；批准/拒绝/撤销/重开后跟随该文档到其所在步骤（可见 Retry indexing 等）；默认有待审核时进入第 2 步。跳转在控件创建前应用（review_focus）。完整离线回归 362 passed、9 deselected。",
         "2026-10-12 可读性改进（用户反馈：正文区太窄导致过高）：文档选择由左侧 1/3 列的单选改为顶部全宽下拉框，详情占满整行；正文放入固定高度 560px 的滚动区；显示时合并段内由提取产生的硬换行（仅显示，快照/引用文本不变，页面注明）。合成数据实例浏览器走查确认全宽与滚动区。完整离线回归 363 passed、9 deselected。",
-        "2026-10-12 便利性改进（用户反馈：每次都要填 Reviewer label）：Review 与 Knowledge Base 的 Reviewer label 预填本机上次使用的值（SQLite app_state `pref:reviewer_label`，修改时保存，去除首尾空格；仅 UI 便利项，不是凭证）。仍可随时修改，空值仍禁止审核动作。完整离线回归 364 passed、9 deselected。"
+        "2026-10-12 便利性改进（用户反馈：每次都要填 Reviewer label）：Review 与 Knowledge Base 的 Reviewer label 预填本机上次使用的值（SQLite app_state `pref:reviewer_label`，修改时保存，去除首尾空格；仅 UI 便利项，不是凭证）。仍可随时修改，空值仍禁止审核动作。完整离线回归 364 passed、9 deselected。",
+        "2026-10-12 审核防漏（用户批准后 Region 仍为 UNKNOWN：Approve 只使用已保存元数据，表单中未点 Save metadata 的修改被静默丢弃）：Approve 上方显示“Approve with saved metadata: region · type”及“未保存修改不会被批准”提示；Region 为 UNKNOWN 时警告该文档不会用于 NZ/US/GLOBAL 筛选的问题，类型 unknown 时也警告（仅提示，不阻止）。按用户要求界面标签 Jurisdiction 统一改为 Region（Review 表单与 KB 修正表单；数据字段仍为 jurisdiction）。完整离线回归 365 passed、9 deselected。"
       ],
       "validation_state": {
         "offline": "passed",
@@ -1446,7 +1447,8 @@
         "tests/integration/test_version_lifecycle.py: 3 passed：完整 v1→v2→revoke（审核过的元数据下同内容刷新 no-op；内容变化建 pending 且不继承批准、沿用已审核标签；v2 批准未入库前 v1 仍有效、v2 Ready 后 v1 Superseded；旧答案 quote/版本不变且状态动态为 superseded；撤销 v2 时向量删除失败仍排除检索、不恢复 v1、状态 revoked、新提问 insufficient）；已批准元数据修正创建新 pending 版本（同文件、新 hash、旧版继续服务、重复修正 VERSION_DUPLICATE）；批准后 hash 被篡改不能入库。",
         "tests/ui/test_knowledge_base.py 新增 Refresh（未变 no-op、变化后待审核提示与“update awaiting review”标记）；Ask 引用按 revoked/superseded/not_current 显示历史标签。",
         "行为变更：刷新/重新抓取沿用最近版本的人工审核元数据（标题、发布方、日期、地区、类型），未审核的 Source 标签变化不再产生新版本；T12 测试已改为验证该规则。元数据修正走 revise_metadata（新 pending 版本）。",
-        "完整离线回归：306 passed, 8 deselected；Ruff、format 与 pip check 通过。"
+        "完整离线回归：306 passed, 8 deselected；Ruff、format 与 pip check 通过。",
+        "2026-10-12 审核防漏（用户批准后 Region 仍为 UNKNOWN：Approve 只使用已保存元数据，表单中未点 Save metadata 的修改被静默丢弃）：Approve 上方显示“Approve with saved metadata: region · type”及“未保存修改不会被批准”提示；Region 为 UNKNOWN 时警告该文档不会用于 NZ/US/GLOBAL 筛选的问题，类型 unknown 时也警告（仅提示，不阻止）。按用户要求界面标签 Jurisdiction 统一改为 Region（Review 表单与 KB 修正表单；数据字段仍为 jurisdiction）。完整离线回归 365 passed、9 deselected。"
       ],
       "validation_state": {
         "offline": "passed",
@@ -2141,7 +2143,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 364,
+      "offline_tests_passed": 365,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

@@ -157,7 +157,7 @@ def test_empty_document_capture_creates_no_version(tmp_path):
 def test_metadata_correction_updates_hash_bound_to_approval(tmp_path):
     app = captured(tmp_path)
     [(original_hash,)] = rows(tmp_path, "SELECT snapshot_sha256 FROM document_versions")
-    next(item for item in app.selectbox if item.label == "Jurisdiction").set_value("GLOBAL")
+    next(item for item in app.selectbox if item.label == "Region").set_value("GLOBAL")
     app.text_input[3].set_value("2026-01-15")
     button(app, "Save metadata").click().run()
     assert not app.exception
@@ -168,7 +168,7 @@ def test_metadata_correction_updates_hash_bound_to_approval(tmp_path):
     assert new_hash != original_hash
     assert json.loads(metadata)["jurisdiction"] == "GLOBAL"
     assert published_at == "2026-01-15"
-    assert not app.warning
+    assert not any("changed after you opened it" in item.value for item in app.warning)
     button(app, "Approve").click().run()
     assert rows(tmp_path, "SELECT approved_snapshot_sha256 FROM document_versions") == [(new_hash,)]
 
@@ -264,3 +264,17 @@ def test_reviewer_label_is_remembered_for_new_sessions(tmp_path):
     fresh = review_app(tmp_path)
     assert fresh.text_input(key="review_reviewer").value == "Lei"
     assert container(tmp_path).sources.get_preference("reviewer_label") == "Lei"
+
+
+def test_approval_shows_saved_metadata_and_warns_about_unknown_labels(tmp_path):
+    app = captured(tmp_path)
+    assert any("region UNKNOWN · type unknown" in item.value for item in app.markdown)
+    assert any("unsaved edits are not approved" in item.value for item in app.caption)
+    assert any("Region is UNKNOWN" in item.value for item in app.warning)
+
+    next(item for item in app.selectbox if item.label == "Region").set_value("NZ")
+    next(item for item in app.selectbox if item.label == "Source type").set_value("policy")
+    button(app, "Save metadata").click().run()
+    assert not app.exception
+    assert any("region NZ · type policy" in item.value for item in app.markdown)
+    assert not any("is UNKNOWN" in item.value or "is unknown" in item.value for item in app.warning)
