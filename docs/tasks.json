@@ -1125,7 +1125,7 @@
       "id": "T21",
       "title": "实现订阅授权的流式回答 Provider",
       "priority": "P0",
-      "status": "awaiting_input",
+      "status": "done",
       "day": "D5",
       "depends_on": [
         "T02",
@@ -1170,14 +1170,14 @@
         "实现：原生 httpx（无 SDK 隐式重试）；顶层字段白名单 model/instructions/input/store/stream/text；证据以 JSON 数据放入 user 消息；output_mode auto 先 strict json_schema，流开始前 400 且 param 为 text.* 时回退一次 prompt_json_validated，两种模式均严格 AnswerDraft 校验；2MB 流上限；记录脱敏注册引用、slug、实际模型、output mode、request ID、terminal event、usage、latency。",
         "tests/unit/test_answer_provider.py: 21 passed（字段白名单与禁用字段、无 system message、注入文本仅作数据、Bearer 为选中账户、schema 回退一次与显式 schema 不回退、无 completed/incomplete/流中额度错误/资格错误/server_error/畸形 SSE 均不返回答案、自由文本/额外 url/page 字段/状态不一致被拒、401/403/404/429/503 映射且不重试、超时与断流、无 plan scope 或账户已切换不发请求、超大流）。",
         "完整离线回归：266 passed, 8 deselected；live 组 4 项按设计 skip；Ruff、format 与 pip check 通过。",
-        "未运行：真实生成 smoke（需登录与计划用量）；wheel 中 prompts 打包未重新构建验证。引用校验在 T22。"
+        "未运行：真实生成 smoke（需登录与计划用量）；wheel 中 prompts 打包未重新构建验证。引用校验在 T22。",
+        "2026-10-12 真实生成（应用内 Ask，非 pytest smoke）：model gpt-5.6-sol，output_mode=schema，execution completed（SSE 至完成），evidence answered，6 条 fact claims，attempts=1，45.3 s，usage input 2624 / output 1579（reasoning 89）/ total 4203 tokens；全部 support_quote 通过逐字校验，7 条引用行。`-m live -k live_answer` 合成证据 smoke 未单独运行。发现并修复显示缺陷：同一 chunk 多句引用时 Sources 仅显示第一句、编号重复（见 progress）。"
       ],
       "validation_state": {
         "offline": "passed",
-        "live": "not_run",
+        "live": "passed",
         "human": "not_required"
-      },
-      "awaiting": "T34 登录并在侧栏选择模型后，运行 APP_MODE=live GRIDLENS_LIVE_ANSWER=1 .venv/bin/python -m pytest -m live -k live_answer -s（消耗计划用量），记录 slug、output mode、terminal event 与 usage（脱敏）。"
+      }
     },
     {
       "id": "T22",
@@ -1228,7 +1228,8 @@
         "tests/integration/test_answers.py: 15 passed（真实临时 Chroma + fake embedding）；服务端引用（编号、标题、URL、版本/快照 hash、定位）；虚构 chunk 修复一次后发布、两次虚构或错误 quote 失败且不保存答案/引用；格式错误修复一次、二次失败保存 OUTPUT_INVALID；USAGE_LIMITED/STREAM_INCOMPLETE/PROVIDER_TIMEOUT/PLAN_PERMISSION_MISSING 不重试且保存为 failed 而非 insufficient；生成期间撤销 → stale_context；空库/筛选全排除直接 completed+insufficient 不调用模型；operation_key 重放（含失败）不再调用模型；无 provider → AUTH_REQUIRED；citations 插入失败整笔回滚 QA_SAVE_FAILED；新版本发布后历史引用仍锁定原版本。",
         "接口：AnswerProvider.generate 增加可选 repair 说明（fake 与 ChatGPT provider 已支持）；AnswerEnvelope 增加 missing_evidence；Container.answer_service；AnswerService 预留 gap_writer 事务扩展点（T24）。",
         "完整离线回归：281 passed, 8 deselected；local_model 4 passed；Ruff、format 与 pip check 通过。",
-        "说明：引用校验证明出处与逐字摘录，不证明语义蕴含；问答时不联网补证据。"
+        "说明：引用校验证明出处与逐字摘录，不证明语义蕴含；问答时不联网补证据。",
+        "2026-10-12 显示修复：同一 chunk 被多条/同一 claim 用不同 support_quote 引用时，Ask 的 Sources 与 research log 显示该 chunk 的全部已校验引文并标注所支持的语句；语句编号显示（1 · Fact）；标记去重。citations 表仍按 (qa, claim, chunk) 唯一，完整引文以 answer_json.draft 为准。366 passed、9 deselected。"
       ],
       "validation_state": {
         "offline": "passed",
@@ -1859,7 +1860,7 @@
       "id": "T34",
       "title": "实现OAuth登录和callback校验",
       "priority": "P0",
-      "status": "awaiting_input",
+      "status": "done",
       "day": "D2",
       "depends_on": [
         "T33",
@@ -1901,14 +1902,14 @@
         "tests/unit/test_oauth.py: 22 passed；覆盖首次注册 authorize 参数（dynamic_agent_client、agent_name_hint、ext_agent_host_id、scope、resource、S256）、每次随机 state/nonce/verifier、仅 127.0.0.1 /auth/callback、交换参数精确（issued ID、同一 redirect URI、verifier、resource、无 secret）、错误 state、access_denied/其他错误不交换、缺 issued ID 或返回 dynamic_agent_client、重复与过期 callback、7 种无效 ID token（nonce/aud/dynamic aud/iss/过期/他钥签名/未知 kid）、invalid_grant 与不完整响应、返回登录复用 issued ID 与 id_token_hint/login_hint、client 不符与账户不符不替换凭证、合成 fixture JWKS 验签、真实 loopback listener 成功与超时后关闭（仅允许 127.0.0.1）、CLI 在 fixture 模式拒绝。",
         "完整离线回归：198 passed, 6 deselected；local_model 4 passed；Ruff、format 与 pip check 通过。",
         "与规格差异：按官方 errors-and-recovery 指引，缺少 chatgpt.tokens.use.direct 时保留登录但 plan_usage_enabled=False（规格原写拒绝）。",
-        "未运行：真实浏览器登录（用户选择稍后本人执行）。账户侧栏 UI 属于 T36。"
+        "未运行：真实浏览器登录（用户选择稍后本人执行）。账户侧栏 UI 属于 T36。",
+        "2026-10-12 用户本人完成真实 ChatGPT 登录：凭证存储 1 个注册（owner-only），侧栏显示其账户；随后在该账户计划用量下成功生成真实回答，说明 plan 授权已授予。tokens 未进入日志/研究库；证据仅记录脱敏事实。"
       ],
       "validation_state": {
         "offline": "passed",
-        "live": "not_run",
+        "live": "passed",
         "human": "not_required"
-      },
-      "awaiting": "用户本人在合资格 ChatGPT 账户完成一次真实登录：APP_MODE=live .venv/bin/python -m gridlens.cli login（或 APP_MODE=live GRIDLENS_LIVE_LOGIN=1 .venv/bin/python -m pytest -m live -k login -s），确认 plan scope 已授予；仅记录脱敏结果。"
+      }
     },
     {
       "id": "T35",
@@ -1967,7 +1968,7 @@
       "id": "T36",
       "title": "接通账户侧栏和可用模型目录",
       "priority": "P0",
-      "status": "awaiting_input",
+      "status": "done",
       "day": "D4",
       "depends_on": [
         "T05",
@@ -2010,14 +2011,14 @@
         "tests/unit/test_catalog.py: 8 passed（过滤/保序/去重/display 回退、Bearer、空目录、401/403/429/5xx 映射、格式错误、过期 handle 不请求、请求期间换账户丢弃结果）。",
         "tests/ui/test_account.py: 5 passed（fixture 模式登录按钮禁用；live 无账户提供 Continue with ChatGPT 且不请求；每次账户选择只请求一次目录、rerun 不重复、换账户清空旧模型并以新账户 token 读取、页面无 token；缺少 plan scope 时不请求目录且提示重新授权；退出清除 tokens 并回到登录，远端撤销未确认时明确提示）。",
         "完整离线回归：245 passed, 7 deselected；local_model 4 passed；Ruff、format 与 pip check 通过。",
-        "未运行：真实账户目录读取与选择（等待 T34 登录）。登录在 Streamlit 进程中阻塞等待本机 loopback callback（最多 5 分钟），tokens 不进入 session_state。"
+        "未运行：真实账户目录读取与选择（等待 T34 登录）。登录在 Streamlit 进程中阻塞等待本机 loopback callback（最多 5 分钟），tokens 不进入 session_state。",
+        "2026-10-12 用户在 live 侧栏从本人账户真实目录选择模型 `gpt-5.6-sol` 并用于生成（qa_records.model_id）。目录中模型数量未记录。"
       ],
       "validation_state": {
         "offline": "passed",
-        "live": "not_run",
+        "live": "passed",
         "human": "not_required"
-      },
-      "awaiting": "T34 本人真实登录后，在 live 模式侧栏读取真实模型目录并完成一次选择，仅记录脱敏结果（模型数量与是否完成选择）。"
+      }
     },
     {
       "id": "T37",
@@ -2095,10 +2096,7 @@
     "document": "docs/HANDOFF.md",
     "instructions": "AGENTS.md",
     "next_recommended_tasks": [
-      "T34",
       "T35",
-      "T36",
-      "T21",
       "T31",
       "T32"
     ],
@@ -2133,7 +2131,10 @@
       "T29",
       "T30",
       "T33",
-      "T37"
+      "T37",
+      "T34",
+      "T36",
+      "T21"
     ],
     "repository": {
       "url": "https://github.com/lynnjeans/gridlens.git",
@@ -2143,19 +2144,16 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 365,
+      "offline_tests_passed": 366,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",
-      "live": "not_run",
+      "live": "partial: SerpApi smoke, real sign-in, catalog selection and one real answer passed; T35 refresh/sign-out not run",
       "human_research_acceptance": "not_run",
       "local_model": "passed"
     },
     "awaiting_input": [
-      "T34",
       "T35",
-      "T36",
-      "T21",
       "T31",
       "T32"
     ]

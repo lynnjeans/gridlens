@@ -897,3 +897,24 @@ questions) or type is unknown (warning only). At the user's request the UI label
 "Jurisdiction" is now "Region" in the Review and Knowledge Base forms (stored field unchanged).
 The approved document still needs a corrected version (Knowledge Base → Propose corrected
 metadata → Region NZ). Checks: **365 passed, 9 deselected**; Ruff passed.
+
+## Live answer verified (T34/T36/T21) and citation display fix (T22) — 2026-10-12
+
+The user signed in with their own ChatGPT account, chose `gpt-5.6-sol` from their catalog
+in the live sidebar and asked, with region NZ: "What does the Optimal Protocol submission
+recommend about decentralisation of the electricity system?" against one approved NZ policy
+document (7 chunks). Result: execution completed, evidence `answered`, 6 fact claims,
+output mode `schema`, 1 attempt, 45.3 s, 2,624 input + 1,579 output (89 reasoning) =
+4,203 tokens. Every support quote passed the verbatim check. T34, T36 and T21 are now done
+(live passed). The `-m live -k live_answer` pytest smoke was not run separately; T35
+refresh/sign-out has not been verified live.
+
+Defect found in that answer: one chunk often supports several claims with different quotes,
+but each citation number kept only the first quote, so Sources showed one sentence for [3]
+while three statements relied on other sentences of it, and markers repeated ("[3] [3] [3]").
+Fix: Ask numbers statements ("1 · Fact"), shows each marker once, and lists under each source
+every verified quote with the statement it supports; the research log export does the same.
+Older answers render correctly because quotes come from the stored draft. The `citations`
+table still holds one row per (answer, claim, chunk); the full quotes remain in
+`answer_json.draft`. Human judgment of whether each quote semantically supports its claim is
+still part of T31. Checks: **366 passed, 9 deselected**; Ruff/format passed.

@@ -38,6 +38,24 @@ def citation_problems(draft: AnswerDraft, context: RetrievalContext) -> list[str
     return problems
 
 
+def quotes_by_chunk(claims) -> dict[str, list[tuple[str, str]]]:
+    """Every verified (claim_id, quote) per chunk, in answer order and without repeats.
+
+    A citation number stands for a chunk, but different claims (or one claim) can rely on
+    several quotes from it; all of them must be shown for a reader to check each claim.
+    Accepts Claim models or their JSON dicts.
+    """
+    quotes: dict[str, list[tuple[str, str]]] = {}
+    for claim in claims:
+        data = claim if isinstance(claim, dict) else claim.model_dump()
+        for evidence in data["evidence"]:
+            item = (data["claim_id"], evidence["support_quote"])
+            bucket = quotes.setdefault(evidence["chunk_id"], [])
+            if item not in bucket:
+                bucket.append(item)
+    return quotes
+
+
 def source_statuses(db: Database, version_ids: list[str], fingerprint: str | None) -> dict:
     """Current status of cited versions, computed on every read of a historical answer."""
     if not version_ids:

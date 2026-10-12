@@ -67,11 +67,13 @@ def test_partial_answer_maps_claims_to_citations(tmp_path, monkeypatch):
     monkeypatch.setattr(FakeAnswerProvider, "generate", counted)
     app = submit(ask_app(tmp_path))
     assert any("Partly answered" in w.value for w in app.warning)
-    assert any(m.value.startswith("**Fact:**") and m.value.endswith("[1]") for m in app.markdown)
+    assert any(
+        m.value.startswith("**1 · Fact:**") and m.value.endswith("[1]") for m in app.markdown
+    )
     [expander] = [e for e in app.expander if e.label.startswith("[1] ")]
     assert expander.label == "[1] synthetic.example"  # reviewed snapshot title
     assert any("paragraph" in c.value for c in expander.caption)
-    assert any("Supports claim(s): c1" in c.value for c in expander.caption)
+    assert any("Supports statement 1" in c.value for c in expander.caption)
     assert any(m.value.startswith("> ") for m in expander.markdown)
     assert any("Missing evidence" in m.value for m in app.markdown)
     assert any("Synthetic development answer" in c.value for c in app.caption)
@@ -98,7 +100,7 @@ def test_answered_path(tmp_path):
     )
     app = submit(ask_app(tmp_path, setup))
     assert any("Answered from approved sources" in s.value for s in app.success)
-    assert any(m.value.startswith("**Inference:**") for m in app.markdown)
+    assert any("· Inference:**" in m.value for m in app.markdown)
 
 
 def test_insufficient_when_nothing_is_approved(tmp_path):
@@ -134,3 +136,59 @@ def test_input_validation(tmp_path):
     app = submit(ask_app(tmp_path), question="x")
     assert any("between 3 and 2000" in e.value for e in app.error)
     assert rows(tmp_path, "SELECT id FROM qa_records") == []
+
+
+def test_repeated_chunk_citations_show_one_marker_and_every_quote():
+    from gridlens.contracts import AnswerEnvelope, Claim, Evidence
+
+    envelope = AnswerEnvelope(
+        qa_id="q",
+        execution_status="completed",
+        evidence_status="answered",
+        claims=[
+            Claim(
+                claim_id="a",
+                kind="fact",
+                text="First claim.",
+                evidence=[Evidence(chunk_id="k", support_quote="Quote one.")],
+            ),
+            Claim(
+                claim_id="b",
+                kind="fact",
+                text="Second claim.",
+                evidence=[
+                    Evidence(chunk_id="k", support_quote="Quote two."),
+                    Evidence(chunk_id="k", support_quote="Quote three."),
+                ],
+            ),
+        ],
+        limitations=[],
+        citations=[
+            {
+                "number": 1,
+                "chunk_id": "k",
+                "quote": "Quote one.",
+                "claim_ids": ["a", "b"],
+                "locator": {"kind": "html", "paragraph_index": 2, "heading_path": []},
+                "source": {"version_id": "v", "title": "Doc"},
+            }
+        ],
+        gaps=[],
+        error=None,
+        mode="live",
+    )
+    import pickle
+
+    payload = pickle.dumps(envelope)
+    script = (
+        "import pickle\nfrom gridlens.ui.ask import _show_answer\n"
+        f"_show_answer(pickle.loads({payload!r}), {{'v': 'current'}})\n"
+    )
+    app = AppTest.from_string(script).run()
+    assert not app.exception
+    assert any(m.value == "**2 · Fact:** Second claim. [1]" for m in app.markdown)
+    [expander] = app.expander
+    quotes = [m.value for m in expander.markdown if m.value.startswith("> ")]
+    assert quotes == ["> Quote one.", "> Quote two.", "> Quote three."]
+    supports = [c.value for c in expander.caption if c.value.startswith("Supports")]
+    assert supports == ["Supports statement 1", "Supports statement 2", "Supports statement 2"]

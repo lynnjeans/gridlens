@@ -14,7 +14,7 @@ from pydantic import Field
 
 from gridlens.contracts import DTO
 from gridlens.db import Database
-from gridlens.services.citations import source_statuses
+from gridlens.services.citations import quotes_by_chunk, source_statuses
 
 DISPLAY_ZONE = ZoneInfo("Pacific/Auckland")
 _MARKDOWN = re.compile(r"([\\`*_{}\[\]()#+\-.!|~>])")
@@ -195,11 +195,10 @@ class ExportService:
                         "that are no longer approved."
                     )
                     continue
-                marks = "".join(
-                    f" \\[{numbers[e['chunk_id']]}\\]"
-                    for e in claim["evidence"]
-                    if e["chunk_id"] in numbers
+                cited = dict.fromkeys(
+                    numbers[e["chunk_id"]] for e in claim["evidence"] if e["chunk_id"] in numbers
                 )
+                marks = "".join(f" \\[{number}\\]" for number in cited)
                 kind = "Fact" if claim["kind"] == "fact" else "Inference"
                 lines.append(f"- {kind}: {md(claim['text'])}{marks}")
             for limitation in answer["draft"]["limitations"]:
@@ -209,6 +208,7 @@ class ExportService:
                     f"- Missing evidence: {md(missing['subquestion'])} — "
                     f"{md(missing['needed_evidence'])}"
                 )
+            quotes = quotes_by_chunk(answer["draft"]["claims"])
             for citation in citations:
                 source = citation["source"]
                 status = statuses.get(source["version_id"], "not_current")
@@ -219,7 +219,11 @@ class ExportService:
                 )
                 if status in {"current", "superseded"}:
                     label = " (superseded version)" if status == "superseded" else ""
-                    lines.append(f"  - Quote{label}: “{md(citation['quote'])}”")
+                    for claim_id, quote in quotes.get(citation["chunk_id"], []) or [
+                        (None, citation["quote"])
+                    ]:
+                        claim = f" for claim {md(claim_id)}" if claim_id else ""
+                        lines.append(f"  - Quote{label}{claim}: “{md(quote)}”")
                 else:
                     lines.append("  - Quote omitted: the source is no longer approved.")
         return lines

@@ -6,7 +6,7 @@ import streamlit as st
 from gridlens.bootstrap import Container
 from gridlens.contracts import AnswerEnvelope, RetrievalFilters
 from gridlens.errors import AppError
-from gridlens.services.citations import source_statuses
+from gridlens.services.citations import quotes_by_chunk, source_statuses
 from gridlens.ui.common import empty_state, show_error
 
 REGIONS = {
@@ -90,12 +90,13 @@ def _show_answer(envelope: AnswerEnvelope, statuses: dict[str, str]):
     getattr(st, kind)(text)
 
     numbers = {c["chunk_id"]: c["number"] for c in envelope.citations}
-    for claim in envelope.claims:
-        marks = "".join(
-            f" [{numbers[e.chunk_id]}]" for e in claim.evidence if e.chunk_id in numbers
-        )
+    positions = {claim.claim_id: index for index, claim in enumerate(envelope.claims, start=1)}
+    quotes = quotes_by_chunk(envelope.claims)
+    for index, claim in enumerate(envelope.claims, start=1):
+        cited = dict.fromkeys(numbers[e.chunk_id] for e in claim.evidence if e.chunk_id in numbers)
+        marks = "".join(f" [{number}]" for number in cited)
         label = "Fact" if claim.kind == "fact" else "Inference"
-        st.markdown(f"**{label}:** {claim.text}{marks}")
+        st.markdown(f"**{index} · {label}:** {claim.text}{marks}")
     if envelope.limitations:
         st.markdown("**Limitations**")
         for item in envelope.limitations:
@@ -110,8 +111,13 @@ def _show_answer(envelope: AnswerEnvelope, statuses: dict[str, str]):
     for citation in envelope.citations:
         source = citation["source"]
         with st.expander(f"[{citation['number']}] {source.get('title') or 'Untitled'}"):
-            st.markdown(f"> {citation['quote']}")
             st.caption(_location(citation["locator"]))
+            for claim_id, quote in quotes.get(citation["chunk_id"], []) or [
+                (None, citation["quote"])
+            ]:
+                st.markdown(f"> {quote}")
+                if claim_id in positions:
+                    st.caption(f"Supports statement {positions[claim_id]}")
             st.caption(
                 " · ".join(
                     [
@@ -122,7 +128,6 @@ def _show_answer(envelope: AnswerEnvelope, statuses: dict[str, str]):
                     ]
                 )
             )
-            st.caption("Supports claim(s): " + ", ".join(citation["claim_ids"]))
             status = statuses.get(source.get("version_id"), "not_current")
             if status != "current":
                 st.warning(STATUS_LABELS[status])

@@ -21,8 +21,8 @@
 
 ## 2. 当前完成状态
 
-37 项任务中 **31 项 done，6 项 awaiting_input，0 项 todo**。T01–T20、T22–T30、T33、T37 已完成并通过离线验证；
-T34/T35/T36/T21 离线完成、等待本人真实登录及其后的会话/目录/生成验证；T31 真实验收与 T32 最终交付等待用户。当前没有遗留的失败检查。
+37 项任务中 **34 项 done，3 项 awaiting_input，0 项 todo**。T01–T30、T33、T34、T36、T37 已完成；
+T34/T36/T21 已于 2026-10-12 由用户真实登录、选模型并生成一次真实回答（gpt-5.6-sol，schema 模式）；T35 刷新/退出真实验证待做；T31 真实验收与 T32 最终交付等待用户。当前没有遗留的失败检查。
 
 | 已完成 | 当前能力 | 主要文件 |
 | --- | --- | --- |
@@ -46,10 +46,10 @@ T34/T35/T36/T21 离线完成、等待本人真实登录及其后的会话/目录
 | T18 | 入库流水线：处理锁、分块、批量 embedding/upsert、ID 集合核对、发布前复查审核、单事务替换 Active；Review 批准后入库与重试 | `gridlens/services/ingestion.py`、`bootstrap.py`、`ui/review.py` |
 | T19 | Knowledge Base：三种状态分列、Searchable 仅来自 SQLite、真实阶段/计数、Retry/Revoke | `gridlens/ui/knowledge_base.py` |
 | T20 | 仅限批准版本的检索：SQLite 资格 + 已审核元数据筛选、白名单 Top-10、越界丢弃、相邻重叠去重、5 块/4000 tokens、返回前复查 | `gridlens/services/retrieval.py`、迁移 002 |
-| T34（awaiting_input） | loopback PKCE 登录、callback/state/nonce/JWKS/issued-ID 校验，全部通过才保存；`gridlens login` | `gridlens/auth/oauth.py`、`cli.py` |
+| T34（done，真实登录已验证） | loopback PKCE 登录、callback/state/nonce/JWKS/issued-ID 校验，全部通过才保存；`gridlens login` | `gridlens/auth/oauth.py`、`cli.py` |
 | T35（awaiting_input） | 串行刷新（fcntl 锁、旋转 token 完整替换）、账户选择 epoch 隔离、撤销后清除 tokens 保留注册；`gridlens logout` | `gridlens/auth/sessions.py` |
-| T36（awaiting_input） | 侧栏账户/模型选择：账户专属目录（/v1/models，visibility=list）、每次选择只请求一次、换账户清空、plan 权限提示、重新授权/退出/Usage | `gridlens/auth/catalog.py`、`ui/account.py` |
-| T21（awaiting_input） | 订阅授权流式回答：字段白名单、证据作数据、schema/prompt-JSON 严格校验、SSE 至 completed、额度/资格/失效错误独立 | `gridlens/providers/chatgpt_oauth.py`、`prompts/answer_v1.txt` |
+| T36（done，真实目录选择已验证） | 侧栏账户/模型选择：账户专属目录（/v1/models，visibility=list）、每次选择只请求一次、换账户清空、plan 权限提示、重新授权/退出/Usage | `gridlens/auth/catalog.py`、`ui/account.py` |
+| T21（done，真实回答已验证） | 订阅授权流式回答：字段白名单、证据作数据、schema/prompt-JSON 严格校验、SSE 至 completed、额度/资格/失效错误独立 | `gridlens/providers/chatgpt_oauth.py`、`prompts/answer_v1.txt` |
 | T22 | 问答服务：最多两次生成（格式/引用修复一次）、逐字引用校验、发布前复查资格、服务端引用元数据、单事务保存、operation_key 重放 | `gridlens/services/answers.py`、`citations.py` |
 | T23 | Ask 页面：问题/地区/类型、已保存记录渲染（rerun 不调用模型）、fact/inference、引用展开（摘录/页码或段落/原链接）、历史与来源状态复查 | `gridlens/ui/ask.py` |
 | T24 | 知识缺口：规范 gap_key、open 唯一合并、QA 同事务保存、仅用户关闭（resolve 需说明）、失败不产生缺口 | `gridlens/services/gaps.py` |
@@ -74,7 +74,7 @@ Knowledge Base 与 Ask 已接通（fixture 可完整使用；live 生成需登�
 
 | 命令 | 结果 |
 | --- | --- |
-| `.venv/bin/python -m pytest -q` | 365 passed，9 deselected（live/local_model）（2026-10-12，批准前元数据提示后） |
+| `.venv/bin/python -m pytest -q` | 366 passed，9 deselected（live/local_model）（2026-10-12，引用显示修复后） |
 | `.venv/bin/ruff check .` | All checks passed |
 | `.venv/bin/ruff format --check .` | 108 files already formatted |
 | `.venv/bin/python -m pip check` | No broken requirements found |
@@ -110,7 +110,7 @@ GitHub 地址和分支信息已在本文明确记录。解压后复用已有应�
 
 ## 5. 下一项工作：全部开发任务已完成，剩余均需用户参与
 
-代码层面 37 项任务中 31 项 done，其余 6 项 awaiting_input：
+代码层面 37 项任务中 34 项 done，其余 3 项 awaiting_input（T35、T31、T32）。此前列出的：
 T34 登录、T35 会话、T36 账户/目录、T21 真实生成 smoke、T31 真实语料与人工评估、
 T32 最终交付（文档已完成，待 T31 结果）。不能宣称 MVP 验收通过。
 

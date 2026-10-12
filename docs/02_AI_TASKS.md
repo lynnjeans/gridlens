@@ -1,6 +1,6 @@
 # GridLens AI 开发任务清单
 
-版本：1.1 | 日期：2026-10-12 | 37 个 P0 任务 | 31 项 done，6 项 awaiting_input（T21、T31、T32、T34–T36），0 项 todo。
+版本：1.1 | 日期：2026-10-12 | 37 个 P0 任务 | 34 项 done，3 项 awaiting_input（T31、T32、T35），0 项 todo。
 
 本地 Streamlit 网页；ChatGPT OAuth 订阅生成；本地 BGE embedding。T01–T32 保留编号，新增 T33–T36 处理授权；按依赖执行，不按编号机械执行。路径均相对于现有应用根目录；基础阶段已经实现，当前交接入口见 HANDOFF.md。
 
@@ -30,7 +30,7 @@
 | T18 | 实现入库流水线与原子发布 | D4 | T13, T14, T15, T16, T17 | implementation | done |
 | T19 | 接通 Knowledge Base 页面 | D6 | T05, T18 | implementation | done |
 | T20 | 实现仅限批准版本的检索 | D5 | T18 | implementation | done |
-| T21 | 实现订阅授权的流式回答 Provider | D5 | T02, T04, T35, T36 | implementation | awaiting_input |
+| T21 | 实现订阅授权的流式回答 Provider | D5 | T02, T04, T35, T36 | implementation | done |
 | T22 | 实现问答服务、引用校验与保存 | D5 | T20, T21 | implementation | done |
 | T23 | 接通 Ask 与引用查看 | D5 | T05, T22 | implementation | done |
 | T24 | 实现知识缺口规则、保存与去重 | D7 | T03, T22 | implementation | done |
@@ -43,9 +43,9 @@
 | T31 | 完成真实语料与人工评估验收 | D9 | T06, T16, T21, T29, T30 | human_gated_acceptance | awaiting_input |
 | T32 | 整理运行说明、限制和 demo 交付 | D10 | T30, T31 | delivery | awaiting_input |
 | T33 | 建立本机注册与受保护凭证存储 | D1 | T02 | implementation | done |
-| T34 | 实现OAuth登录和callback校验 | D2 | T33, T04 | implementation | awaiting_input |
+| T34 | 实现OAuth登录和callback校验 | D2 | T33, T04 | implementation | done |
 | T35 | 实现刷新、账户切换与退出 | D4 | T34 | implementation | awaiting_input |
-| T36 | 接通账户侧栏和可用模型目录 | D4 | T05, T35 | implementation | awaiting_input |
+| T36 | 接通账户侧栏和可用模型目录 | D4 | T05, T35 | implementation | done |
 | T37 | 实现 SerpApi 搜索适配器（可选搜索 provider） | D10 | T06, T07 | implementation | done |
 
 ## 使用规则
@@ -919,7 +919,7 @@
 
 ## T21 — 实现订阅授权的流式回答 Provider
 
-**优先级/状态：** P0 / awaiting_input（离线完成，真实 smoke 需登录与计划用量）
+**优先级/状态：** P0 / done
 **日程/类别：** D5 / implementation
 **依赖：** T02, T04, T35, T36
 **PRD 对应：** AC-05, AC-06
@@ -957,9 +957,11 @@
 
 - 不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。
 
-**验证状态：** offline=passed, live=not_run, human=not_required
+**验证状态：** offline=passed, live=passed, human=not_required
 
 **执行证据：** 已核对官方 inference/限制/错误文档。`tests/unit/test_answer_provider.py` 21 项通过（请求字段白名单、证据仅作数据、schema→prompt-JSON 单次回退、未 completed/额度/资格/畸形流不返回答案、自由文本与额外字段被拒、错误映射不重试、无权限或换账户不请求）。完整回归 266 passed、8 deselected。**未运行真实 smoke**：需 `APP_MODE=live GRIDLENS_LIVE_ANSWER=1 .venv/bin/python -m pytest -m live -k live_answer -s`。
+
+**真实验证（2026-10-12）：** 2026-10-12 真实生成（应用内 Ask，非 pytest smoke）：model gpt-5.6-sol，output_mode=schema，execution completed（SSE 至完成），evidence answered，6 条 fact claims，attempts=1，45.3 s，usage input 2624 / output 1579（reasoning 89）/ total 4203 tokens；全部 support_quote 通过逐字校验，7 条引用行。`-m live -k live_answer` 合成证据 smoke 未单独运行。发现并修复显示缺陷：同一 chunk 多句引用时 Sources 仅显示第一句、编号重复（见 progress）。
 
 ## T22 — 实现问答服务、引用校验与保存
 
@@ -1004,6 +1006,8 @@
 **验证状态：** offline=passed, live=not_required, human=not_required
 
 **执行证据：** `tests/integration/test_answers.py` 15 项通过（伪造引用与错误 quote、修复一次、provider 失败不伪装 insufficient、中途撤销 stale_context、空库 insufficient 不调用模型、operation_key 重放、保存失败整笔回滚、历史引用锁定版本）。完整回归 281 passed、8 deselected。引用校验不等于语义蕴含验证。
+
+**显示修复（2026-10-12）：** 同一 chunk 的多句引文全部显示并标注所支持语句；语句编号；标记去重（见 progress）。
 
 ## T23 — 接通 Ask 与引用查看
 
@@ -1483,7 +1487,7 @@ T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或
 
 ## T34 — 实现OAuth登录和callback校验
 
-**优先级/状态：** P0 / awaiting_input（离线完成，等待本人真实登录）
+**优先级/状态：** P0 / done
 **日程/类别：** D2 / implementation
 **依赖：** T33, T04
 **PRD 对应：** AC-09, AC-10
@@ -1520,9 +1524,11 @@ T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或
 
 - 不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。
 
-**验证状态：** offline=passed, live=not_run, human=not_required
+**验证状态：** offline=passed, live=passed, human=not_required
 
 **执行证据：** 已核对官方 sign-in/token/errors 文档与 OIDC discovery。`tests/unit/test_oauth.py` 22 项通过（错误 state/nonce/签名/aud/iss/过期、scope、issued-ID 错配、重复与过期 callback、拒绝授权与交换失败不保存、返回登录身份核对、loopback listener 成功/超时关闭）。完整回归 198 passed、6 deselected。按官方指引，缺少 plan scope 时保留登录但禁用 plan usage。**未运行真实登录**：需本人执行 `APP_MODE=live .venv/bin/python -m gridlens.cli login` 或 `APP_MODE=live GRIDLENS_LIVE_LOGIN=1 .venv/bin/python -m pytest -m live -k login -s`，只记录脱敏结果。
+
+**真实验证（2026-10-12）：** 2026-10-12 用户本人完成真实 ChatGPT 登录：凭证存储 1 个注册（owner-only），侧栏显示其账户；随后在该账户计划用量下成功生成真实回答，说明 plan 授权已授予。tokens 未进入日志/研究库；证据仅记录脱敏事实。
 
 ## T35 — 实现刷新、账户切换与退出
 
@@ -1568,7 +1574,7 @@ T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或
 
 ## T36 — 接通账户侧栏和可用模型目录
 
-**优先级/状态：** P0 / awaiting_input（离线完成，真实目录需 T34 登录）
+**优先级/状态：** P0 / done
 **日程/类别：** D4 / implementation
 **依赖：** T05, T35
 **PRD 对应：** AC-09, AC-10
@@ -1605,9 +1611,11 @@ T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或
 
 - 不使用私有 backend-api、浏览器 cookies 或共享他人的 tokens；不部署公网。
 
-**验证状态：** offline=passed, live=not_run, human=not_required
+**验证状态：** offline=passed, live=passed, human=not_required
 
 **执行证据：** 已核对官方 models 文档。`tests/unit/test_catalog.py` 8 项、`tests/ui/test_account.py` 5 项通过（字段/空目录/错误映射、账户切换清空并隔离、rerun 不重复请求、plan scope 缺失、退出）。完整回归 245 passed、7 deselected。**未运行真实目录读取**：需 T34 登录后在 live 侧栏完成一次选择。
+
+**真实验证（2026-10-12）：** 2026-10-12 用户在 live 侧栏从本人账户真实目录选择模型 `gpt-5.6-sol` 并用于生成（qa_records.model_id）。目录中模型数量未记录。
 
 ## T37 — 实现 SerpApi 搜索适配器（可选搜索 provider）
 

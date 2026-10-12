@@ -4,10 +4,10 @@
 
 | Item | Status | How to verify |
 | --- | --- | --- |
-| Real ChatGPT sign-in (T34) | awaiting_input | `APP_MODE=live python -m gridlens.cli login`; record whether plan usage was granted. |
+| Real ChatGPT sign-in (T34) | passed 2026-10-12 (owner signed in; plan usage granted) | `APP_MODE=live python -m gridlens.cli login`; record whether plan usage was granted. |
 | Session refresh and sign-out (T35) | awaiting_input | After sign-in: `APP_MODE=live GRIDLENS_LIVE_SESSION=1 python -m pytest -m live -k live_sessions -s`. |
-| Real model catalog and selection (T36) | awaiting_input | Live sidebar: load models and choose one. |
-| Real answer and output mode (T21) | awaiting_input | `APP_MODE=live GRIDLENS_LIVE_ANSWER=1 python -m pytest -m live -k live_answer -s` (uses plan usage). Records whether strict JSON schema or prompt-JSON mode was used. |
+| Real model catalog and selection (T36) | passed 2026-10-12 (gpt-5.6-sol chosen; model count not recorded) | Live sidebar: load models and choose one. |
+| Real answer and output mode (T21) | passed 2026-10-12 in the app (schema mode, 4,203 tokens, 45 s); pytest smoke not run | `APP_MODE=live GRIDLENS_LIVE_ANSWER=1 python -m pytest -m live -k live_answer -s` (uses plan usage). Records whether strict JSON schema or prompt-JSON mode was used. |
 | Real Tavily search (T06) | not run | Set `TAVILY_API_KEY`; `python -m pytest -m live -k tavily -s`. |
 | Real SerpApi search (T37) | smoke passed 2026-10-12 (auth and parsing; relevance not yet scored) | Set `SEARCH_PROVIDER=serpapi` and `SERPAPI_API_KEY`; `python -m pytest -m live -k serpapi -s` (one search). |
 | Real corpus, gold and human evaluation (T31) | awaiting_input | See `docs/HANDOFF.md` §5 runbook. |
