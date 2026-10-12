@@ -62,7 +62,10 @@ def render(container: Container):
             "Search sources", disabled=container.discovery.provider is None
         )
     if container.discovery.provider is None:
-        st.info("Live search needs a Tavily key in the local .env file.")
+        st.info(
+            "Live search needs the key of the selected search provider (SEARCH_PROVIDER) "
+            "in the local .env file."
+        )
     if submitted:
         try:
             request = DiscoveryRequest(

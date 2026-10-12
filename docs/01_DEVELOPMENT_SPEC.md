@@ -22,7 +22,7 @@
 | 元数据 | Python `sqlite3` + 编号 SQL migration | 数据量小，显式事务即可；不引入 ORM |
 | 原文 | 本地不可变快照目录 | 审核和引用固定到实际读取内容 |
 | 向量库 | Chroma PersistentClient | 本地验证；业务正文仍从 SQLite/快照读取 |
-| 搜索适配器 | Tavily Search（建议默认，可替换） | 首版实现一个真实 provider，与业务逻辑隔离 |
+| 搜索适配器 | Tavily Search（默认）或 SerpApi Google Search（`SEARCH_PROVIDER` 选择） | 两个真实 provider 共用 SearchProvider 端口，与业务逻辑隔离 |
 | 生成适配器 | ChatGPT OAuth + OpenAI SDK Responses 流式调用 | 使用用户批准的订阅用量；UI 不直接持有 tokens |
 | embedding 默认 | SentenceTransformers + `BAAI/bge-small-en-v1.5`，384 维，本地 CPU | 固定 revision 与归一化配置；英文首版 |
 | 生成模型 | 登录后读取账户 catalog，由用户选择 model slug | schema 能力需联调；保持严格本地输出校验 |
@@ -42,7 +42,7 @@ Application services：discover / capture / review / ingest / ask / gaps / expor
        ↓                         ↓
 SQLite repositories       Provider interfaces
        ↓                         ↓
-Snapshots + metadata      Tavily / ChatGPT OAuth Responses / local embeddings / Chroma / HTTP fetcher
+Snapshots + metadata      Tavily|SerpApi / ChatGPT OAuth Responses / local embeddings / Chroma / HTTP fetcher
 ```
 
 UI 只负责收集输入、调用服务和显示结果。状态变更、检索资格、引用校验在服务层执行，不能仅通过禁用按钮实现。同步、串行处理即可；不加消息队列、微服务或 Agent 框架。
@@ -66,7 +66,7 @@ gridlens/
     db.py
     migrations/001_initial.sql
     repositories/             # sources.py, research.py, qa.py
-    providers/                # tavily.py, chatgpt_oauth.py, local_embeddings.py, chroma_store.py, fakes.py
+    providers/                # tavily.py, serpapi.py, chatgpt_oauth.py, local_embeddings.py, chroma_store.py, fakes.py
     auth/                     # host.py, credentials.py, oauth.py, sessions.py, catalog.py
     documents/                # fetch.py, html.py, pdf.py, snapshots.py, chunking.py
     services/                 # discovery.py, review.py, ingestion.py, retrieval.py,
@@ -97,7 +97,8 @@ gridlens/
 | --- | --- | --- |
 | `APP_MODE` | `fixture` 或 `live`，默认 `fixture` | 两套数据目录完全分离；页面始终显示模式 |
 | `DATA_DIR` | `./data/{APP_MODE}` | 路径必须落入项目指定数据目录，不从文档输入取得 |
-| `TAVILY_API_KEY` | live 搜索必填 | 缺失时只禁用真实搜索，不阻止离线开发 |
+| `SEARCH_PROVIDER` | `tavily`（默认）或 `serpapi` | 只构造所选 provider，search_runs.provider 记录其名称 |
+| `TAVILY_API_KEY` / `SERPAPI_API_KEY` | 所选 provider 的 key，live 搜索必填 | 缺失时只禁用真实搜索（手动 URL 仍可用），不阻止离线开发；另一家的 key 不会被使用 |
 | `AUTH_DIR` | 用户配置目录下 GridLens 子目录 | tokens 使用受保护的本地存储，禁止落入仓库/研究数据库 |
 | `CHATGPT_MODEL_SLUG` | 可选首选项，须匹配当前账户目录 | 实际选择绑定账户；不可用时要求重选 |
 | `EMBEDDING_MODEL` | `BAAI/bge-small-en-v1.5` | 模型变化要求新索引配置 |
@@ -315,6 +316,8 @@ class VectorStore(Protocol):
 规则模板最多生成 3 个查询，优先保留用户原问题并扩展 data centre/data center、grid connection/interconnection；无需为 query expansion 额外调用 LLM。地区默认 NZ，来源类型是检索提示及人工标签，不把猜测分类视为已验证元数据。
 
 Tavily 使用 `topic=general`、`search_depth=basic`、`max_results=10`、`auto_parameters=false`、`include_answer=false`、`include_raw_content=false`。应用合并排序去重至 10 条，搜索摘要仅为候选描述。映射 provider 字段时，发布方与日期无证据则 null；域名可显示，但不能冒充机构名称。[Tavily Search API](https://docs.tavily.com/documentation/api-reference/endpoint/search)
+
+SerpApi（2026-10-12 核对官方文档）使用 `GET https://serpapi.com/search`，参数 `engine=google`、`q`、`hl=en`、`safe=active`、`output=json`、`api_key`（官方仅支持查询参数认证；httpx 日志通过 oplog 过滤脱敏 `api_key=`）。不请求 `num`，按 limit 截断 `organic_results`。映射 title/link/snippet，`date` 作显示用日期文本，`source` 只作为 metadata_evidence 的站点标签，不写入 publisher。200 且 `error` 含 "hasn't returned any results" 为成功空列表；其他 `error` 或缺少 `organic_results` 为 PROVIDER_RESPONSE_INVALID；401/403 认证失败、429（限流或额度用完）RATE_LIMITED、5xx 可重试、其他 4xx 请求无效；适配器不自行重试。[SerpApi Google Search API](https://serpapi.com/search-api)、[状态与错误码](https://serpapi.com/api-status-and-error-codes)
 
 搜索总预算 3 次请求；部分查询成功则 `partial` 并保留结果与失败原因，全部失败为 `failed`。HTTP 429/5xx/超时可在预算内重试，400/401/403 不盲目重试。实际使用次数和 provider usage 有则保存，无则为未知。
 
@@ -574,6 +577,7 @@ Session state 只保存当前选中 ID、表单输入和 operation_key，不保�
 - [Python sqlite3](https://docs.python.org/3/library/sqlite3.html)：连接与事务行为；项目固定 Python 3.12，编码时使用相应版本文档。
 - [Streamlit navigation](https://docs.streamlit.io/develop/api-reference/navigation/st.navigation)：四页导航。
 - [Tavily Search](https://docs.tavily.com/documentation/api-reference/endpoint/search)：搜索请求和结果字段。
+- [SerpApi Google Search](https://serpapi.com/search-api) 与 [错误码](https://serpapi.com/api-status-and-error-codes)：替代搜索 provider 的请求、结果与错误。
 - [OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)：受约束输出与异常处理。
 - [Sign in with ChatGPT](https://developers.openai.com/siwc/token-sharing-open-source)：本地应用订阅授权；具体子页面见第 3.3 节。
 - [BGE model card](https://huggingface.co/BAAI/bge-small-en-v1.5)：英文模型、384 维、512 tokens、query/document 策略。

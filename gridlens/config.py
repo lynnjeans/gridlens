@@ -20,7 +20,9 @@ class Settings(BaseModel):
     data_dir: Path | None = None
     auth_dir: Path | None = None
     local_model_dir: Path | None = None
+    search_provider: Literal["tavily", "serpapi"] = "tavily"
     tavily_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
+    serpapi_api_key: SecretStr = Field(default=SecretStr(""), repr=False)
     chatgpt_model_slug: str = ""
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_revision: str = ""
@@ -90,6 +92,11 @@ class Settings(BaseModel):
                 values[name] = path if path.is_absolute() else project_root / path
         return cls(**values)
 
+    @property
+    def search_api_key(self) -> SecretStr:
+        """The key of the selected search provider; the other key is never used."""
+        return self.serpapi_api_key if self.search_provider == "serpapi" else self.tavily_api_key
+
     def require_search(self) -> None:
-        if self.mode == "live" and not self.tavily_api_key.get_secret_value():
+        if self.mode == "live" and not self.search_api_key.get_secret_value():
             raise AppError("CONFIG_MISSING", "Add your search key to the local .env file.")

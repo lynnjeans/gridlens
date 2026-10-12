@@ -163,6 +163,7 @@ def test_redaction_patterns_and_logging_filter(caplog):
         "id_token_hint=eyJhbGciOi.eyJzdWIiOi.sig": "eyJhbGciOi",
         '{"refresh_token": "r-secret-1"}': "r-secret-1",
         "key tvly-abc123def": "tvly-abc123def",
+        "GET https://serpapi.com/search?engine=google&api_key=SERP123&q=x": "SERP123",
     }
     for text, secret in samples.items():
         assert secret not in redact(text)
@@ -180,5 +181,6 @@ def test_doctor_is_offline_and_secret_free(tmp_path):
     dumped = json.dumps(report)
     assert "tvly-doctor-secret" not in dumped
     assert report["search_key_configured"] is True
+    assert report["search_provider"] == "tavily"
     assert report["database"]["schema_current"] is True
     assert report["data_dir_writable"] is True

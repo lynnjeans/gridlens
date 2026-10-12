@@ -81,3 +81,7 @@ T21 离线完成（awaiting_input，2026-10-12）：ChatGPT 计划用量流式�
 完成 T30（2026-10-12）：端到端与可信边界回归（直接检查上下文与存储），AI 浏览器 fixture 走查留档。全量 345 passed、8 deselected；人工 UI 检查与真实账户回归未执行。
 
 2026-10-12：T31 记录为 awaiting_input（需要真实语料、登录、gold 与人工评分，AI 未代做）；T32 文档完成（README 重写、DEMO、KNOWN_LIMITATIONS，离线干净环境安装与 fixture 全流程通过），最终交付待 T31。MVP 验收不能宣称通过。
+
+## SerpApi 搜索适配器（T37）— 2026-10-12
+
+用户不愿为 Tavily 绑定银行卡，选择 SerpApi（Google 结果）。新增 `gridlens/providers/serpapi.py` 与 `SEARCH_PROVIDER=tavily|serpapi`、`SERPAPI_API_KEY` 配置；默认仍为 tavily。SerpApi 仅支持查询参数认证，日志过滤新增 `api_key=` 脱敏。完整离线回归 360 passed、9 deselected；真实 SerpApi smoke 未运行（未配置 key）。

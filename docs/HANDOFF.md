@@ -21,7 +21,7 @@
 
 ## 2. 当前完成状态
 
-36 项任务中 **30 项 done，6 项 awaiting_input，0 项 todo**。T01–T20、T22–T30、T33 已完成并通过离线验证；
+37 项任务中 **31 项 done，6 项 awaiting_input，0 项 todo**。T01–T20、T22–T30、T33、T37 已完成并通过离线验证；
 T34/T35/T36/T21 离线完成、等待本人真实登录及其后的会话/目录/生成验证；T31 真实验收与 T32 最终交付等待用户。当前没有遗留的失败检查。
 
 | 已完成 | 当前能力 | 主要文件 |
@@ -60,10 +60,11 @@ T34/T35/T36/T21 离线完成、等待本人真实登录及其后的会话/目录
 | T29 | R01–R15 原样题库、空白人工 gold、`gridlens evaluate`/`evaluate-score`（PRD 门槛、分子分母、缺人工输入即 awaiting_input、fixture 永不验收） | `evals/`、`gridlens/evaluation.py` |
 | T30 | 端到端与可信边界回归（直接检查上下文）、AI 浏览器 fixture 走查留档 | `tests/integration/test_workflow.py`、`test_trust_boundaries.py` |
 | T33 | 稳定 host ID、按注册隔离的受保护原子凭证存储 | `gridlens/auth/host.py`、`credentials.py` |
+| T37 | SerpApi（Google 结果）搜索适配器；`SEARCH_PROVIDER=tavily|serpapi` 只用所选 key；`api_key=` 日志脱敏；search_runs.provider 记录实际 provider | `gridlens/providers/serpapi.py`、`config.py`、`bootstrap.py` |
 
 所有其他任务待实施，包括：真实搜索联调、抓取/解析服务、批准/拒绝操作、
 embedding/Chroma、RAG/引用服务、缺口管理/导出、OAuth、模型目录和评估。
-Discover 搜索在 fixture 模式可用，live 模式需本地 Tavily key。Review 可捕获、人工审核并在批准后入库（fixture：合成文档 + fake embedding + 持久 Chroma；
+Discover 搜索在 fixture 模式可用，live 模式需本地所选 provider 的 key（Tavily 或 SerpApi；用户因 Tavily 注册要求绑卡而改用 SerpApi，2026-10-12）。Review 可捕获、人工审核并在批准后入库（fixture：合成文档 + fake embedding + 持久 Chroma；
 live：需先 prepare-model）；
 Knowledge Base 与 Ask 已接通（fixture 可完整使用；live 生成需登录与选择模型）。凭证存储实现不等于 OAuth 登录已实现。
 
@@ -73,9 +74,9 @@ Knowledge Base 与 Ask 已接通（fixture 可完整使用；live 生成需登�
 
 | 命令 | 结果 |
 | --- | --- |
-| `.venv/bin/python -m pytest -q` | 345 passed，8 deselected（live/local_model） |
+| `.venv/bin/python -m pytest -q` | 360 passed，9 deselected（live/local_model）（2026-10-12，T37 后） |
 | `.venv/bin/ruff check .` | All checks passed |
-| `.venv/bin/ruff format --check .` | 93 files already formatted |
+| `.venv/bin/ruff format --check .` | 108 files already formatted |
 | `.venv/bin/python -m pip check` | No broken requirements found |
 | `.venv/bin/python -m gridlens.cli doctor` | 离线 JSON：mode、extras、模型 revision、数据目录可写、schema 是否最新、待恢复运行、凭证目录权限（不含密钥） |
 | `.venv/bin/python -m pytest -m local_model -q` | 4 passed（禁网；需本机已 prepare-model；含 live 装配端到端入库） |
@@ -109,9 +110,11 @@ GitHub 地址和分支信息已在本文明确记录。解压后复用已有应�
 
 ## 5. 下一项工作：全部开发任务已完成，剩余均需用户参与
 
-代码层面 36 项任务中 30 项 done，其余 6 项 awaiting_input：
+代码层面 37 项任务中 31 项 done，其余 6 项 awaiting_input：
 T34 登录、T35 会话、T36 账户/目录、T21 真实生成 smoke、T31 真实语料与人工评估、
 T32 最终交付（文档已完成，待 T31 结果）。不能宣称 MVP 验收通过。
+
+真实搜索 smoke（花一次 SerpApi 搜索）：`SERPAPI_API_KEY=... .venv/bin/python -m pytest -m live -k serpapi -s`，或在 live Discover 页面搜索一次。
 
 先做真实账户验证：
 
@@ -122,7 +125,7 @@ APP_MODE=live GRIDLENS_LIVE_ANSWER=1 .venv/bin/python -m pytest -m live -k live_
 ```
 
 T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或评分）：
-1. APP_MODE=live；`.env` 配置 TAVILY_API_KEY；`gridlens doctor` 确认 local_model prepared。
+1. APP_MODE=live；`.env` 设置 SEARCH_PROVIDER 并配置对应 key（当前用户选择 `serpapi` + SERPAPI_API_KEY）；`gridlens doctor` 确认 local_model prepared。
 2. 侧栏 Continue with ChatGPT 本人登录并选择模型（完成 T34–T36、T21 的真实验证）。
 3. Discover 运行 3 个冻结查询，人工标注前 10 条相关性（目标 ≥30 条、相关 ≥70%）。
 4. Review 中人工审核并批准 ≥10 份资料（覆盖 ≥3 类），记录 source/version ID；Knowledge Base 确认 Searchable。

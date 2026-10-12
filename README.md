@@ -10,7 +10,7 @@ Repository: [lynnjeans/gridlens](https://github.com/lynnjeans/gridlens) (`master
 
 **Status (2026-10-12).** Every feature is implemented and passes the offline test suite,
 including a synthetic end-to-end and trust-boundary regression. Not yet done:
-a real ChatGPT sign-in, real answers, a real Tavily search, the real-corpus evaluation
+a real ChatGPT sign-in, real answers, a real Tavily/SerpApi search, the real-corpus evaluation
 with human gold answers and scores (T31), and a human UI check. Passing tests is **not**
 research acceptance; see `docs/KNOWN_LIMITATIONS.md`.
 
@@ -50,7 +50,10 @@ text), **Knowledge Base** (status, retry, revoke, refresh, export) and **Ask & G
 
 ### Live mode setup
 
-1. **Search**: add `TAVILY_API_KEY` to `.env` (a separate Tavily account and quota).
+1. **Search**: choose a provider in `.env` with `SEARCH_PROVIDER` and add only its key
+   (a separate account and quota): `tavily` (default) uses `TAVILY_API_KEY`; `serpapi`
+   (Google results via SerpApi) uses `SERPAPI_API_KEY`. Without a key, live Discover still
+   accepts pasted URLs.
 2. **Local embeddings**: download the pinned model once (about 134 MB into the
    git-ignored `models/`); normal runs never download.
 

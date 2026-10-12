@@ -1,6 +1,6 @@
 # GridLens AI 开发任务清单
 
-版本：1.1 | 日期：2026-10-11 | 36 个 P0 任务 | 14 项已完成（T01–T13、T33），22 项待实施。
+版本：1.1 | 日期：2026-10-12 | 37 个 P0 任务 | 31 项 done，6 项 awaiting_input（T21、T31、T32、T34–T36），0 项 todo。
 
 本地 Streamlit 网页；ChatGPT OAuth 订阅生成；本地 BGE embedding。T01–T32 保留编号，新增 T33–T36 处理授权；按依赖执行，不按编号机械执行。路径均相对于现有应用根目录；基础阶段已经实现，当前交接入口见 HANDOFF.md。
 
@@ -23,29 +23,30 @@
 | T11 | 实现 PDF 提取与页码定位 | D3 | T02, T04 | implementation | done |
 | T12 | 保存可审核的不可变文档快照 | D3 | T03, T09, T10, T11 | implementation | done |
 | T13 | 实现审核状态机与即时撤销 | D3 | T03, T12 | implementation | done |
-| T14 | 接通 Review 页面 | D3 | T05, T13 | implementation | todo |
-| T15 | 实现确定性 token 分块 | D4 | T02, T12, T16 | implementation | todo |
-| T16 | 实现本地 embedding 与模型准备 | D4 | T02, T04 | implementation | todo |
-| T17 | 实现 Chroma 向量存储适配器 | D4 | T02, T03, T04 | implementation | todo |
-| T18 | 实现入库流水线与原子发布 | D4 | T13, T14, T15, T16, T17 | implementation | todo |
-| T19 | 接通 Knowledge Base 页面 | D6 | T05, T18 | implementation | todo |
-| T20 | 实现仅限批准版本的检索 | D5 | T18 | implementation | todo |
-| T21 | 实现订阅授权的流式回答 Provider | D5 | T02, T04, T35, T36 | implementation | todo |
-| T22 | 实现问答服务、引用校验与保存 | D5 | T20, T21 | implementation | todo |
-| T23 | 接通 Ask 与引用查看 | D5 | T05, T22 | implementation | todo |
-| T24 | 实现知识缺口规则、保存与去重 | D7 | T03, T22 | implementation | todo |
-| T25 | 接通缺口列表与补充搜索入口 | D7 | T08, T23, T24 | implementation | todo |
-| T26 | 补齐刷新版本与历史引用状态 | D6 | T19, T23 | implementation | todo |
-| T27 | 实现 Markdown research log 导出 | D8 | T24, T26 | implementation | todo |
-| T28 | 实现中断恢复、调用限额与运行记录 | D8 | T18, T22 | implementation | todo |
-| T29 | 建立 15 题与评估运行工具 | D8 | T22, T24 | implementation | todo |
-| T30 | 执行完整闭环与可信性回归 | D9 | T14, T19, T23, T25, T26, T27, T28, T29, T36 | implementation | todo |
-| T31 | 完成真实语料与人工评估验收 | D9 | T06, T16, T21, T29, T30 | human_gated_acceptance | todo |
-| T32 | 整理运行说明、限制和 demo 交付 | D10 | T30, T31 | delivery | todo |
+| T14 | 接通 Review 页面 | D3 | T05, T13 | implementation | done |
+| T15 | 实现确定性 token 分块 | D4 | T02, T12, T16 | implementation | done |
+| T16 | 实现本地 embedding 与模型准备 | D4 | T02, T04 | implementation | done |
+| T17 | 实现 Chroma 向量存储适配器 | D4 | T02, T03, T04 | implementation | done |
+| T18 | 实现入库流水线与原子发布 | D4 | T13, T14, T15, T16, T17 | implementation | done |
+| T19 | 接通 Knowledge Base 页面 | D6 | T05, T18 | implementation | done |
+| T20 | 实现仅限批准版本的检索 | D5 | T18 | implementation | done |
+| T21 | 实现订阅授权的流式回答 Provider | D5 | T02, T04, T35, T36 | implementation | awaiting_input |
+| T22 | 实现问答服务、引用校验与保存 | D5 | T20, T21 | implementation | done |
+| T23 | 接通 Ask 与引用查看 | D5 | T05, T22 | implementation | done |
+| T24 | 实现知识缺口规则、保存与去重 | D7 | T03, T22 | implementation | done |
+| T25 | 接通缺口列表与补充搜索入口 | D7 | T08, T23, T24 | implementation | done |
+| T26 | 补齐刷新版本与历史引用状态 | D6 | T19, T23 | implementation | done |
+| T27 | 实现 Markdown research log 导出 | D8 | T24, T26 | implementation | done |
+| T28 | 实现中断恢复、调用限额与运行记录 | D8 | T18, T22 | implementation | done |
+| T29 | 建立 15 题与评估运行工具 | D8 | T22, T24 | implementation | done |
+| T30 | 执行完整闭环与可信性回归 | D9 | T14, T19, T23, T25, T26, T27, T28, T29, T36 | implementation | done |
+| T31 | 完成真实语料与人工评估验收 | D9 | T06, T16, T21, T29, T30 | human_gated_acceptance | awaiting_input |
+| T32 | 整理运行说明、限制和 demo 交付 | D10 | T30, T31 | delivery | awaiting_input |
 | T33 | 建立本机注册与受保护凭证存储 | D1 | T02 | implementation | done |
-| T34 | 实现OAuth登录和callback校验 | D2 | T33, T04 | implementation | todo |
-| T35 | 实现刷新、账户切换与退出 | D4 | T34 | implementation | todo |
-| T36 | 接通账户侧栏和可用模型目录 | D4 | T05, T35 | implementation | todo |
+| T34 | 实现OAuth登录和callback校验 | D2 | T33, T04 | implementation | awaiting_input |
+| T35 | 实现刷新、账户切换与退出 | D4 | T34 | implementation | awaiting_input |
+| T36 | 接通账户侧栏和可用模型目录 | D4 | T05, T35 | implementation | awaiting_input |
+| T37 | 实现 SerpApi 搜索适配器（可选搜索 provider） | D10 | T06, T07 | implementation | done |
 
 ## 使用规则
 
@@ -1367,7 +1368,7 @@
 **执行证据：** 尚无验收结果。工具已就绪；AI 未批准来源、未填写 gold、未评分。执行步骤：
 
 T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或评分）：
-1. APP_MODE=live；`.env` 配置 TAVILY_API_KEY；`gridlens doctor` 确认 local_model prepared。
+1. APP_MODE=live；`.env` 设置 SEARCH_PROVIDER 并配置对应 key（TAVILY_API_KEY 或 SERPAPI_API_KEY）；`gridlens doctor` 确认 local_model prepared。
 2. 侧栏 Continue with ChatGPT 本人登录并选择模型（完成 T34–T36、T21 的真实验证）。
 3. Discover 运行 3 个冻结查询，人工标注前 10 条相关性（目标 ≥30 条、相关 ≥70%）。
 4. Review 中人工审核并批准 ≥10 份资料（覆盖 ≥3 类），记录 source/version ID；Knowledge Base 确认 Searchable。
@@ -1587,3 +1588,44 @@ T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或
 **验证状态：** offline=passed, live=not_run, human=not_required
 
 **执行证据：** 已核对官方 models 文档。`tests/unit/test_catalog.py` 8 项、`tests/ui/test_account.py` 5 项通过（字段/空目录/错误映射、账户切换清空并隔离、rerun 不重复请求、plan scope 缺失、退出）。完整回归 245 passed、7 deselected。**未运行真实目录读取**：需 T34 登录后在 live 侧栏完成一次选择。
+
+## T37 — 实现 SerpApi 搜索适配器（可选搜索 provider）
+
+**优先级/状态：** P0 / done
+**日程/类别：** D10 / implementation
+**依赖：** T06, T07
+**PRD 对应：** AC-01
+**所需输入：** 离线实现无需密钥；真实 smoke 需要用户自己的 SERPAPI_API_KEY。
+
+**目标：** 用户不想为 Tavily 绑卡时，可通过 `SEARCH_PROVIDER=serpapi` 使用 SerpApi（Google 结果）完成自动搜索。
+
+### 文件范围
+
+- `gridlens/providers/serpapi.py`
+- `gridlens/config.py`、`bootstrap.py`、`services/discovery.py`、`oplog.py`、`cli.py`、`ui/discover.py`
+- `.env.example`
+- `tests/unit/test_serpapi.py`、`tests/live/test_search_provider.py`
+
+### 实现步骤
+
+1. 核对 SerpApi 官方文档：`GET /search`，`engine=google`，`api_key` 查询参数认证，`organic_results` 字段与错误码。
+2. 实现与 Tavily 相同端口和错误映射的适配器；无结果为成功空列表；站点标签不冒充 publisher；不隐式重试。
+3. `SEARCH_PROVIDER` 选择 provider，只使用所选 key；`search_runs.provider` 记录实际 provider；日志脱敏 `api_key=`。
+
+### 完成条件
+
+- 请求参数、结果映射、空结果/畸形记录、HTTP/超时错误可由 mock HTTP 校验，错误不泄露 key。
+- 默认仍为 tavily，现有行为与测试不变；缺 key 时仅禁用自动搜索，手动 URL 仍可用。
+
+### 验证要求
+
+- mock HTTP 契约测试。
+- 有 SERPAPI_API_KEY 时一次显式 live smoke；否则记录尚未运行。
+
+### 范围外
+
+- 不抓取 Google 或 Programmable Search 网页；不自动购买配额；不使用付费 SerpApi 功能。
+
+**验证状态：** offline=passed, live=not_run, human=not_required
+
+**执行证据：** `tests/unit/test_serpapi.py` 12 项通过；另有配置选择、bootstrap、search_runs.provider、日志脱敏与 doctor 测试。完整离线回归 360 passed、9 deselected；Ruff、format、pip check 通过。真实 SerpApi smoke 因未配置 key 未运行。

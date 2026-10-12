@@ -19,7 +19,9 @@ _SECRETS = [
         r"\1_token\2[redacted]",
     ),
     (
-        re.compile(r"(?i)\b(code|id_token_hint|code_verifier|state|nonce|login_hint)=[^&\s\"']+"),
+        re.compile(
+            r"(?i)\b(code|id_token_hint|code_verifier|state|nonce|login_hint|api_key)=[^&\s\"']+"
+        ),
         r"\1=[redacted]",
     ),
     (re.compile(r"eyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]*"), "[redacted-jwt]"),

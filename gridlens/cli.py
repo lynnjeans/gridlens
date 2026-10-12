@@ -82,7 +82,8 @@ def doctor(settings: Settings) -> dict:
         "mode": settings.mode,
         "python": ".".join(map(str, sys.version_info[:3])),
         "python_required": "3.12",
-        "search_key_configured": bool(settings.tavily_api_key.get_secret_value()),
+        "search_provider": settings.search_provider,
+        "search_key_configured": bool(settings.search_api_key.get_secret_value()),
         "chatgpt_sign_in": "available_in_live_mode_not_verified_by_developers",
         "extras": {
             name: importlib.util.find_spec(module) is not None

@@ -1742,7 +1742,7 @@
         "live": "not_run",
         "human": "not_run"
       },
-      "awaiting": "T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或评分）：\n1. APP_MODE=live；`.env` 配置 TAVILY_API_KEY；`gridlens doctor` 确认 local_model prepared。\n2. 侧栏 Continue with ChatGPT 本人登录并选择模型（完成 T34–T36、T21 的真实验证）。\n3. Discover 运行 3 个冻结查询，人工标注前 10 条相关性（目标 ≥30 条、相关 ≥70%）。\n4. Review 中人工审核并批准 ≥10 份资料（覆盖 ≥3 类），记录 source/version ID；Knowledge Base 确认 Searchable。\n5. 由人阅读冻结语料填写 evals/gold.json（R01–R12 参考段落与要点，作者署名）。\n6. `gridlens evaluate --mode live --model <slug>`；由队友（或注明自评）填写 artifacts/evals/<run>/reviews.json。\n7. `gridlens evaluate-score --run artifacts/evals/<run>`；把全部指标（含分子分母、失败项、评审者、用量与耗时）写入 docs/progress.md，并导出 artifacts/research-log.md。"
+      "awaiting": "T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或评分）：\n1. APP_MODE=live；`.env` 设置 SEARCH_PROVIDER 并配置对应 key（TAVILY_API_KEY 或 SERPAPI_API_KEY）；`gridlens doctor` 确认 local_model prepared。\n2. 侧栏 Continue with ChatGPT 本人登录并选择模型（完成 T34–T36、T21 的真实验证）。\n3. Discover 运行 3 个冻结查询，人工标注前 10 条相关性（目标 ≥30 条、相关 ≥70%）。\n4. Review 中人工审核并批准 ≥10 份资料（覆盖 ≥3 类），记录 source/version ID；Knowledge Base 确认 Searchable。\n5. 由人阅读冻结语料填写 evals/gold.json（R01–R12 参考段落与要点，作者署名）。\n6. `gridlens evaluate --mode live --model <slug>`；由队友（或注明自评）填写 artifacts/evals/<run>/reviews.json。\n7. `gridlens evaluate-score --run artifacts/evals/<run>`；把全部指标（含分子分母、失败项、评审者、用量与耗时）写入 docs/progress.md，并导出 artifacts/research-log.md。"
     },
     {
       "id": "T32",
@@ -2008,6 +2008,63 @@
         "human": "not_required"
       },
       "awaiting": "T34 本人真实登录后，在 live 模式侧栏读取真实模型目录并完成一次选择，仅记录脱敏结果（模型数量与是否完成选择）。"
+    },
+    {
+      "id": "T37",
+      "title": "实现 SerpApi 搜索适配器（可选搜索 provider）",
+      "priority": "P0",
+      "status": "done",
+      "day": "D10",
+      "depends_on": [
+        "T06",
+        "T07"
+      ],
+      "kind": "implementation",
+      "scope_paths": [
+        "gridlens/providers/serpapi.py",
+        "gridlens/config.py",
+        "gridlens/bootstrap.py",
+        "gridlens/services/discovery.py",
+        "gridlens/oplog.py",
+        "gridlens/cli.py",
+        "gridlens/ui/discover.py",
+        ".env.example",
+        "tests/unit/test_serpapi.py",
+        "tests/live/test_search_provider.py"
+      ],
+      "objective": "用户不想为 Tavily 绑卡时，可通过 SEARCH_PROVIDER=serpapi 使用 SerpApi（Google 结果）完成自动搜索。",
+      "steps": [
+        "核对 SerpApi 官方文档：GET /search，engine=google，api_key 查询参数认证，organic_results 字段与错误码。",
+        "实现与 Tavily 相同端口和错误映射的适配器；无结果为成功空列表；站点标签不冒充 publisher；不隐式重试。",
+        "配置 SEARCH_PROVIDER 选择 provider，只使用所选 key；search_runs.provider 记录实际 provider；日志脱敏 api_key=。"
+      ],
+      "acceptance_criteria": [
+        "请求参数、结果映射、空结果/畸形记录、HTTP/超时错误可由 mock HTTP 校验，错误不泄露 key。",
+        "默认仍为 tavily，现有行为与测试不变；缺 key 时仅禁用自动搜索，手动 URL 仍可用。"
+      ],
+      "verification": [
+        "tests/unit/test_serpapi.py 等 mock 契约测试。",
+        "有 SERPAPI_API_KEY 时一次显式 live smoke。"
+      ],
+      "out_of_scope": [
+        "不抓取 Google 或 Programmable Search 网页；不自动购买配额；不使用付费 SerpApi 功能。"
+      ],
+      "prd_refs": [
+        "AC-01"
+      ],
+      "required_inputs": "离线实现无需密钥；真实 smoke 需要用户自己的 SERPAPI_API_KEY。",
+      "evidence": [
+        "2026-10-12 核对 serpapi.com/search-api 与 api-status-and-error-codes：GET https://serpapi.com/search，api_key 查询参数；200+error \"Google hasn't returned any results\" 表示无结果；401/403/429/500/503 含义。",
+        "tests/unit/test_serpapi.py: 12 passed（请求参数/无 Authorization 头、字段映射与 publisher 为空、无结果、畸形记录、limit 截断、401/403/429/500/503/400 映射且不重试不泄露 key、timeout、非 JSON/非对象/error/缺字段、输入校验、端点）。",
+        "新增配置选择、bootstrap 只构造所选 provider、search_runs.provider=serpapi、api_key= 日志脱敏、doctor 报告 search_provider 的测试。",
+        "完整离线回归：360 passed, 9 deselected；Ruff check、format check（108 files）与 pip check 通过。",
+        "未运行：真实 SerpApi smoke（尚未配置 SERPAPI_API_KEY）。"
+      ],
+      "validation_state": {
+        "offline": "passed",
+        "live": "not_run",
+        "human": "not_required"
+      }
     }
   ],
   "updated_at": "2026-10-12",
@@ -2065,7 +2122,8 @@
       "T28",
       "T29",
       "T30",
-      "T33"
+      "T33",
+      "T37"
     ],
     "repository": {
       "url": "https://github.com/lynnjeans/gridlens.git",
@@ -2075,7 +2133,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 345,
+      "offline_tests_passed": 360,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

@@ -1,8 +1,9 @@
 import pytest
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
 from gridlens.config import Settings
 from gridlens.contracts import AnswerDraft, EmbeddingBatch, Locator, ReviewStatus
+from gridlens.errors import AppError
 
 
 def insufficient():
@@ -55,6 +56,29 @@ def test_dotenv_process_precedence_and_secret_repr(tmp_path):
     assert settings.mode == "fixture"
     assert "synthetic-secret" not in repr(settings)
     assert "synthetic-secret" not in settings.model_dump_json()
+
+
+def test_search_provider_selects_only_its_own_key(tmp_path):
+    (tmp_path / ".env").write_text(
+        "APP_MODE=live\nSEARCH_PROVIDER=serpapi\n"
+        "TAVILY_API_KEY=tavily-secret\nSERPAPI_API_KEY=serp-secret\n"
+    )
+    settings = Settings.from_env(tmp_path, {})
+    assert settings.search_provider == "serpapi"
+    assert settings.search_api_key.get_secret_value() == "serp-secret"
+    assert "serp-secret" not in repr(settings)
+    assert "serp-secret" not in settings.model_dump_json()
+    assert Settings(project_root=tmp_path).search_provider == "tavily"
+    only_tavily = Settings(
+        project_root=tmp_path,
+        mode="live",
+        search_provider="serpapi",
+        tavily_api_key=SecretStr("tavily-secret"),
+    )
+    with pytest.raises(AppError, match="search key"):
+        only_tavily.require_search()
+    with pytest.raises(ValidationError):
+        Settings(project_root=tmp_path, search_provider="google")
 
 
 def test_draft_cannot_bypass_claim_structure():

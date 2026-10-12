@@ -41,7 +41,7 @@ def test_input_error_and_missing_live_key_are_distinct(tmp_path):
 
     live = discover_app(tmp_path / "live", mode="live")
     assert button(live, "Search sources").disabled
-    assert any("Tavily key" in item.value for item in live.info)
+    assert any("SEARCH_PROVIDER" in item.value for item in live.info)
 
 
 def test_manual_source_is_saved_and_selected_for_review(tmp_path):

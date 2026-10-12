@@ -100,3 +100,31 @@ def test_all_errors_create_failed_run(db):
     assert result.status == "failed"
     assert result.candidates == []
     assert result.error_codes == ["PROVIDER_TIMEOUT", "PROVIDER_TIMEOUT"]
+
+
+def test_live_run_records_the_selected_provider(db):
+    provider = ScriptedProvider([[hit("https://example.org/guide")]] * 3)
+    DiscoveryService(db, SourceRepository(db), provider, "live", provider_name="serpapi").discover(
+        DiscoveryRequest(topic="grid capacity", region="NZ"), "serpapi-operation"
+    )
+    with db.transaction() as c:
+        assert c.execute("SELECT provider FROM search_runs").fetchone()[0] == "serpapi"
+
+
+def test_bootstrap_builds_only_the_selected_live_provider(tmp_path):
+    from pydantic import SecretStr
+
+    from gridlens.bootstrap import build_container
+    from gridlens.config import Settings
+    from gridlens.providers.serpapi import SerpApiSearchProvider
+
+    settings = Settings(
+        project_root=tmp_path,
+        mode="live",
+        auth_dir=tmp_path.parent / f"{tmp_path.name}-auth",
+        search_provider="serpapi",
+        serpapi_api_key=SecretStr("serp-secret"),
+    )
+    discovery = build_container(settings).discovery
+    assert isinstance(discovery.provider, SerpApiSearchProvider)
+    assert discovery.provider_name == "serpapi"

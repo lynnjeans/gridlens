@@ -84,6 +84,7 @@ class DiscoveryService:
     sources: SourceRepository
     provider: SearchProvider | None
     mode: str
+    provider_name: str = "tavily"
     max_calls: int = 3
     max_results: int = 10
     locks: RunLocks | None = None
@@ -124,7 +125,7 @@ class DiscoveryService:
                         request.topic,
                         json.dumps(filters),
                         json.dumps(queries),
-                        "fixture" if self.mode == "fixture" else "tavily",
+                        "fixture" if self.mode == "fixture" else self.provider_name,
                         "running",
                         0,
                         started,

@@ -23,6 +23,7 @@ from gridlens.providers.fakes import (
     FakeTokenizer,
 )
 from gridlens.providers.local_embeddings import LocalEmbeddingProvider, read_manifest
+from gridlens.providers.serpapi import SerpApiSearchProvider
 from gridlens.providers.tavily import TavilySearchProvider
 from gridlens.repositories.qa import QARepository
 from gridlens.repositories.research import ResearchRepository
@@ -72,9 +73,12 @@ def build_container(settings: Settings) -> Container:
     search: SearchProvider | None
     if is_fixture:
         search = FakeSearchProvider()
-    elif settings.tavily_api_key.get_secret_value():
-        search = TavilySearchProvider(
-            settings.tavily_api_key, timeout_seconds=settings.fetch_timeout_seconds
+    elif settings.search_api_key.get_secret_value():
+        provider_class = (
+            SerpApiSearchProvider if settings.search_provider == "serpapi" else TavilySearchProvider
+        )
+        search = provider_class(
+            settings.search_api_key, timeout_seconds=settings.fetch_timeout_seconds
         )
     else:
         search = None
@@ -128,6 +132,7 @@ def build_container(settings: Settings) -> Container:
             db=db,
             sources=source_repository,
             provider=search,
+            provider_name=settings.search_provider,
             mode=settings.mode,
             max_calls=settings.max_search_calls,
             max_results=settings.max_search_results,

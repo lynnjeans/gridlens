@@ -795,3 +795,30 @@ handoff archives are refreshed without runtime data or real credentials.
 This records a development workflow preference, not a scheduled automation or a
 GitHub push request. At the time of this documentation-only change, feature states were
 6 done and 30 todo; the later discovery milestone supersedes that count.
+
+## T37 — SerpApi search adapter — 2026-10-12
+
+Status: **implemented and verified offline; live smoke not run.** The user declined to
+attach a payment card for Tavily and chose SerpApi (Google results). Checked the official
+SerpApi docs (search-api, api-status-and-error-codes) on 2026-10-12: `GET
+https://serpapi.com/search`, `api_key` query-parameter authentication only, `organic_results`
+fields, and a 200 response with "Google hasn't returned any results" for an empty search.
+
+Changed files: `gridlens/providers/serpapi.py` (new), `gridlens/config.py`
+(`SEARCH_PROVIDER`, `SERPAPI_API_KEY`, `search_api_key`), `gridlens/bootstrap.py` (builds only
+the selected provider), `gridlens/services/discovery.py` (`provider_name` recorded in
+`search_runs.provider`), `gridlens/oplog.py` (redacts `api_key=`), `gridlens/cli.py` (doctor
+reports `search_provider`), `gridlens/ui/discover.py` (provider-neutral missing-key message),
+`.env.example`, README, spec §2/§6.1/sources, and tests (`tests/unit/test_serpapi.py` new;
+contracts, discovery, discover UI, recovery redaction/doctor, live smoke).
+
+Mapping: title/link/snippet; `date` kept as display text; `source` is evidence only, never
+the publisher. No `num`, no retries, no answer box. 401/403 → SEARCH_AUTH_FAILED, 429 →
+RATE_LIMITED, 5xx → PROVIDER_UNAVAILABLE (retryable), other 4xx → SEARCH_REQUEST_INVALID,
+other `error` bodies or missing results → PROVIDER_RESPONSE_INVALID. Default provider stays
+`tavily`, so existing behavior is unchanged.
+
+Checks: `tests/unit/test_serpapi.py` 12 passed; full offline suite **360 passed, 9
+deselected**; Ruff check passed; format check 108 files; pip check passed.
+Not run: real SerpApi smoke (`SERPAPI_API_KEY` not configured). Next: the user's live checks
+(T34 → T35 → T36 → T21) and T31.

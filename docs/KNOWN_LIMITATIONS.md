@@ -9,6 +9,7 @@
 | Real model catalog and selection (T36) | awaiting_input | Live sidebar: load models and choose one. |
 | Real answer and output mode (T21) | awaiting_input | `APP_MODE=live GRIDLENS_LIVE_ANSWER=1 python -m pytest -m live -k live_answer -s` (uses plan usage). Records whether strict JSON schema or prompt-JSON mode was used. |
 | Real Tavily search (T06) | not run | Set `TAVILY_API_KEY`; `python -m pytest -m live -k tavily -s`. |
+| Real SerpApi search (T37) | not run | Set `SEARCH_PROVIDER=serpapi` and `SERPAPI_API_KEY`; `python -m pytest -m live -k serpapi -s` (one search). |
 | Real corpus, gold and human evaluation (T31) | awaiting_input | See `docs/HANDOFF.md` §5 runbook. |
 | Human UI checks (T14, T19, T23, T25, T27, T30) | not run | One person walks the main flow; an AI browser walkthrough of fixture mode is recorded in `artifacts/test-results/`. |
 
