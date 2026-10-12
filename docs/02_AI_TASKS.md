@@ -279,6 +279,8 @@
 
 **执行证据：** docs/progress.md；离线验证已通过，真实授权/研究验收未执行。
 
+**缺陷修复（2026-10-12）：** 2026-10-12 缺陷修复（用户 live 捕获 PDF 时终端出现大量 missing ScriptRunContext 警告）：PDF 提取的 spawn 子进程以 __mp_main__ 重新导入 app.py，在无会话的 bare 模式下重新执行整页（含 recovery.recover() 与侧栏，已登录时可能请求模型目录）。app.py 改为 main() + `if __name__ == "__main__"` 守卫（Streamlit 以 __main__ 执行脚本）；新增回归测试以 runpy run_name=__mp_main__ 导入且禁止 build_container/set_page_config。完整离线回归 362 passed、9 deselected。捕获结果本身不受影响（该次捕获已产生 1 个 pending 版本）。
+
 ## T06 — 实现 Tavily 搜索适配器
 
 **优先级/状态：** P0 / done
@@ -525,6 +527,8 @@
 **验证状态：** offline=passed, live=not_required, human=not_required
 
 **执行证据：** `tests/unit/test_pdf_parser.py` 6 项通过；覆盖两页文本/file_page、确定性、扫描件、损坏/加密 PDF、页数限制和可终止超时子进程。完整回归 102 passed、1 live deselected；Ruff/format/pip check 通过。
+
+**缺陷修复（2026-10-12）：** 2026-10-12 缺陷修复（用户 live 捕获 PDF 时终端出现大量 missing ScriptRunContext 警告）：PDF 提取的 spawn 子进程以 __mp_main__ 重新导入 app.py，在无会话的 bare 模式下重新执行整页（含 recovery.recover() 与侧栏，已登录时可能请求模型目录）。app.py 改为 main() + `if __name__ == "__main__"` 守卫（Streamlit 以 __main__ 执行脚本）；新增回归测试以 runpy run_name=__mp_main__ 导入且禁止 build_container/set_page_config。完整离线回归 362 passed、9 deselected。捕获结果本身不受影响（该次捕获已产生 1 个 pending 版本）。
 
 ## T12 — 保存可审核的不可变文档快照
 

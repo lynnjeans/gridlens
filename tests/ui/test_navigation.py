@@ -54,3 +54,20 @@ def test_entrypoint_navigation_rerun_does_not_call_providers(tmp_path, monkeypat
     app.run()
     assert not app.exception
     assert not (tmp_path / "data/fixture/auth").exists()
+
+
+def test_spawned_worker_import_does_not_run_the_app(monkeypatch):
+    # PDF extraction uses a spawn worker, which re-imports the main script as __mp_main__.
+    import runpy
+
+    import streamlit
+
+    import gridlens.bootstrap
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("worker import must not build the app or render pages")
+
+    monkeypatch.setattr(gridlens.bootstrap, "build_container", forbidden)
+    monkeypatch.setattr(streamlit, "set_page_config", forbidden)
+    namespace = runpy.run_path(str(PROJECT_ROOT / "app.py"), run_name="__mp_main__")
+    assert callable(namespace["main"])

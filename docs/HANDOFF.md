@@ -74,7 +74,7 @@ Knowledge Base 与 Ask 已接通（fixture 可完整使用；live 生成需登�
 
 | 命令 | 结果 |
 | --- | --- |
-| `.venv/bin/python -m pytest -q` | 361 passed，9 deselected（live/local_model）（2026-10-12，Review 队列修复后） |
+| `.venv/bin/python -m pytest -q` | 362 passed，9 deselected（live/local_model）（2026-10-12，app.py 主模块守卫后） |
 | `.venv/bin/ruff check .` | All checks passed |
 | `.venv/bin/ruff format --check .` | 108 files already formatted |
 | `.venv/bin/python -m pip check` | No broken requirements found |
@@ -137,6 +137,7 @@ AI 接手者可以协助执行与记录，但不得代为登录、批准来源�
 
 ## 6. 实现时容易误判的地方
 
+- `app.py` 的页面代码必须留在 `main()` 并由 `if __name__ == "__main__"` 调用：PDF 提取的 spawn 子进程会以 `__mp_main__` 重新导入主脚本。
 - Discover → Review 的选择保存在 SQLite `app_state.review_queue`（不是 session_state），捕获后自动出队；不要改回单个 session 选择（2026-10-12 用户遇到多选覆盖缺陷）。
 
 - `bootstrap.py` 每次渲染构建 container（只读 manifest，不加载模型、不打开 Chroma）。

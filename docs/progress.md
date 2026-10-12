@@ -845,3 +845,16 @@ Changed: `gridlens/repositories/sources.py`, `gridlens/ui/discover.py`, `gridlen
 `tests/ui/test_discover.py`, `tests/ui/test_review_page.py`, spec §UI table.
 Checks: full offline suite **361 passed, 9 deselected**; Ruff check and format passed.
 Not run: a human check in the live UI (the user can re-select results and open Review).
+
+## Fix — PDF worker re-ran the app (T05/T11) — 2026-10-12
+
+Status: **fixed and verified offline.** While the user captured a live PDF, the terminal
+filled with `missing ScriptRunContext` warnings. Cause: PDF extraction runs in a `spawn`
+worker, which re-imports the main script (`app.py`) as `__mp_main__`; the whole page then
+executed in bare mode, including run recovery and the sidebar (which, once signed in, could
+request the model catalog). `app.py` now wraps the page in `main()` behind
+`if __name__ == "__main__"` (Streamlit executes the script as `__main__`). Regression test
+`tests/ui/test_navigation.py::test_spawned_worker_import_does_not_run_the_app` imports it as
+`__mp_main__` with `build_container`/`set_page_config` forbidden. The capture itself had
+succeeded (one pending version). Checks: **362 passed, 9 deselected**; Ruff/format passed.
+Not run: re-capturing a live PDF after the fix (the user should restart `./run.sh`).

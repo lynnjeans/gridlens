@@ -89,3 +89,7 @@ T21 离线完成（awaiting_input，2026-10-12）：ChatGPT 计划用量流式�
 ## Review 待捕获队列修复 — 2026-10-12
 
 Discover 多选时只保留最后一条且刷新丢失的缺陷：改为 SQLite 持久队列，Review 列出全部待捕获来源。361 passed、9 deselected。
+
+## PDF 子进程重跑页面修复 — 2026-10-12
+
+app.py 加主模块守卫，PDF spawn 子进程不再重新执行整页（恢复、侧栏、可能的目录请求）。362 passed、9 deselected。

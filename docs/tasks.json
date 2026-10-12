@@ -289,7 +289,8 @@
       ],
       "required_inputs": "无需外部凭证；使用合成 fixture。",
       "evidence": [
-        "docs/progress.md: Foundation milestone; offline tests and actual local browser verification"
+        "docs/progress.md: Foundation milestone; offline tests and actual local browser verification",
+        "2026-10-12 缺陷修复（用户 live 捕获 PDF 时终端出现大量 missing ScriptRunContext 警告）：PDF 提取的 spawn 子进程以 __mp_main__ 重新导入 app.py，在无会话的 bare 模式下重新执行整页（含 recovery.recover() 与侧栏，已登录时可能请求模型目录）。app.py 改为 main() + `if __name__ == \"__main__\"` 守卫（Streamlit 以 __main__ 执行脚本）；新增回归测试以 runpy run_name=__mp_main__ 导入且禁止 build_container/set_page_config。完整离线回归 362 passed、9 deselected。捕获结果本身不受影响（该次捕获已产生 1 个 pending 版本）。"
       ],
       "validation_state": {
         "offline": "passed",
@@ -590,7 +591,8 @@
       "required_inputs": "无需外部凭证；使用合成 fixture。",
       "evidence": [
         "tests/unit/test_pdf_parser.py: 6 passed；覆盖两页文本/file_page、确定性、扫描件、损坏/加密 PDF、页数限制和可终止超时子进程。",
-        "完整离线回归：102 passed, 1 live deselected；Ruff、format 与 pip check 通过。"
+        "完整离线回归：102 passed, 1 live deselected；Ruff、format 与 pip check 通过。",
+        "2026-10-12 缺陷修复（用户 live 捕获 PDF 时终端出现大量 missing ScriptRunContext 警告）：PDF 提取的 spawn 子进程以 __mp_main__ 重新导入 app.py，在无会话的 bare 模式下重新执行整页（含 recovery.recover() 与侧栏，已登录时可能请求模型目录）。app.py 改为 main() + `if __name__ == \"__main__\"` 守卫（Streamlit 以 __main__ 执行脚本）；新增回归测试以 runpy run_name=__mp_main__ 导入且禁止 build_container/set_page_config。完整离线回归 362 passed、9 deselected。捕获结果本身不受影响（该次捕获已产生 1 个 pending 版本）。"
       ],
       "validation_state": {
         "offline": "passed",
@@ -2135,7 +2137,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 361,
+      "offline_tests_passed": 362,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",
