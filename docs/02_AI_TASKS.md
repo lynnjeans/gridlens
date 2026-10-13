@@ -670,6 +670,8 @@
 
 **用词改进（2026-10-14）：** 2026-10-14 用词改进（用户反馈：superseded 太生疏）：界面上的版本状态改用通俗说法——active 显示为 current、superseded 显示为 older version、candidate 显示为 not yet in use；Knowledge Base 状态 `Superseded by a newer version` 改为 `Older version: a newer one replaced it`。数据库存储值与接口不变（gridlens/ui/common.py VERSION_LABELS）。完整离线回归 367 passed、9 deselected；Ruff/format/pip check 通过；重启 live 应用后浏览器确认 Review 显示 version: current（只查看）。
 
+**缺陷修复（2026-10-14）：** 2026-10-14 缺陷修复（用户 live 使用时发现：捕获失败提示 The source requires access that is not available 后 Remove from queue 按钮消失）：捕获错误分支的 `continue` 跳过了 Remove 按钮的绘制。改为先绘制 Remove from queue 再处理捕获结果；不可重试的错误（AppError.retryable 为 False，如需要访问权限、未找到、类型不支持）额外提示重试无用，可移出队列或自行打开原文。不自动移出队列，由用户决定。新增 UI 测试覆盖失败后仍可移出队列；完整离线回归 368 passed、9 deselected；Ruff/format/pip check 通过；重启 live 应用后确认 Review 页正常加载（未在 live 点击 Capture，避免真实抓取）。
+
 ## T15 — 实现确定性 token 分块
 
 **优先级/状态：** P0 / done

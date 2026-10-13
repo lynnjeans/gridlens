@@ -59,11 +59,23 @@ def _capture_queue(container: Container, queue: list[dict]):
             st.caption(source["original_url"])
             left, middle, right = st.columns(3)
             left.link_button("Open original", source["original_url"])
-            if middle.button("Capture document", key=f"capture-{source_id}"):
+            capture = middle.button("Capture document", key=f"capture-{source_id}")
+            # Drawn before any capture error so a failed source can still leave the queue.
+            if right.button("Remove from queue", key=f"dequeue-{source_id}"):
+                container.sources.remove_from_review_queue(source_id)
+                _notice(
+                    "Removed from the Review queue. The search result is kept.", "info", focus=None
+                )
+            if capture:
                 try:
                     preview = container.snapshots.capture(source_id)
                 except AppError as error:
                     show_error(error)
+                    if not error.retryable:
+                        st.caption(
+                            "Trying again will not help. Use Remove from queue, "
+                            "or open the original to read it yourself."
+                        )
                     continue
                 st.session_state.pop("review_seen", None)
                 _notice(
@@ -71,11 +83,6 @@ def _capture_queue(container: Container, queue: list[dict]):
                     if preview.reused
                     else "Snapshot saved. Read it below, then approve or reject.",
                     focus=preview.version_id,
-                )
-            if right.button("Remove from queue", key=f"dequeue-{source_id}"):
-                container.sources.remove_from_review_queue(source_id)
-                _notice(
-                    "Removed from the Review queue. The search result is kept.", "info", focus=None
                 )
 
 

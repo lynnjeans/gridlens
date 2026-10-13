@@ -280,6 +280,33 @@ def test_document_labels_stay_unique_for_versions_of_one_source():
     assert len(set(labels.values())) == 3
 
 
+def test_failed_capture_still_offers_remove_from_queue(tmp_path):
+    script = (
+        "from pathlib import Path\n"
+        "from gridlens.config import Settings\n"
+        "from gridlens.bootstrap import build_container\n"
+        "from gridlens.errors import AppError\n"
+        "from gridlens.ui.review import render\n"
+        f"c=build_container(Settings(project_root=Path({str(tmp_path)!r})))\n"
+        "def denied(source_id):\n"
+        "    raise AppError('SOURCE_ACCESS_DENIED', 'denied')\n"
+        "c.snapshots.capture = denied\n"
+        "render(c)\n"
+    )
+    c = build_container(Settings(project_root=tmp_path))
+    lead = c.discovery.add_source("https://example.org/paywalled")
+    c.sources.queue_for_review(lead.source_id)
+
+    app = AppTest.from_string(script).run()
+    next(b for b in app.button if b.key == f"capture-{lead.source_id}").click().run()
+    assert not app.exception
+    assert any("access that is not available" in item.value for item in app.error)
+    assert any("Trying again will not help" in item.value for item in app.caption)
+    remove = next(b for b in app.button if b.key == f"dequeue-{lead.source_id}")
+    remove.click().run()
+    assert c.sources.review_queue() == []
+
+
 def test_reviewer_label_is_remembered_for_new_sessions(tmp_path):
     app = review_app(tmp_path)
     assert app.text_input(key="review_reviewer").value == ""

@@ -952,3 +952,15 @@ Knowledge Base status reads `Older version: a newer one replaced it`. Stored val
 interfaces are unchanged (`VERSION_LABELS` in `gridlens/ui/common.py`, used by Review and
 Knowledge Base). Checks: **367 passed, 9 deselected**; Ruff, format and pip check passed.
 Restarted the live app; Review shows `version: current` (viewing only).
+
+## Remove after a failed capture (T14) — 2026-10-14
+
+User report: after "The source requires access that is not available." the Remove from queue
+button disappeared. The capture error path used `continue`, which skipped drawing the button.
+The button is now drawn before the capture result is handled. For errors a retry cannot fix
+(`AppError.retryable` is false, e.g. access required, not found, unsupported type) the page adds
+that trying again will not help and suggests removing the source or opening the original.
+Sources are not removed automatically. Changed `gridlens/ui/review.py` and
+`tests/ui/test_review_page.py` (new test). Checks: **368 passed, 9 deselected**; Ruff, format and
+pip check passed. Restarted the live app and confirmed the Review page loads; Capture was not
+clicked in live (it would fetch a real site).
