@@ -22,6 +22,7 @@ JURISDICTIONS = ["NZ", "US", "GLOBAL", "UNKNOWN"]
 SOURCE_TYPES = ["policy", "technical", "paper", "industry_report", "product", "unknown"]
 MAX_PREVIEW_SEGMENTS = 200
 SECTIONS = ("capture", "review", "reviewed")
+SECTION_NAMES = {"capture": "1 · To extract", "review": "2 · To review", "reviewed": "Reviewed"}
 SECTION_HELP = {
     "capture": "Step 1 · Extract text saves a fixed copy of each selected source's current text.",
     "review": "Step 2 · Read each extracted document, fix its metadata, then approve or reject.",
@@ -374,19 +375,22 @@ def render(container: Container):
     if notice := st.session_state.pop("review_notice", None):
         kind, message = notice
         {"warning": st.warning, "info": st.info}.get(kind, st.success)(message)
-    titles = {
-        "capture": f"1 · To extract ({len(queue)})",
-        "review": f"2 · To review ({len(pending)})",
-        "reviewed": f"Reviewed ({len(reviewed)})",
-    }
+    counts = {"capture": len(queue), "review": len(pending), "reviewed": len(reviewed)}
+    titles = {key: f"{SECTION_NAMES[key]} ({counts[key]})" for key in SECTIONS}
+    # Streamlit remembers a radio's picked label, whose count changes after an action, and
+    # would then lose the step. The step lives in session state and the widget key carries
+    # the counts, so a count change draws a fresh radio at the saved step while clicks on an
+    # unchanged radio keep working.
     section = st.radio(
         "Review step",
         SECTIONS,
+        index=SECTIONS.index(st.session_state["review_section"]),
         format_func=titles.__getitem__,
         horizontal=True,
-        key="review_section",
+        key="review_step_" + "_".join(str(counts[key]) for key in SECTIONS),
         label_visibility="collapsed",
     )
+    st.session_state["review_section"] = section
     st.caption(SECTION_HELP[section])
     if section == "capture":
         _capture_queue(container, queue)

@@ -87,8 +87,8 @@ def test_review_page_displays_selected_pending_lead(tmp_path):
     )
     app = AppTest.from_string(script).run()
     assert not app.exception
-    assert app.radio(key="review_section").value == "capture"
-    assert "To extract (1)" in app.radio(key="review_section").options[0]
+    assert app.radio[0].value == "capture"
+    assert "To extract (1)" in app.radio[0].options[0]
     assert any("example.org" in item.value for item in app.markdown)
 
 
@@ -115,8 +115,8 @@ def test_every_selected_candidate_waits_in_the_persistent_review_queue(tmp_path)
     # A fresh session (e.g. a browser reload) still shows both selections in order.
     app = AppTest.from_string(script).run()
     assert not app.exception
-    assert app.radio(key="review_section").value == "capture"
-    assert "To extract (2)" in app.radio(key="review_section").options[0]
+    assert app.radio[0].value == "capture"
+    assert "To extract (2)" in app.radio[0].options[0]
     assert [item.value for item in app.caption if item.value.startswith("https://")] == [
         "https://synthetic.example/connection-guide",
         "https://example.org/second",
@@ -131,8 +131,8 @@ def test_every_selected_candidate_waits_in_the_persistent_review_queue(tmp_path)
     assert not app.exception
     assert c.sources.review_queue() == []
     # Extraction stays in step 1; the document waits, preselected, in step 2.
-    assert app.radio(key="review_section").value == "capture"
+    assert app.radio[0].value == "capture"
     assert any("Text extracted" in item.value for item in app.success)
-    assert "To review (1)" in app.radio(key="review_section").options[1]
-    app.radio(key="review_section").set_value("review").run()
+    assert "To review (1)" in app.radio[0].options[1]
+    app.radio[0].set_value("review").run()
     assert any(item.label == "Approve" for item in app.button)

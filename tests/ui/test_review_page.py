@@ -46,15 +46,15 @@ def captured(tmp_path, reviewer="Researcher A"):
     button(app, "Extract text").click().run()
     assert not app.exception
     # Extraction keeps step 1 open; open step 2 to read the new document.
-    assert app.radio(key="review_section").value == "capture"
-    app.radio(key="review_section").set_value("review").run()
+    assert app.radio[0].value == "capture"
+    app.radio[0].set_value("review").run()
     return app
 
 
 def test_capture_preview_and_approve_saves_reviewer_once(tmp_path):
     app = captured(tmp_path)
     # The extracted document is preselected in step 2 and has left the queue.
-    assert "To extract (0)" in app.radio(key="review_section").options[0]
+    assert "To extract (0)" in app.radio[0].options[0]
     assert any("fictional operator" in item.value for item in app.text)
     assert any("Open original" == item.label for item in app.get("link_button"))
     button(app, "Approve").click().run()
@@ -215,7 +215,7 @@ def test_retry_indexing_for_approved_but_unindexed_version(tmp_path):
     service.review.approve(version_id, snapshot, "Researcher A")
     app.run()
     assert any("No extracted documents are waiting" in item.value for item in app.info)
-    app.radio(key="review_section").set_value("reviewed").run()
+    app.radio[0].set_value("reviewed").run()
     button(app, "Retry indexing").click().run()
     assert not app.exception
     assert any("Retried. Indexed" in item.value for item in app.success)
@@ -231,7 +231,7 @@ def test_indexing_failure_keeps_approval_and_offers_retry(tmp_path):
     app = review_app(tmp_path, setup=setup)
     app.text_input(key="review_reviewer").set_value("Researcher A")
     button(app, "Extract text").click().run()
-    app.radio(key="review_section").set_value("review").run()
+    app.radio[0].set_value("review").run()
     button(app, "Approve").click().run()
     assert not app.exception
     assert any("Indexing failed (LOCAL_MODEL_MISSING)" in item.value for item in app.warning)
@@ -307,6 +307,20 @@ def test_failed_capture_still_offers_remove_from_queue(tmp_path):
     remove = next(b for b in app.button if b.key == f"dequeue-{lead.source_id}")
     remove.click().run()
     assert c.sources.review_queue() == []
+
+
+def test_step_stays_when_its_count_changes(tmp_path):
+    # Two queued sources: extracting one changes every step count but keeps step 1 open.
+    app = review_app(tmp_path)
+    c = container(tmp_path)
+    c.sources.queue_for_review(c.discovery.add_source("https://example.org/other").source_id)
+    app.radio[0].set_value("capture").run()
+    assert "To extract (2)" in app.radio[0].options[0]
+    button(app, "Extract text").click().run()
+    assert not app.exception
+    assert app.radio[0].value == "capture"
+    assert "To extract (1)" in app.radio[0].options[0]
+    assert "To review (1)" in app.radio[0].options[1]
 
 
 def test_reviewer_label_is_remembered_for_new_sessions(tmp_path):

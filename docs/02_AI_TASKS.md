@@ -674,6 +674,8 @@
 
 **用词与流程调整（2026-10-14）：** 2026-10-14 用词与流程调整（用户反馈：capture 不易懂；提取后不要自动跳到 To review）：界面上的 capture 改为 extract：步骤 `1 · To extract (N)`、按钮 `Extract text`，Discover 成功提示、侧栏说明、超时错误和空状态同步改写（内部 key/服务名不变）。Extract text 成功后停留在第 1 步，提示 `Text extracted. Read it in 2 · To review, then approve or reject.`，并在第 2 步预选该文档（review_preselect）；批准/拒绝/撤销等其他动作仍跟随文档所在步骤。规格 Review 行与 README 同步。完整离线回归 368 passed、9 deselected；Ruff/format/pip check 通过；重启 live 应用后确认新用词显示（只查看，未在 live 点击 Extract text）。
 
+**缺陷修复（2026-10-14）：** 2026-10-14 缺陷修复（用户 live 使用时发现：再次点 Extract text 仍跳到 To review）：Streamlit 1.65 radio 在浏览器端记住所选标签文本（如 `1 · To extract (22)`），提取后计数变化，旧标签无法匹配选项，原逻辑回落到默认步骤（有待审核时为 To review）。改为步骤保存在 session_state `review_section`，radio 的 key 携带三个计数（`review_step_<n>_<n>_<n>`）：计数变化时以保存的步骤重新绘制，计数不变时点击照常生效（无 key 方案会因 index 变化导致手动切换要点两次，已在浏览器中发现并排除）。测试改用 `app.radio[0]`，新增两源提取后仍停留第 1 步的测试（AppTest 不经过浏览器标签回传，无法复现原始原因）。在临时 fixture 数据目录（data/fixture/ui-check，检查后已删除）的浏览器中确认：提取后停留第 1 步且计数更新；单击在 1/2/Reviewed 间来回切换 5 次均一次生效；Approve 后跟随到 Reviewed。完整离线回归 369 passed、9 deselected；Ruff/format/pip check 通过；已重启 live 应用（只查看）。
+
 ## T15 — 实现确定性 token 分块
 
 **优先级/状态：** P0 / done

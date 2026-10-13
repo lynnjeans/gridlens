@@ -74,7 +74,7 @@ Knowledge Base 与 Ask 已接通（fixture 可完整使用；live 生成需登�
 
 | 命令 | 结果 |
 | --- | --- |
-| `.venv/bin/python -m pytest -q` | 368 passed，9 deselected（live/local_model）（2026-10-14，capture 改称 extract 且提取后停留第 1 步） |
+| `.venv/bin/python -m pytest -q` | 369 passed，9 deselected（live/local_model）（2026-10-14，Review 步骤不因计数变化而跳转） |
 | `.venv/bin/ruff check .` | All checks passed |
 | `.venv/bin/ruff format --check .` | 108 files already formatted |
 | `.venv/bin/python -m pip check` | No broken requirements found |

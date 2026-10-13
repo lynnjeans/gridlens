@@ -976,3 +976,20 @@ preselected in step 2; other actions still follow the document to its step. Spec
 README updated. Checks: **368 passed, 9 deselected**; Ruff, format and pip check passed.
 Restarted the live app and confirmed the new wording (viewing only; Extract text not clicked
 in live).
+
+## Review step no longer jumps when counts change (T14) — 2026-10-14
+
+User report: clicking Extract text again still jumped to To review. Cause: in the browser,
+Streamlit 1.65's radio remembers the picked label text (e.g. `1 · To extract (22)`); after an
+extraction the count changes, the old label matches no option, and the page fell back to its
+default step (To review when anything is pending). The step now lives in session state
+(`review_section`) and the radio key carries the three counts, so a count change redraws the
+radio at the saved step while clicks on an unchanged radio work normally. (An unkeyed radio
+was tried first; in the browser it needed two clicks to switch back, because its identity
+includes the starting index.) Tests use `app.radio[0]`; a new test extracts one of two sources
+and stays in step 1 (AppTest does not send labels back like the browser, so it cannot reproduce
+the original cause). Browser check in a temporary fixture data folder (data/fixture/ui-check,
+deleted afterwards): stays in step 1 with updated counts after extracting; five single-click
+switches between the steps all worked; Approve still moves to Reviewed. Checks:
+**369 passed, 9 deselected**; Ruff, format and pip check passed. Restarted the live app
+(viewing only).
