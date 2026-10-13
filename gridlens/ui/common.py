@@ -5,6 +5,17 @@ import streamlit as st
 from gridlens.bootstrap import Container
 from gridlens.errors import AppError
 
+# Plain words for version states on screen; stored values stay candidate/active/superseded.
+VERSION_LABELS = {
+    "candidate": "not yet in use",
+    "active": "current",
+    "superseded": "older version",
+}
+
+
+def version_label(status: str) -> str:
+    return VERSION_LABELS.get(status, status)
+
 
 def sidebar(container: Container):
     with st.sidebar:

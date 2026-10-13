@@ -14,6 +14,7 @@ from gridlens.ui.common import (
     reviewer_input,
     revoke_version,
     show_error,
+    version_label,
 )
 
 STATUS_ORDER = {"pending": 0, "rejected": 1, "revoked": 2, "approved": 3}
@@ -267,7 +268,7 @@ def _version_detail(container: Container, version_id: str, reviewer: str):
     st.subheader(meta.get("title") or "Untitled")
     st.caption(
         f"Review: {row['review_status']} · ingestion: {row['ingestion_status']} · "
-        f"version: {row['version_status']} · snapshot {current_hash[:12]}"
+        f"version: {version_label(row['version_status'])} · snapshot {current_hash[:12]}"
     )
     link_left, link_right = st.columns(2)
     link_left.link_button("Open original", meta["original_url"])

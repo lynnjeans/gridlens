@@ -149,7 +149,10 @@ def test_overview_separates_all_states(tmp_path):
         assert data[title]["Status"] == status
         assert data[title]["Searchable"] == "no"
     edition = [r for r in app.dataframe[0].value.to_dict("records") if r["Title"] == "edition"]
-    assert sorted(r["Status"] for r in edition) == ["Searchable", "Superseded by a newer version"]
+    assert sorted(r["Status"] for r in edition) == [
+        "Older version: a newer one replaced it",
+        "Searchable",
+    ]
     assert any("2 searchable" in c.value and "1 awaiting review" in c.value for c in app.caption)
     assert any("3 approved, not searchable" in c.value for c in app.caption)
 

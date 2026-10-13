@@ -12,6 +12,7 @@ from gridlens.ui.common import (
     reviewer_input,
     revoke_version,
     show_error,
+    version_label,
 )
 
 
@@ -19,7 +20,7 @@ def _status(version: dict, run: dict | None, searchable: bool) -> str:
     """Plain status; Approved is never shown as answerable unless SQLite says eligible."""
     review, ingestion = version["review_status"], version["ingestion_status"]
     if version["version_status"] == "superseded":
-        return "Superseded by a newer version"
+        return "Older version: a newer one replaced it"
     if review == "pending":
         return "Waiting for review"
     if review == "rejected":
@@ -52,7 +53,7 @@ def _detail(container: Container, version: dict, run: dict | None, searchable: b
     left.markdown(
         f"**Review:** {version['review_status']}  \n"
         f"**Ingestion:** {version['ingestion_status']}  \n"
-        f"**Version:** {version['version_status']}"
+        f"**Version:** {version_label(version['version_status'])}"
     )
     right.markdown(
         f"**Region:** {meta.get('jurisdiction', 'UNKNOWN')}  \n"
@@ -199,7 +200,7 @@ def render(container: Container):
                 "Type": meta.get("source_type", "unknown"),
                 "Review": version["review_status"],
                 "Ingestion": version["ingestion_status"],
-                "Version": version["version_status"],
+                "Version": version_label(version["version_status"]),
                 "Searchable": "yes" if version["id"] in searchable else "no",
                 "Status": _status(version, runs.get(version["id"]), version["id"] in searchable),
             }

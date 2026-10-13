@@ -943,3 +943,12 @@ are unique and visible in a narrow dropdown. Changed `gridlens/ui/review.py` and
 `tests/ui/test_review_page.py`. Checks: **367 passed, 9 deselected**; Ruff, format and pip check
 passed. Restarted the live app and confirmed in the browser that the older version opens
 (viewing only).
+
+## Plain version wording (T14) — 2026-10-14
+
+User feedback: "superseded" is an unfamiliar word. The screens now show version states in plain
+words: active → `current`, superseded → `older version`, candidate → `not yet in use`; the
+Knowledge Base status reads `Older version: a newer one replaced it`. Stored values and
+interfaces are unchanged (`VERSION_LABELS` in `gridlens/ui/common.py`, used by Review and
+Knowledge Base). Checks: **367 passed, 9 deselected**; Ruff, format and pip check passed.
+Restarted the live app; Review shows `version: current` (viewing only).

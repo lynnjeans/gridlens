@@ -668,6 +668,8 @@
 
 **缺陷修复（2026-10-14）：** 2026-10-14 缺陷修复（用户 live 使用时发现：Reviewed 下拉中同一文章出现两次且第二个无法选中）：两条是同一来源的两个版本——已批准版本修改 Region 后经 revise_metadata 生成新版本并获批，旧版本 superseded（检索只用 active 版本，回答不受影响）。Streamlit 1.65 selectbox 把选中的标签文本映射回第一个相同标签，导致第二项无法选中。文档标签改为 superseded 版本前缀 `Older version · `，仍重复时前缀 `Snapshot <hash12> · `，保证唯一且窄下拉中可见。新增标签唯一性单元测试；完整离线回归 367 passed、9 deselected；Ruff/format/pip check 通过；重启 live 应用后浏览器确认可选中旧版本（只查看，无其他操作）。
 
+**用词改进（2026-10-14）：** 2026-10-14 用词改进（用户反馈：superseded 太生疏）：界面上的版本状态改用通俗说法——active 显示为 current、superseded 显示为 older version、candidate 显示为 not yet in use；Knowledge Base 状态 `Superseded by a newer version` 改为 `Older version: a newer one replaced it`。数据库存储值与接口不变（gridlens/ui/common.py VERSION_LABELS）。完整离线回归 367 passed、9 deselected；Ruff/format/pip check 通过；重启 live 应用后浏览器确认 Review 显示 version: current（只查看）。
+
 ## T15 — 实现确定性 token 分块
 
 **优先级/状态：** P0 / done
