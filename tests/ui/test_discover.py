@@ -88,7 +88,7 @@ def test_review_page_displays_selected_pending_lead(tmp_path):
     app = AppTest.from_string(script).run()
     assert not app.exception
     assert app.radio(key="review_section").value == "capture"
-    assert "To capture (1)" in app.radio(key="review_section").options[0]
+    assert "To extract (1)" in app.radio(key="review_section").options[0]
     assert any("example.org" in item.value for item in app.markdown)
 
 
@@ -116,7 +116,7 @@ def test_every_selected_candidate_waits_in_the_persistent_review_queue(tmp_path)
     app = AppTest.from_string(script).run()
     assert not app.exception
     assert app.radio(key="review_section").value == "capture"
-    assert "To capture (2)" in app.radio(key="review_section").options[0]
+    assert "To extract (2)" in app.radio(key="review_section").options[0]
     assert [item.value for item in app.caption if item.value.startswith("https://")] == [
         "https://synthetic.example/connection-guide",
         "https://example.org/second",
@@ -130,7 +130,9 @@ def test_every_selected_candidate_waits_in_the_persistent_review_queue(tmp_path)
     next(b for b in app.button if b.key == f"capture-{first.source_id}").click().run()
     assert not app.exception
     assert c.sources.review_queue() == []
-    # The captured document opens in step 2 for reading and review.
-    assert app.radio(key="review_section").value == "review"
+    # Extraction stays in step 1; the document waits, preselected, in step 2.
+    assert app.radio(key="review_section").value == "capture"
+    assert any("Text extracted" in item.value for item in app.success)
     assert "To review (1)" in app.radio(key="review_section").options[1]
+    app.radio(key="review_section").set_value("review").run()
     assert any(item.label == "Approve" for item in app.button)

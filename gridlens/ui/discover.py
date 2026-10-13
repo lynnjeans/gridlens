@@ -57,7 +57,7 @@ def _show_results(container: Container, result: SearchRunDetail):
                 st.caption(f":gray[{_plain(candidate.relevance_reason)}]")
             if selected:
                 container.sources.queue_for_review(candidate.source_id)
-                st.success("Added to the Review queue. Open Review to capture it.")
+                st.success("Added to the Review queue. Open Review to extract its text.")
 
 
 def render(container: Container):

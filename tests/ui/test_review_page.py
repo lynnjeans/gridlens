@@ -43,17 +43,18 @@ def rows(tmp_path, sql):
 def captured(tmp_path, reviewer="Researcher A"):
     app = review_app(tmp_path)
     app.text_input(key="review_reviewer").set_value(reviewer)
-    button(app, "Capture document").click().run()
+    button(app, "Extract text").click().run()
     assert not app.exception
+    # Extraction keeps step 1 open; open step 2 to read the new document.
+    assert app.radio(key="review_section").value == "capture"
+    app.radio(key="review_section").set_value("review").run()
     return app
 
 
 def test_capture_preview_and_approve_saves_reviewer_once(tmp_path):
     app = captured(tmp_path)
-    assert any("Snapshot saved" in item.value for item in app.success)
-    # The captured document opens in step 2 and has left the capture queue.
-    assert app.radio(key="review_section").value == "review"
-    assert "To capture (0)" in app.radio(key="review_section").options[0]
+    # The extracted document is preselected in step 2 and has left the queue.
+    assert "To extract (0)" in app.radio(key="review_section").options[0]
     assert any("fictional operator" in item.value for item in app.text)
     assert any("Open original" == item.label for item in app.get("link_button"))
     button(app, "Approve").click().run()
@@ -148,7 +149,7 @@ def test_unreadable_snapshot_cannot_be_approved(tmp_path):
 
 def test_empty_document_capture_creates_no_version(tmp_path):
     app = review_app(tmp_path, "https://synthetic.example/empty")
-    button(app, "Capture document").click().run()
+    button(app, "Extract text").click().run()
     assert any("No readable text" in item.value for item in app.error)
     assert rows(tmp_path, "SELECT id FROM document_versions") == []
     assert rows(tmp_path, "SELECT access_status FROM sources") == [("failed",)]
@@ -213,7 +214,7 @@ def test_retry_indexing_for_approved_but_unindexed_version(tmp_path):
     [(version_id, snapshot)] = rows(tmp_path, "SELECT id, snapshot_sha256 FROM document_versions")
     service.review.approve(version_id, snapshot, "Researcher A")
     app.run()
-    assert any("No captured documents are waiting" in item.value for item in app.info)
+    assert any("No extracted documents are waiting" in item.value for item in app.info)
     app.radio(key="review_section").set_value("reviewed").run()
     button(app, "Retry indexing").click().run()
     assert not app.exception
@@ -229,7 +230,8 @@ def test_indexing_failure_keeps_approval_and_offers_retry(tmp_path):
     )
     app = review_app(tmp_path, setup=setup)
     app.text_input(key="review_reviewer").set_value("Researcher A")
-    button(app, "Capture document").click().run()
+    button(app, "Extract text").click().run()
+    app.radio(key="review_section").set_value("review").run()
     button(app, "Approve").click().run()
     assert not app.exception
     assert any("Indexing failed (LOCAL_MODEL_MISSING)" in item.value for item in app.warning)

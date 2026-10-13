@@ -964,3 +964,15 @@ Sources are not removed automatically. Changed `gridlens/ui/review.py` and
 `tests/ui/test_review_page.py` (new test). Checks: **368 passed, 9 deselected**; Ruff, format and
 pip check passed. Restarted the live app and confirmed the Review page loads; Capture was not
 clicked in live (it would fetch a real site).
+
+## Extract wording and staying in step 1 (T14) — 2026-10-14
+
+User feedback: "capture" is hard to understand, and extracting a source should not jump to
+To review. On-screen wording now says extract: step `1 · To extract (N)`, button
+`Extract text`, plus the Discover success message, sidebar note, timeout error and empty states
+(internal keys and service names unchanged). After Extract text the page stays in step 1 with
+"Text extracted. Read it in 2 · To review, then approve or reject." and the document is
+preselected in step 2; other actions still follow the document to its step. Spec Review row and
+README updated. Checks: **368 passed, 9 deselected**; Ruff, format and pip check passed.
+Restarted the live app and confirmed the new wording (viewing only; Extract text not clicked
+in live).

@@ -23,8 +23,8 @@ SOURCE_TYPES = ["policy", "technical", "paper", "industry_report", "product", "u
 MAX_PREVIEW_SEGMENTS = 200
 SECTIONS = ("capture", "review", "reviewed")
 SECTION_HELP = {
-    "capture": "Step 1 · Capture saves a fixed copy of each selected source's current text.",
-    "review": "Step 2 · Read each captured document, correct its metadata, then approve or reject.",
+    "capture": "Step 1 · Extract text saves a fixed copy of each selected source's current text.",
+    "review": "Step 2 · Read each extracted document, fix its metadata, then approve or reject.",
     "reviewed": "Approved, rejected and revoked documents. Approval adds a document to the "
     "knowledge base.",
 }
@@ -50,7 +50,7 @@ def _capture_queue(container: Container, queue: list[dict]):
     # The queue is persisted in SQLite, so every selection survives reruns and reloads;
     # a source leaves the queue once it has a captured version.
     if not queue:
-        empty_state("Nothing to capture. Select sources in Discover with Select for review.")
+        empty_state("Nothing to extract. Select sources in Discover with Select for review.")
         return
     for source in queue:
         source_id = source["id"]
@@ -59,7 +59,7 @@ def _capture_queue(container: Container, queue: list[dict]):
             st.caption(source["original_url"])
             left, middle, right = st.columns(3)
             left.link_button("Open original", source["original_url"])
-            capture = middle.button("Capture document", key=f"capture-{source_id}")
+            capture = middle.button("Extract text", key=f"capture-{source_id}")
             # Drawn before any capture error so a failed source can still leave the queue.
             if right.button("Remove from queue", key=f"dequeue-{source_id}"):
                 container.sources.remove_from_review_queue(source_id)
@@ -78,11 +78,13 @@ def _capture_queue(container: Container, queue: list[dict]):
                         )
                     continue
                 st.session_state.pop("review_seen", None)
+                # Stay in step 1 so more sources can be extracted; step 2 opens on this one.
+                st.session_state["review_preselect"] = preview.version_id
                 _notice(
-                    "This text was already captured; the existing version is shown."
+                    "This text was already extracted; it is in 2 · To review."
                     if preview.reused
-                    else "Snapshot saved. Read it below, then approve or reject.",
-                    focus=preview.version_id,
+                    else "Text extracted. Read it in 2 · To review, then approve or reject.",
+                    focus=None,
                 )
 
 
@@ -280,7 +282,7 @@ def _version_detail(container: Container, version_id: str, reviewer: str):
     link_left, link_right = st.columns(2)
     link_left.link_button("Open original", meta["original_url"])
     if meta.get("final_url") and meta["final_url"] != meta["original_url"]:
-        link_right.caption(f"Captured from redirect target: {meta['final_url']}")
+        link_right.caption(f"Extracted from redirect target: {meta['final_url']}")
     if stale:
         st.warning(
             "This document changed after you opened it. Reload the preview and read it again "
@@ -295,7 +297,7 @@ def _version_detail(container: Container, version_id: str, reviewer: str):
     except AppError as error:
         segments = []
         show_error(error)
-        st.caption("An unreadable snapshot cannot be approved. Capture the source again.")
+        st.caption("An unreadable snapshot cannot be approved. Extract the text again.")
     if notes := json.loads(row["extraction_notes_json"]):
         st.warning("Extraction limits: " + "; ".join(notes))
     if segments:
@@ -359,8 +361,10 @@ def render(container: Container):
     )
     pending = [v for v in versions if v["review_status"] == "pending"]
     reviewed = [v for v in versions if v["review_status"] != "pending"]
+    if preselect := st.session_state.pop("review_preselect", None):
+        st.session_state["review_version_id"] = preselect
     if focus := st.session_state.pop("review_focus", None):
-        # Follow the document just captured or acted on into the step where it now is.
+        # Follow the document just acted on into the step where it now is.
         status = next((v["review_status"] for v in versions if v["id"] == focus), None)
         if status:
             st.session_state["review_section"] = "review" if status == "pending" else "reviewed"
@@ -371,7 +375,7 @@ def render(container: Container):
         kind, message = notice
         {"warning": st.warning, "info": st.info}.get(kind, st.success)(message)
     titles = {
-        "capture": f"1 · To capture ({len(queue)})",
+        "capture": f"1 · To extract ({len(queue)})",
         "review": f"2 · To review ({len(pending)})",
         "reviewed": f"Reviewed ({len(reviewed)})",
     }
@@ -391,7 +395,7 @@ def render(container: Container):
             container,
             pending,
             reviewer,
-            "No captured documents are waiting for review. Capture a source first.",
+            "No extracted documents are waiting for review. Extract a source's text first.",
         )
     else:
         _version_list(container, reviewed, reviewer, "No documents have been reviewed yet.")

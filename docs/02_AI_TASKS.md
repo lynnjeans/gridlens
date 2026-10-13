@@ -672,6 +672,8 @@
 
 **缺陷修复（2026-10-14）：** 2026-10-14 缺陷修复（用户 live 使用时发现：捕获失败提示 The source requires access that is not available 后 Remove from queue 按钮消失）：捕获错误分支的 `continue` 跳过了 Remove 按钮的绘制。改为先绘制 Remove from queue 再处理捕获结果；不可重试的错误（AppError.retryable 为 False，如需要访问权限、未找到、类型不支持）额外提示重试无用，可移出队列或自行打开原文。不自动移出队列，由用户决定。新增 UI 测试覆盖失败后仍可移出队列；完整离线回归 368 passed、9 deselected；Ruff/format/pip check 通过；重启 live 应用后确认 Review 页正常加载（未在 live 点击 Capture，避免真实抓取）。
 
+**用词与流程调整（2026-10-14）：** 2026-10-14 用词与流程调整（用户反馈：capture 不易懂；提取后不要自动跳到 To review）：界面上的 capture 改为 extract：步骤 `1 · To extract (N)`、按钮 `Extract text`，Discover 成功提示、侧栏说明、超时错误和空状态同步改写（内部 key/服务名不变）。Extract text 成功后停留在第 1 步，提示 `Text extracted. Read it in 2 · To review, then approve or reject.`，并在第 2 步预选该文档（review_preselect）；批准/拒绝/撤销等其他动作仍跟随文档所在步骤。规格 Review 行与 README 同步。完整离线回归 368 passed、9 deselected；Ruff/format/pip check 通过；重启 live 应用后确认新用词显示（只查看，未在 live 点击 Extract text）。
+
 ## T15 — 实现确定性 token 分块
 
 **优先级/状态：** P0 / done

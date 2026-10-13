@@ -30,7 +30,7 @@ def sidebar(container: Container):
 
         render_account(container)
         st.divider()
-        st.caption("Searches, captures and sign-in run only when you ask")
+        st.caption("Searches, text extraction and sign-in run only when you ask")
 
 
 def reviewer_input(container: Container, key: str, placeholder: str) -> str:
@@ -60,7 +60,7 @@ def show_error(error: AppError):
         "DNS_FAILED": "The source host could not be found. Try again later.",
         "SOURCE_NOT_FOUND": "The source document was not found.",
         "SOURCE_ACCESS_DENIED": "The source requires access that is not available.",
-        "FETCH_TIMEOUT": "Capturing the document timed out. Try again.",
+        "FETCH_TIMEOUT": "Extracting the text timed out. Try again.",
         "FETCH_UNAVAILABLE": "The source is temporarily unavailable. Try again later.",
         "FETCH_RATE_LIMITED": "The source is limiting requests. Try again later.",
         "FETCH_FAILED": "The source rejected the request.",

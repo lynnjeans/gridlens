@@ -487,7 +487,7 @@ Streamlit 入口使用 `st.navigation` 与 `st.Page`，页面函数由容器传�
 | 页面 | 布局及组件 | 验证与交互 |
 | --- | --- | --- |
 | Discover | 顶部主题表单；地区/类型；Search；候选卡片；手动 URL 输入 | 空输入报错；展示 publisher unknown/date unknown；显示 partial/failed；Select for review 加入持久待捕获队列（SQLite app_state，可多选、刷新不丢）后到 Review 处理 |
-| Review | 三个步骤选项：1 · To capture（逐条 Capture/Remove）、2 · To review（待审核）、Reviewed（已处理）；捕获后自动进入第 2 步；左侧文档列表，右侧元数据表单与正文展开区；Approve/Reject/Reopen | Approve 前 hash 检查；Reject reason 必填；不可读来源禁止批准；界面刷新不重复提交 |
+| Review | 三个步骤选项：1 · To extract（逐条 Extract text/Remove）、2 · To review（待审核）、Reviewed（已处理）；Extract text 后停留第 1 步并在第 2 步预选该文档；左侧文档列表，右侧元数据表单与正文展开区；Approve/Reject/Reopen | Approve 前 hash 检查；Reject reason 必填；不可读来源禁止批准；界面刷新不重复提交 |
 | Knowledge Base | 来源、版本、审核/入库状态表格；详情与 Retry/Revoke/Refresh | 三种状态分开展示；不提供一键“全批准”；进度按阶段而非伪造百分比 |
 | Ask & Gaps | 问题表单；回答 claims；引用展开；历史；缺口 tab | 空库仍可说明范围不足；错误与 insufficient 不混淆；建议词只填入搜索框 |
 

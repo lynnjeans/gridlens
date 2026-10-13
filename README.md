@@ -38,7 +38,7 @@ python -m streamlit run app.py --server.address 127.0.0.1   # or ./run.sh
 ```
 
 Open [http://127.0.0.1:8501](http://127.0.0.1:8501). Pages: **Discover** (search or add a
-URL), **Review** (capture, read, correct metadata, approve/reject; approval indexes the
+URL), **Review** (extract text, read, correct metadata, approve/reject; approval indexes the
 text), **Knowledge Base** (status, retry, revoke, refresh, export) and **Ask & Gaps**
 (questions, citations, history, knowledge gaps).
 
