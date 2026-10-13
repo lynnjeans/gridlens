@@ -22,7 +22,8 @@ def test_fixture_search_renders_candidate_and_rerun_is_idempotent(tmp_path):
     app.text_input[0].set_value("New Zealand grid connection")
     button(app, "Search sources").click().run()
     assert not app.exception
-    assert any("Synthetic connection guide" in item.value for item in app.subheader)
+    assert any("Search results" in item.value for item in app.subheader)
+    assert any("Synthetic connection guide" in item.value for item in app.markdown)
     assert any("1 search call" in item.value for item in app.caption)
     button(app, "Select for review").click().run()
     assert any("Review queue" in item.value for item in app.success)

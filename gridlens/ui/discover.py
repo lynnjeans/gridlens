@@ -15,7 +15,24 @@ SOURCE_TYPES = {
 }
 
 
+SNIPPET_LIMIT = 220
+MARKDOWN_SPECIALS = "\\`*_{}[]()<>#+-.!|~$"
+
+
+def _plain(text: str) -> str:
+    """Escape search-provided text so titles and snippets render literally."""
+    return "".join(f"\\{char}" if char in MARKDOWN_SPECIALS else char for char in text)
+
+
+def _short(text: str) -> str:
+    text = " ".join(text.split())
+    return text if len(text) <= SNIPPET_LIMIT else text[: SNIPPET_LIMIT - 1].rstrip() + "…"
+
+
 def _show_results(container: Container, result: SearchRunDetail):
+    # A visible break keeps the results apart from the search form above.
+    st.divider()
+    st.subheader(":material/manage_search: Search results")
     if result.status == "partial":
         st.warning("Some searches failed. Successful candidates are shown below.")
     elif result.status == "failed":
@@ -23,21 +40,22 @@ def _show_results(container: Container, result: SearchRunDetail):
     elif not result.candidates:
         empty_state("No candidates were found. Try a more specific research topic.")
     st.caption(f"{result.calls_used} search call(s) · {len(result.candidates)} unique candidate(s)")
-    for candidate in result.candidates:
-        with st.container(border=True):
-            st.subheader(candidate.title)
+    for index, candidate in enumerate(result.candidates, start=1):
+        with st.container(border=True, gap="small"):
+            st.markdown(f"**{index}\\. {_plain(candidate.title)}**")
             details = [
                 candidate.publisher or "Publisher unknown",
                 candidate.published_at or "Date unknown",
             ]
-            st.caption(" · ".join(details))
-            st.write(candidate.snippet or "No search snippet was returned.")
-            st.caption(candidate.relevance_reason)
-            left, right = st.columns([1, 1])
-            left.link_button("Open original", candidate.url)
-            if right.button(
-                "Select for review", key=f"review-{result.run_id}-{candidate.source_id}"
-            ):
+            snippet = _short(candidate.snippet or "No search snippet was returned.")
+            st.caption(f"{_plain(' · '.join(details))} — {_plain(snippet)}")
+            with st.container(horizontal=True, vertical_alignment="center", gap="small"):
+                st.link_button("Open original", candidate.url)
+                selected = st.button(
+                    "Select for review", key=f"review-{result.run_id}-{candidate.source_id}"
+                )
+                st.caption(f":gray[{_plain(candidate.relevance_reason)}]")
+            if selected:
                 container.sources.queue_for_review(candidate.source_id)
                 st.success("Added to the Review queue. Open Review to capture it.")
 

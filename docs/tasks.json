@@ -441,7 +441,8 @@
       "evidence": [
         "tests/ui/test_discover.py 与 test_navigation.py: 10 passed；覆盖搜索、rerun 幂等、候选选择、Review 接收、手动 URL、输入/配置错误及空/partial/failed 状态。",
         "完整离线回归：67 passed, 1 deselected；Ruff、format、pip check 通过。",
-        "2026-10-12 缺陷修复（用户 live 使用时发现）：原 Select for review 只写单个 session_state.selected_source_id，多选时互相覆盖、刷新后丢失，Review 只显示最后一条。改为 SQLite app_state 中的持久 review_queue：Discover 选择/手动 URL 入队（重复选择不重复），Review 顶部列出全部 Waiting for capture，逐条 Capture 或 Remove from queue，捕获后自动离开队列。修复前的选择未持久化，需在 Discover 重新选择。新增 UI 测试覆盖多选、刷新后保留、移除和捕获出队；完整离线回归 361 passed、9 deselected；Ruff/format 通过。"
+        "2026-10-12 缺陷修复（用户 live 使用时发现）：原 Select for review 只写单个 session_state.selected_source_id，多选时互相覆盖、刷新后丢失，Review 只显示最后一条。改为 SQLite app_state 中的持久 review_queue：Discover 选择/手动 URL 入队（重复选择不重复），Review 顶部列出全部 Waiting for capture，逐条 Capture 或 Remove from queue，捕获后自动离开队列。修复前的选择未持久化，需在 Discover 重新选择。新增 UI 测试覆盖多选、刷新后保留、移除和捕获出队；完整离线回归 361 passed、9 deselected；Ruff/format 通过。",
+        "2026-10-14 可读性改进（用户反馈：检索输入与结果区分不明显、结果卡片过大滚动麻烦）：表单下方加分隔线和 `Search results` 标题；候选卡片改为紧凑格式：编号加粗标题一行，机构·日期—摘要（截断至 220 字符）一行灰色小字，Open original / Select for review 与相关性理由同一行；搜索返回的标题与摘要按字面显示（转义 Markdown）。合成数据实例浏览器走查确认版面与 Select for review 入队。完整离线回归 366 passed、9 deselected；Ruff/format/pip check 通过。未执行：用户在 live 应用中的查看。"
       ],
       "validation_state": {
         "offline": "passed",

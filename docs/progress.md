@@ -918,3 +918,15 @@ Older answers render correctly because quotes come from the stored draft. The `c
 table still holds one row per (answer, claim, chunk); the full quotes remain in
 `answer_json.draft`. Human judgment of whether each quote semantically supports its claim is
 still part of T31. Checks: **366 passed, 9 deselected**; Ruff/format passed.
+
+## Discover results layout (T08) — 2026-10-14
+
+User feedback: the search form and the results looked alike, and each result card was so tall
+that several results meant a lot of scrolling. A divider and a `Search results` heading now
+separate the results from the form. Each card is compact: a numbered bold title, one grey line
+with publisher · date — snippet (cut to 220 characters), and one row with Open original,
+Select for review and the relevance reason. Search-provided titles and snippets are escaped so
+they render literally. Changed `gridlens/ui/discover.py` and `tests/ui/test_discover.py`.
+Checked in a fixture instance in the browser (layout, Select for review queues the candidate).
+Checks: **366 passed, 9 deselected**; Ruff, format and pip check passed. Not run: the user's look
+at the restarted live app.
