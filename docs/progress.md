@@ -930,3 +930,16 @@ they render literally. Changed `gridlens/ui/discover.py` and `tests/ui/test_disc
 Checked in a fixture instance in the browser (layout, Select for review queues the candidate).
 Checks: **366 passed, 9 deselected**; Ruff, format and pip check passed. Not run: the user's look
 at the restarted live app.
+
+## Review document labels (T14) — 2026-10-14
+
+User report: the Reviewed dropdown listed the same article twice and the second entry could
+not be selected. They are two versions of one source: after approval the Region was corrected,
+which created a new version that was approved; the earlier one is superseded (retrieval uses
+only the active version, so answers were unaffected). Streamlit 1.65 maps a picked label back to
+the first equal label, so identical labels made the second unreachable. Labels now start with
+`Older version · ` for superseded versions and with `Snapshot <hash12> · ` if still equal, so they
+are unique and visible in a narrow dropdown. Changed `gridlens/ui/review.py` and
+`tests/ui/test_review_page.py`. Checks: **367 passed, 9 deselected**; Ruff, format and pip check
+passed. Restarted the live app and confirmed in the browser that the older version opens
+(viewing only).

@@ -666,6 +666,8 @@
 
 **审核防漏（2026-10-12）：** 2026-10-12 审核防漏（用户批准后 Region 仍为 UNKNOWN：Approve 只使用已保存元数据，表单中未点 Save metadata 的修改被静默丢弃）：Approve 上方显示“Approve with saved metadata: region · type”及“未保存修改不会被批准”提示；Region 为 UNKNOWN 时警告该文档不会用于 NZ/US/GLOBAL 筛选的问题，类型 unknown 时也警告（仅提示，不阻止）。按用户要求界面标签 Jurisdiction 统一改为 Region（Review 表单与 KB 修正表单；数据字段仍为 jurisdiction）。完整离线回归 365 passed、9 deselected。
 
+**缺陷修复（2026-10-14）：** 2026-10-14 缺陷修复（用户 live 使用时发现：Reviewed 下拉中同一文章出现两次且第二个无法选中）：两条是同一来源的两个版本——已批准版本修改 Region 后经 revise_metadata 生成新版本并获批，旧版本 superseded（检索只用 active 版本，回答不受影响）。Streamlit 1.65 selectbox 把选中的标签文本映射回第一个相同标签，导致第二项无法选中。文档标签改为 superseded 版本前缀 `Older version · `，仍重复时前缀 `Snapshot <hash12> · `，保证唯一且窄下拉中可见。新增标签唯一性单元测试；完整离线回归 367 passed、9 deselected；Ruff/format/pip check 通过；重启 live 应用后浏览器确认可选中旧版本（只查看，无其他操作）。
+
 ## T15 — 实现确定性 token 分块
 
 **优先级/状态：** P0 / done

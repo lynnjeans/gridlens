@@ -761,7 +761,8 @@
         "2026-10-12 可用性改进（用户反馈：待审核文档显示在捕获队列下方，不便查看、难理解）：Review 页改为三个步骤选项 `1 · To capture (N)`、`2 · To review (N)`、`Reviewed (N)`，每步一句说明；捕获成功后自动跳到第 2 步并打开该文档；批准/拒绝/撤销/重开后跟随该文档到其所在步骤（可见 Retry indexing 等）；默认有待审核时进入第 2 步。跳转在控件创建前应用（review_focus）。完整离线回归 362 passed、9 deselected。",
         "2026-10-12 可读性改进（用户反馈：正文区太窄导致过高）：文档选择由左侧 1/3 列的单选改为顶部全宽下拉框，详情占满整行；正文放入固定高度 560px 的滚动区；显示时合并段内由提取产生的硬换行（仅显示，快照/引用文本不变，页面注明）。合成数据实例浏览器走查确认全宽与滚动区。完整离线回归 363 passed、9 deselected。",
         "2026-10-12 便利性改进（用户反馈：每次都要填 Reviewer label）：Review 与 Knowledge Base 的 Reviewer label 预填本机上次使用的值（SQLite app_state `pref:reviewer_label`，修改时保存，去除首尾空格；仅 UI 便利项，不是凭证）。仍可随时修改，空值仍禁止审核动作。完整离线回归 364 passed、9 deselected。",
-        "2026-10-12 审核防漏（用户批准后 Region 仍为 UNKNOWN：Approve 只使用已保存元数据，表单中未点 Save metadata 的修改被静默丢弃）：Approve 上方显示“Approve with saved metadata: region · type”及“未保存修改不会被批准”提示；Region 为 UNKNOWN 时警告该文档不会用于 NZ/US/GLOBAL 筛选的问题，类型 unknown 时也警告（仅提示，不阻止）。按用户要求界面标签 Jurisdiction 统一改为 Region（Review 表单与 KB 修正表单；数据字段仍为 jurisdiction）。完整离线回归 365 passed、9 deselected。"
+        "2026-10-12 审核防漏（用户批准后 Region 仍为 UNKNOWN：Approve 只使用已保存元数据，表单中未点 Save metadata 的修改被静默丢弃）：Approve 上方显示“Approve with saved metadata: region · type”及“未保存修改不会被批准”提示；Region 为 UNKNOWN 时警告该文档不会用于 NZ/US/GLOBAL 筛选的问题，类型 unknown 时也警告（仅提示，不阻止）。按用户要求界面标签 Jurisdiction 统一改为 Region（Review 表单与 KB 修正表单；数据字段仍为 jurisdiction）。完整离线回归 365 passed、9 deselected。",
+        "2026-10-14 缺陷修复（用户 live 使用时发现：Reviewed 下拉中同一文章出现两次且第二个无法选中）：两条是同一来源的两个版本——已批准版本修改 Region 后经 revise_metadata 生成新版本并获批，旧版本 superseded（检索只用 active 版本，回答不受影响）。Streamlit 1.65 selectbox 把选中的标签文本映射回第一个相同标签，导致第二项无法选中。文档标签改为 superseded 版本前缀 `Older version · `，仍重复时前缀 `Snapshot <hash12> · `，保证唯一且窄下拉中可见。新增标签唯一性单元测试；完整离线回归 367 passed、9 deselected；Ruff/format/pip check 通过；重启 live 应用后浏览器确认可选中旧版本（只查看，无其他操作）。"
       ],
       "validation_state": {
         "offline": "passed",
@@ -2145,7 +2146,7 @@
       "pushed": true
     },
     "verification": {
-      "offline_tests_passed": 366,
+      "offline_tests_passed": 367,
       "ruff": "passed",
       "format": "passed",
       "dependency_check": "passed",

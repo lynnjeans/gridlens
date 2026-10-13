@@ -1,5 +1,6 @@
 import json
 import re
+from collections import Counter
 
 import streamlit as st
 from pydantic import ValidationError
@@ -79,7 +80,20 @@ def _capture_queue(container: Container, queue: list[dict]):
 
 def _label(version: dict) -> str:
     title = json.loads(version["metadata_json"]).get("title") or version["title"]
-    return f"{title} · {version['review_status']}"
+    # The distinguishing part comes first so a narrow dropdown does not cut it off.
+    older = "Older version · " if version["version_status"] == "superseded" else ""
+    return f"{older}{title} · {version['review_status']}"
+
+
+def _labels(versions: list[dict]) -> dict[str, str]:
+    """Unique dropdown labels: Streamlit maps a picked label back to the first equal one."""
+    labels = {v["id"]: _label(v) for v in versions}
+    counts = Counter(labels.values())
+    return {
+        v["id"]: (f"Snapshot {v['snapshot_sha256'][:12]} · " if counts[label] > 1 else "") + label
+        for v in versions
+        for label in [labels[v["id"]]]
+    }
 
 
 def _reflow(text: str) -> str:
@@ -313,7 +327,7 @@ def _version_list(container: Container, versions: list[dict], reviewer: str, emp
     if not versions:
         empty_state(empty)
         return
-    labels = {v["id"]: _label(v) for v in versions}
+    labels = _labels(versions)
     if st.session_state.get("review_version_id") not in labels:
         st.session_state["review_version_id"] = versions[0]["id"]
     version_id = st.selectbox(

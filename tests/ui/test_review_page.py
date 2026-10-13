@@ -254,6 +254,32 @@ def test_preview_reflows_hard_line_breaks_for_display_only():
     )
 
 
+def test_document_labels_stay_unique_for_versions_of_one_source():
+    from gridlens.ui.review import _labels
+
+    def version(vid, status, snapshot):
+        meta = '{"title": "Same title"}'
+        return {
+            "id": vid,
+            "title": "Same title",
+            "metadata_json": meta,
+            "review_status": "approved",
+            "version_status": status,
+            "snapshot_sha256": snapshot,
+        }
+
+    labels = _labels(
+        [
+            version("new", "active", "b" * 64),
+            version("old", "superseded", "a" * 64),
+            version("old2", "superseded", "c" * 64),
+        ]
+    )
+    assert labels["new"] == "Same title · approved"
+    assert labels["old"] == "Snapshot aaaaaaaaaaaa · Older version · Same title · approved"
+    assert len(set(labels.values())) == 3
+
+
 def test_reviewer_label_is_remembered_for_new_sessions(tmp_path):
     app = review_app(tmp_path)
     assert app.text_input(key="review_reviewer").value == ""
