@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from pypdf import PdfWriter
 
-from gridlens.documents.pdf import parse_pdf
+from gridlens.documents.pdf import parse_pdf, parse_pdf_document, read_pdf_info
 from gridlens.errors import AppError
 
 
@@ -67,3 +67,14 @@ def test_controlled_worker_timeout_is_terminated(fixtures_dir: Path):
     assert raised.value.code == "PDF_TIMEOUT"
     assert raised.value.retryable
     assert time.monotonic() - started < 1.5
+
+
+def test_pdf_info_is_read_with_and_without_page_text(fixtures_dir: Path):
+    buffer = io.BytesIO()
+    writer = PdfWriter(clone_from=fixtures_dir / "readable.pdf")
+    writer.add_metadata({"/Title": "Synthetic guide", "/CreationDate": "D:20240102030405"})
+    writer.write(buffer)
+    data = buffer.getvalue()
+    expected = {"title": "Synthetic guide", "creation_date": "D:20240102030405"}
+    assert parse_pdf_document(data, max_pages=10, timeout_seconds=5)[1] == expected
+    assert read_pdf_info(data, timeout_seconds=5) == expected

@@ -139,10 +139,60 @@ def _segments(segments):
             )
 
 
+FIELD_LABELS = {
+    "title": "Title",
+    "publisher": "Publisher",
+    "published_at": "Published date",
+    "jurisdiction": "Region",
+    "source_type": "Source type",
+}
+EMPTY_VALUES = {None, "", "UNKNOWN", "unknown"}
+
+
+def _auto_filled(meta: dict) -> list[str]:
+    # A hint stays visible until the reviewer saves a different value for that field.
+    return [
+        f"{FIELD_LABELS[field]} ({hint['origin']})"
+        for field, hint in meta.get("metadata_hints", {}).items()
+        if field in FIELD_LABELS and meta.get(field) == hint["value"]
+    ]
+
+
+def _fill_from_page(container: Container, version_id: str, seen_hash: str, meta: dict):
+    try:
+        hints = container.snapshots.page_hints(version_id)
+        if not hints:
+            st.info("The saved page does not declare any of the empty fields.")
+            return
+        values = {field: meta.get(field) for field in FIELD_LABELS}
+        values.update({field: hint["value"] for field, hint in hints.items()})
+        result = container.review.update_metadata(
+            version_id, seen_hash, MetadataCorrection(**values), hints
+        )
+    except (AppError, ValidationError) as error:
+        if isinstance(error, AppError):
+            show_error(error)
+        else:
+            st.error("The values found on the page could not be used.")
+        return
+    st.session_state["review_seen"] = {"version_id": version_id, "hash": result.snapshot_sha256}
+    filled = ", ".join(FIELD_LABELS[field] for field in hints)
+    _notice(f"Filled from the saved page: {filled}. Check them before approving.")
+
+
 def _metadata_form(container: Container, version_id: str, seen_hash: str, meta: dict, stale):
     suffix = f"{version_id}-{seen_hash[:12]}"
+    if any(meta.get(field) in EMPTY_VALUES for field in FIELD_LABELS) and st.button(
+        "Fill empty fields from the page",
+        key=f"fill-{suffix}",
+        disabled=stale,
+        help="Reads the saved copy of this document; nothing is fetched.",
+    ):
+        _fill_from_page(container, version_id, seen_hash, meta)
     with st.form(f"metadata-{suffix}"):
         st.markdown("**Reviewed metadata**")
+        if auto := _auto_filled(meta):
+            st.caption("Filled automatically, check before approving: " + " · ".join(auto))
         title = st.text_input("Title", value=meta.get("title") or "", key=f"title-{suffix}")
         left, right = st.columns(2)
         publisher = left.text_input(

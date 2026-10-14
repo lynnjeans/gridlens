@@ -23,7 +23,11 @@ class ReviewService:
         return self._validate_snapshot(self._version(version_id))
 
     def update_metadata(
-        self, version_id: str, expected_hash: str, correction: MetadataCorrection
+        self,
+        version_id: str,
+        expected_hash: str,
+        correction: MetadataCorrection,
+        hints: dict | None = None,
     ) -> ReviewResult:
         row = self._version(version_id)
         if row["review_status"] != "pending":
@@ -32,6 +36,9 @@ class ReviewService:
             raise AppError("REVIEW_STALE", "The document preview has changed.")
         segments = self._validate_snapshot(row)
         metadata = {**json.loads(row["metadata_json"]), **correction.model_dump()}
+        if hints:
+            # Where each auto-filled value came from; shown to the reviewer, not hashed.
+            metadata["metadata_hints"] = {**metadata.get("metadata_hints", {}), **hints}
         digest = snapshot_digest(segments, metadata, metadata["parser_version"])
         if digest == row["snapshot_sha256"]:
             return self._result(row, changed=False)

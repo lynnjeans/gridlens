@@ -170,3 +170,39 @@ def test_fetch_or_parse_failure_marks_lead_failed_without_version(db, tmp_path):
     assert SourceRepository(db).get_source(source_id)["access_status"] == "failed"
     with db.connect() as connection:
         assert connection.execute("SELECT COUNT(*) FROM document_versions").fetchone()[0] == 0
+
+
+def test_first_extraction_fills_empty_labels_and_records_where_they_came_from(db, tmp_path):
+    source_id = SourceRepository(db).save_candidate(
+        SearchHitDTO(
+            title="Search title", url="https://www.ea.govt.nz/guide", snippet="", provider_rank=1
+        ),
+        "https://www.ea.govt.nz/guide",
+    )
+    body = (
+        b'<head><meta name="citation_publication_date" content="2025/06/25">'
+        b'<meta property="article:published_time" content="2025-06-25"></head>'
+        b"<main><p>Connection guide text.</p></main>"
+    )
+    document = fetched(body).model_copy(update={"final_url": "https://www.ea.govt.nz/guide"})
+    preview = service(db, tmp_path, FakeFetcher([document])).capture(source_id)
+    meta = preview.metadata
+    assert meta["title"] == "Search title"  # the page declares no title
+    assert meta["publisher"] == "Electricity Authority"
+    assert meta["published_at"] == "2025-06-25"
+    assert (meta["jurisdiction"], meta["source_type"]) == ("NZ", "policy")
+    assert meta["metadata_hints"]["publisher"]["origin"] == "website domain"
+    assert meta["metadata_hints"]["published_at"]["origin"] == "page metadata"
+
+
+def test_search_labels_are_kept_and_saved_copy_hints_need_no_fetch(db, tmp_path):
+    source_id = source(db)  # search gave publisher, type and region
+    body = b'<head><meta name="citation_date" content="2024-03-01"></head><main><p>T.</p></main>'
+    snapshots = service(db, tmp_path, FakeFetcher([fetched(body)]))
+    preview = snapshots.capture(source_id)
+    assert preview.metadata["publisher"] == "Example operator"
+    assert preview.metadata["published_at"] == "2024-03-01"
+    assert set(preview.metadata["metadata_hints"]) == {"published_at"}
+
+    snapshots.fetcher = FakeFetcher(error=AssertionError("no network for saved-copy hints"))
+    assert snapshots.page_hints(preview.version_id) == {}  # nothing left empty

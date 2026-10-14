@@ -676,6 +676,8 @@
 
 **缺陷修复（2026-10-14）：** 2026-10-14 缺陷修复（用户 live 使用时发现：再次点 Extract text 仍跳到 To review）：Streamlit 1.65 radio 在浏览器端记住所选标签文本（如 `1 · To extract (22)`），提取后计数变化，旧标签无法匹配选项，原逻辑回落到默认步骤（有待审核时为 To review）。改为步骤保存在 session_state `review_section`，radio 的 key 携带三个计数（`review_step_<n>_<n>_<n>`）：计数变化时以保存的步骤重新绘制，计数不变时点击照常生效（无 key 方案会因 index 变化导致手动切换要点两次，已在浏览器中发现并排除）。测试改用 `app.radio[0]`，新增两源提取后仍停留第 1 步的测试（AppTest 不经过浏览器标签回传，无法复现原始原因）。在临时 fixture 数据目录（data/fixture/ui-check，检查后已删除）的浏览器中确认：提取后停留第 1 步且计数更新；单击在 1/2/Reviewed 间来回切换 5 次均一次生效；Approve 后跟随到 Reviewed。完整离线回归 369 passed、9 deselected；Ruff/format/pip check 通过；已重启 live 应用（只查看）。
 
+**元数据自动预填（2026-10-14）：** 2026-10-14 元数据自动预填第一层（用户同意先做确定性规则，对照表用 8 个机构）：新增 gridlens/documents/metadata.py，从已抓取的 HTML head 与 PDF 信息字典读取标题、机构、日期、期刊信号，加 8 项域名对照表（Electricity Authority、Transpower、MBIE、EECA、Commerce Commission、FERC、NERC、EIA）及 `.nz/.gov/.govt.nz`、论文站点规则推断 Region 与 Source type。只填空字段；首次提取时在 hash 之前应用，来源记入 metadata_json.metadata_hints（不进入 hash）；Review 表单显示“Filled automatically … (来源)”；待审核版本新增 “Fill empty fields from the page” 按钮，仅读已保存副本（新增 read_pdf_info 只读 PDF 信息字典），不联网。parse_pdf 接口不变，新增 parse_pdf_document 返回 (segments, info)。改动：gridlens/documents/{metadata,pdf,snapshots}.py、gridlens/services/review.py、gridlens/ui/review.py、tests/unit/test_metadata_hints.py（新）、tests/unit/test_pdf_parser.py、tests/integration/test_snapshots.py、tests/ui/test_review_page.py、tests/ui/test_ask.py（合成页 <title> 取代主机名标题）。完整离线回归 380 passed、9 deselected；Ruff/format/pip check 通过。live 只读预览（只读已保存副本，未写入）：8 篇待审核中 7 篇有可填值，1 篇（media.umbraco.io）无；已知局限：托管在监管机构网站上的第三方提交文件（如 MBIE 上的 EPOC 提交）会按域名填成托管机构，来源标为 website domain 需人工核对；PDF 日期是文件创建日期，不一定是发布日期。未执行：用户在 live 中点击按钮并核对；第二层（AI 建议）未做。
+
 ## T15 — 实现确定性 token 分块
 
 **优先级/状态：** P0 / done

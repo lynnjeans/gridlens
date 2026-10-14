@@ -11,7 +11,8 @@ from uuid import uuid4
 from gridlens.contracts import FetchedDocument, ParsedSegment, VersionPreview
 from gridlens.db import Database, now
 from gridlens.documents.html import parse_html
-from gridlens.documents.pdf import parse_pdf
+from gridlens.documents.metadata import html_hints, pdf_hints, suggest
+from gridlens.documents.pdf import parse_pdf_document, read_pdf_info
 from gridlens.errors import AppError
 from gridlens.repositories.sources import SourceRepository
 
@@ -72,7 +73,7 @@ class SnapshotService:
             raise AppError("SOURCE_NOT_FOUND", "The source does not exist.")
         try:
             fetched: FetchedDocument = self.fetcher.fetch(source["original_url"])
-            segments = self._parse(fetched)
+            segments, page = self._parse(fetched)
         except AppError:
             self.sources.mark_access(source_id, "failed")
             raise
@@ -87,15 +88,22 @@ class SnapshotService:
             "final_url": fetched.final_url,
             "content_type": fetched.content_type,
         }
+        hints: dict = {}
         if previous := self.sources.latest_version(source_id):
             # A refresh keeps the reviewer's metadata, so identical content is a no-op and
             # only changed content (or a deliberate metadata revision) needs a new review.
             reviewed = json.loads(previous["metadata_json"])
             metadata.update({key: reviewed.get(key) for key in REVIEWED_LABEL_KEYS})
+        else:
+            # First extraction: fill empty labels from the document itself, marked as hints.
+            hints = suggest(fetched.final_url, metadata, page, prefer_page_title=True)
+            metadata.update({field: hint["value"] for field, hint in hints.items()})
         serial_segments = [segment.model_dump(mode="json") for segment in segments]
         parser_version = PARSER_VERSIONS[fetched.content_type]
         snapshot_sha256 = snapshot_digest(segments, metadata, parser_version)
         stored_metadata = {**metadata, "parser_version": parser_version}
+        if hints:
+            stored_metadata["metadata_hints"] = hints
         existing = self.sources.get_version_by_snapshot(source_id, snapshot_sha256)
         if existing:
             self.sources.mark_access(source_id, "readable")
@@ -162,14 +170,39 @@ class SnapshotService:
             raise AppError("SNAPSHOT_SAVE_FAILED", "The saved snapshot could not be loaded.")
         return self._preview(row, segments, stored_metadata, reused=False)
 
-    def _parse(self, fetched: FetchedDocument) -> list[ParsedSegment]:
+    def page_hints(self, version_id: str) -> dict[str, dict]:
+        """Hints for a version's empty labels, read from its saved copy (no network)."""
+        row = self.sources.get_version(version_id)
+        if row is None:
+            raise AppError("VERSION_NOT_FOUND", "The document version does not exist.")
+        metadata = json.loads(row["metadata_json"])
+        path = (self.snapshot_root / row["raw_path"]).resolve()
+        if not path.is_relative_to(self.snapshot_root):
+            raise AppError("SNAPSHOT_PATH_INVALID", "The snapshot path is invalid.")
+        try:
+            body = path.read_bytes()
+        except OSError:
+            raise AppError(
+                "SNAPSHOT_READ_FAILED", "The saved snapshot could not be read."
+            ) from None
+        page = self._page(metadata["content_type"], body)
+        url = metadata.get("final_url") or metadata["original_url"]
+        return suggest(url, metadata, page, prefer_page_title=False)
+
+    def _parse(self, fetched: FetchedDocument) -> tuple[list[ParsedSegment], dict]:
         if fetched.content_type == "text/html":
-            return parse_html(fetched.body)
-        return parse_pdf(
+            return parse_html(fetched.body), html_hints(fetched.body)
+        segments, info = parse_pdf_document(
             fetched.body,
             max_pages=self.max_pdf_pages,
             timeout_seconds=self.pdf_timeout_seconds,
         )
+        return segments, pdf_hints(info)
+
+    def _page(self, content_type: str, body: bytes) -> dict:
+        if content_type == "text/html":
+            return html_hints(body)
+        return pdf_hints(read_pdf_info(body, timeout_seconds=self.pdf_timeout_seconds))
 
     def _load_segments(self, row) -> list[ParsedSegment]:
         path = (self.snapshot_root / row["segments_path"]).resolve()

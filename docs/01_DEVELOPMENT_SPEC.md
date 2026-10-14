@@ -340,6 +340,8 @@ pypdf 不执行 OCR，扫描图像和复杂排版可能无法得到可用文本�
 
 Pending 元数据修正通过 `ReviewService.update_metadata(version_id, expected_hash, MetadataCorrection)` 重算 hash；页面记录审核者打开时的 hash，与当前不一致时禁用批准并要求重新加载。fixture 模式的 capture 使用合成 `FakeDocumentFetcher`，不访问真实网站。
 
+元数据自动预填（2026-10-14，第一层，确定性规则，不联网、不调用模型）：`gridlens/documents/metadata.py` 从已抓取内容读取 HTML head（`citation_title`/`og:title`/`dc.title`、`citation_publisher`/`DC.publisher`/JSON-LD `publisher.name`、`og:site_name`、`citation_publication_date`/`article:published_time`/`dc.date`/JSON-LD `datePublished`/`<time datetime>`、`citation_journal_title`）和 PDF 信息字典（`/Title` 过滤无效值、`/CreationDate`，标为 PDF file date）；域名对照表 8 项：ea.govt.nz、transpower.co.nz、mbie.govt.nz、eeca.govt.nz、comcom.govt.nz、ferc.gov、nerc.com、eia.gov；Region 由对照表或 `.nz`→NZ、`.gov/.mil`→US 推断；Source type 由论文站点/`citation_journal_title`→paper、`.govt.nz/.gov`→policy 推断。优先级：页面声明的 publisher > 对照表 > og:site_name。只填空字段（None/空/UNKNOWN/unknown）；标题在首次提取时优先页面声明标题，仅为主机名时用 `<title>` 或有效 PDF 标题。首次提取（无旧版本）时在计算 snapshot hash 之前应用；再次提取沿用已审核元数据、不预填。每个预填字段在 `metadata_json.metadata_hints` 记录 `{value, origin}`（不进入 hash）；Review 表单显示“Filled automatically, check before approving: 字段 (来源)”，审核者改成其他值后不再显示。已有待审核版本可点 “Fill empty fields from the page”，仅读取已保存副本（PDF 只读信息字典，不重新提取正文），通过 `update_metadata(..., hints)` 写入并重算 hash；不自动批准。
+
 Approve 成功后 UI 可自动发起一次同步入库操作；失败只改 ingestion，不撤销人的审核。再次渲染页面不能重复触发批准或入库。需要 retry 时使用新的 operation_key，版本仍保持同一个。
 
 ## 7. 分块、向量与发布事务

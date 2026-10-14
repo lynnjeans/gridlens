@@ -71,7 +71,7 @@ def test_partial_answer_maps_claims_to_citations(tmp_path, monkeypatch):
         m.value.startswith("**1 · Fact:**") and m.value.endswith("[1]") for m in app.markdown
     )
     [expander] = [e for e in app.expander if e.label.startswith("[1] ")]
-    assert expander.label == "[1] synthetic.example"  # reviewed snapshot title
+    assert expander.label == "[1] Synthetic connection guide"  # reviewed snapshot title
     assert any("paragraph" in c.value for c in expander.caption)
     assert any("Supports statement 1" in c.value for c in expander.caption)
     assert any(m.value.startswith("> ") for m in expander.markdown)

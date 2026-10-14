@@ -993,3 +993,23 @@ deleted afterwards): stays in step 1 with updated counts after extracting; five 
 switches between the steps all worked; Approve still moves to Reviewed. Checks:
 **369 passed, 9 deselected**; Ruff, format and pip check passed. Restarted the live app
 (viewing only).
+
+## Metadata auto-fill, layer 1 (T12/T14) — 2026-10-14
+
+The user agreed to deterministic rules first, with the eight-organisation domain table.
+`gridlens/documents/metadata.py` reads hints from the fetched document: HTML head tags
+(citation_*, Dublin Core, Open Graph, JSON-LD, `<time>`) and the PDF info dictionary (title with
+junk filtered, creation date marked "PDF file date"), plus a domain table (Electricity
+Authority, Transpower, MBIE, EECA, Commerce Commission, FERC, NERC, EIA) and domain rules for
+region (.nz → NZ, .gov/.mil → US) and type (paper sites/journal tag → paper, .govt.nz/.gov →
+policy). Only empty fields are filled. On a first extraction the hints apply before the
+snapshot hash; each filled field's origin is stored in `metadata_hints` (not hashed) and shown on
+the Review form until the reviewer saves a different value. Pending versions get "Fill empty
+fields from the page", which reads only the saved copy (new `read_pdf_info` reads the PDF info
+without page text). `parse_pdf` is unchanged; `parse_pdf_document` returns segments and info.
+Read-only live preview over the 8 pending documents (saved copies only, nothing written): 7 would
+gain values, 1 (media.umbraco.io) none. Known limits: third-party files hosted on a regulator's
+site get the host as publisher (e.g. the EPOC submission on mbie.govt.nz), marked "website
+domain"; a PDF creation date is not always the publication date. Checks: **380 passed,
+9 deselected**; Ruff, format and pip check passed. Not run: the user's own use of the button in
+live; layer 2 (AI suggestions) not started.

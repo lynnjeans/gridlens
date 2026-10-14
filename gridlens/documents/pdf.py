@@ -30,22 +30,41 @@ def _extract_worker(data: bytes, max_pages: int, connection) -> None:
         pages = []
         for index, page in enumerate(reader.pages, start=1):
             pages.append((index, page.extract_text() or ""))
-        connection.send({"pages": pages})
+        connection.send({"pages": pages, "info": _info(reader)})
     except Exception:
         connection.send({"error": "PDF_CORRUPT"})
     finally:
         connection.close()
 
 
-def parse_pdf(
-    data: bytes,
-    *,
-    max_pages: int,
-    timeout_seconds: float,
-    worker: Worker = _extract_worker,
-) -> list[ParsedSegment]:
-    if not data:
-        raise AppError("PDF_CORRUPT", "The PDF file is empty or damaged.")
+def _info(reader: PdfReader) -> dict:
+    # The document info dictionary is optional and often wrong; it only feeds review hints.
+    try:
+        info = reader.metadata or {}
+        return {
+            "title": str(info.get("/Title") or "") or None,
+            "creation_date": str(info.get("/CreationDate") or "") or None,
+        }
+    except Exception:
+        return {}
+
+
+def _info_worker(data: bytes, max_pages: int, connection) -> None:
+    try:
+        connection.send({"info": _info(PdfReader(io.BytesIO(data), strict=False))})
+    except Exception:
+        connection.send({"info": {}})
+    finally:
+        connection.close()
+
+
+def read_pdf_info(data: bytes, *, timeout_seconds: float) -> dict:
+    """Only the PDF's own title/creation date, without extracting page text."""
+    result = _run(data, 0, timeout_seconds, _info_worker)
+    return result.get("info") or {}
+
+
+def _run(data: bytes, max_pages: int, timeout_seconds: float, worker: Worker) -> dict:
     context = multiprocessing.get_context("spawn")
     receive, send = context.Pipe(duplex=False)
     process = context.Process(target=worker, args=(data, max_pages, send), daemon=True)
@@ -56,7 +75,7 @@ def parse_pdf(
             process.terminate()
             process.join(timeout=1)
             raise AppError("PDF_TIMEOUT", "PDF extraction timed out.", retryable=True)
-        result = receive.recv()
+        return receive.recv()
     except EOFError:
         raise AppError("PDF_PARSE_FAILED", "PDF extraction stopped unexpectedly.") from None
     finally:
@@ -64,6 +83,31 @@ def parse_pdf(
         if process.is_alive():
             process.terminate()
         process.join(timeout=1)
+
+
+def parse_pdf(
+    data: bytes,
+    *,
+    max_pages: int,
+    timeout_seconds: float,
+    worker: Worker = _extract_worker,
+) -> list[ParsedSegment]:
+    return parse_pdf_document(
+        data, max_pages=max_pages, timeout_seconds=timeout_seconds, worker=worker
+    )[0]
+
+
+def parse_pdf_document(
+    data: bytes,
+    *,
+    max_pages: int,
+    timeout_seconds: float,
+    worker: Worker = _extract_worker,
+) -> tuple[list[ParsedSegment], dict]:
+    """Segments plus the PDF's own title/creation-date info (empty when unavailable)."""
+    if not data:
+        raise AppError("PDF_CORRUPT", "The PDF file is empty or damaged.")
+    result = _run(data, max_pages, timeout_seconds, worker)
 
     error = result.get("error")
     if error == "PDF_ENCRYPTED":
@@ -89,7 +133,7 @@ def parse_pdf(
     ]
     if not segments:
         raise AppError("UNSUPPORTED_SCAN", "The PDF has no extractable text; OCR is not supported.")
-    return segments
+    return segments, result.get("info") or {}
 
 
 def _normalize_text(text: str) -> str:

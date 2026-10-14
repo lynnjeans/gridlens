@@ -323,6 +323,21 @@ def test_step_stays_when_its_count_changes(tmp_path):
     assert "To review (1)" in app.radio[0].options[1]
 
 
+def test_auto_filled_fields_are_marked_and_fill_reads_the_saved_copy(tmp_path):
+    app = captured(tmp_path)
+    # The synthetic page's <title> replaced the bare hostname title at extraction.
+    title = next(item for item in app.text_input if item.label == "Title")
+    assert title.value == "Synthetic connection guide"
+    assert any(
+        "Filled automatically" in item.value and "Title (page metadata)" in item.value
+        for item in app.caption
+    )
+    # Publisher and date are still empty; the saved page declares neither.
+    button(app, "Fill empty fields from the page").click().run()
+    assert not app.exception
+    assert any("does not declare" in item.value for item in app.info)
+
+
 def test_reviewer_label_is_remembered_for_new_sessions(tmp_path):
     app = review_app(tmp_path)
     assert app.text_input(key="review_reviewer").value == ""
