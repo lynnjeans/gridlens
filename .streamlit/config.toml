@@ -13,3 +13,10 @@ secondaryBackgroundColor = "#FFFFFF"
 textColor = "#173238"
 font = "sans serif"
 
+# Deep teal sidebar with a mint accent for the brand, section labels and the current page.
+[theme.sidebar]
+backgroundColor = "#0F3A40"
+secondaryBackgroundColor = "#185058"
+textColor = "#E8F3F1"
+primaryColor = "#5ED3BC"
+

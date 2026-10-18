@@ -283,6 +283,8 @@
 
 **侧栏布局调整（2026-10-18）：** 用户提供草图，标语改为 Find. Verify. Know.。内置导航改为 `st.navigation(position="hidden")`，侧栏自绘：顶部 GridLens 与标语 → RESEARCH WORKFLOW 小标题与 ①–④ 页面链接（`st.page_link`，当前页高亮）→ CHATGPT ACCOUNT（Account/Model 选择保持可见，Refresh models、Reauthorize、Sign out、Add another account 收进 Manage account 折叠区，View ChatGPT usage 保持可见）→ 底部数据模式（live 显示 ● Live mode / Local workspace；fixture 仍为黄色警告）。页面 URL、标题与按钮文字不变。改动：app.py、gridlens/ui/common.py、gridlens/ui/account.py。完整离线回归 380 passed、9 deselected；Ruff/format 通过；重启 8501 live 应用后在浏览器确认新布局，并点击 ② Review 链接确认页面切换与高亮正常（只查看，未搜索、提取或登录）。
 
+**侧栏配色（2026-10-18）：** 用户要求加颜色。`.streamlit/config.toml` 新增 `[theme.sidebar]`：深青背景 #0F3A40、控件底色 #185058、浅色文字 #E8F3F1、薄荷绿强调色 #5ED3BC；标题 “Grid” 与 RESEARCH WORKFLOW / CHATGPT ACCOUNT 小标题用强调色（`:primary[...]`）。主区域配色不变。完整离线回归 380 passed、9 deselected；Ruff/format 通过；重启 8501 live 应用后浏览器确认（只查看）。
+
 ## T06 — 实现 Tavily 搜索适配器
 
 **优先级/状态：** P0 / done

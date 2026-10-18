@@ -1028,3 +1028,13 @@ gridlens/ui/account.py. Checks: **380 passed, 9 deselected**; Ruff and format pa
 the 8501 live app and checked the new sidebar in the browser, including the ② Review link
 switching pages and moving the highlight (viewing only; no search, extraction or sign-in).
 Note: a restart clears the chosen model, so it has to be picked again after each restart.
+
+## Sidebar colours (T05) — 2026-10-18
+
+The user asked for more colour in the sidebar. `.streamlit/config.toml` gains a
+`[theme.sidebar]` section: deep teal background #0F3A40, control background #185058, light text
+#E8F3F1 and a mint accent #5ED3BC. "Grid" in the title and the RESEARCH WORKFLOW and CHATGPT
+ACCOUNT labels use the accent (`:primary[...]`); the main area keeps its colours. Files:
+.streamlit/config.toml, gridlens/ui/common.py, gridlens/ui/account.py. Checks: **380 passed,
+9 deselected**; Ruff and format passed. Restarted the 8501 live app and checked the sidebar in the
+browser (viewing only).

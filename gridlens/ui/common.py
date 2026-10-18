@@ -23,9 +23,9 @@ WORKFLOW_MARKS = ("①", "②", "③", "④")
 def sidebar(container: Container, pages: list):
     """Brand, the numbered workflow pages, the account, then the data mode at the bottom."""
     with st.sidebar:
-        st.title("GridLens")
+        st.title(":primary[Grid]Lens")
         st.caption("Find. Verify. Know.")
-        st.caption("RESEARCH WORKFLOW")
+        st.caption(":primary[**RESEARCH WORKFLOW**]")
         for mark, page in zip(WORKFLOW_MARKS, pages, strict=True):
             st.page_link(page, label=f"{mark}  {page.title}")
         st.divider()

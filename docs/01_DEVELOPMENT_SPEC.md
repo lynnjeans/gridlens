@@ -493,7 +493,7 @@ Streamlit 入口使用 `st.navigation` 与 `st.Page`，页面函数由容器传�
 | Knowledge Base | 来源、版本、审核/入库状态表格；详情与 Retry/Revoke/Refresh | 三种状态分开展示；不提供一键“全批准”；进度按阶段而非伪造百分比 |
 | Ask & Gaps | 问题表单；回答 claims；引用展开；历史；缺口 tab | 空库仍可说明范围不足；错误与 insufficient 不混淆；建议词只填入搜索框 |
 
-四页共用账户侧栏，显示注册标签、授权状态、模型及 Usage；OAuth tokens 不缓存到 UI/session state。侧栏顺序：品牌与标语 → RESEARCH WORKFLOW 链接 → CHATGPT ACCOUNT（Account/Model 可见，Refresh models、Reauthorize、Sign out、Add another account 在 Manage account 折叠区，View ChatGPT usage 可见）→ 底部数据模式（live：● Live mode / Local workspace；fixture：黄色警告）。
+四页共用账户侧栏，显示注册标签、授权状态、模型及 Usage；OAuth tokens 不缓存到 UI/session state。侧栏顺序：品牌与标语 → RESEARCH WORKFLOW 链接 → CHATGPT ACCOUNT（Account/Model 可见，Refresh models、Reauthorize、Sign out、Add another account 在 Manage account 折叠区，View ChatGPT usage 可见）→ 底部数据模式（live：● Live mode / Local workspace；fixture：黄色警告）。侧栏配色在 `.streamlit/config.toml` 的 `[theme.sidebar]`（深青底 #0F3A40、薄荷绿强调 #5ED3BC）。
 
 Session state 只保存当前选中 ID、表单输入和 operation_key，不保存权威审核资格。可缓存 provider 客户端；SQLite 连接按操作创建，避免把一个默认线程限制连接跨线程共享。页面每次渲染重新读取状态，历史答案同样检查来源状态。
 

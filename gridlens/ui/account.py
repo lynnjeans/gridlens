@@ -74,7 +74,7 @@ def _load_catalog(container: Container, handle: SessionHandle):
 
 
 def render_account(container: Container):
-    st.caption("CHATGPT ACCOUNT")
+    st.caption(":primary[**CHATGPT ACCOUNT**]")
     if container.settings.mode != "live":
         st.caption("Development mode uses synthetic answers. Sign-in is available in live mode.")
         st.button("Continue with ChatGPT", disabled=True, use_container_width=True)
