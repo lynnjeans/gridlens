@@ -27,7 +27,6 @@ def main() -> None:
         # Once per browser session: mark runs whose owner process has exited as interrupted.
         container.recovery.recover()
         st.session_state["gridlens_recovered"] = True
-    sidebar(container)
     pages = [
         st.Page(
             lambda: discover.render(container), title="Discover", url_path="discover", default=True
@@ -40,7 +39,10 @@ def main() -> None:
         ),
         st.Page(lambda: ask.render(container), title="Ask & Gaps", url_path="ask"),
     ]
-    st.navigation(pages).run()
+    # The built-in menu is hidden so the sidebar can show the brand above the workflow links.
+    page = st.navigation(pages, position="hidden")
+    sidebar(container, pages)
+    page.run()
 
 
 # Streamlit runs this script as __main__. A spawned worker (PDF extraction) re-imports it as

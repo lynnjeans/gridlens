@@ -281,6 +281,8 @@
 
 **缺陷修复（2026-10-12）：** 2026-10-12 缺陷修复（用户 live 捕获 PDF 时终端出现大量 missing ScriptRunContext 警告）：PDF 提取的 spawn 子进程以 __mp_main__ 重新导入 app.py，在无会话的 bare 模式下重新执行整页（含 recovery.recover() 与侧栏，已登录时可能请求模型目录）。app.py 改为 main() + `if __name__ == "__main__"` 守卫（Streamlit 以 __main__ 执行脚本）；新增回归测试以 runpy run_name=__mp_main__ 导入且禁止 build_container/set_page_config。完整离线回归 362 passed、9 deselected。捕获结果本身不受影响（该次捕获已产生 1 个 pending 版本）。
 
+**侧栏布局调整（2026-10-18）：** 用户提供草图，标语改为 Find. Verify. Know.。内置导航改为 `st.navigation(position="hidden")`，侧栏自绘：顶部 GridLens 与标语 → RESEARCH WORKFLOW 小标题与 ①–④ 页面链接（`st.page_link`，当前页高亮）→ CHATGPT ACCOUNT（Account/Model 选择保持可见，Refresh models、Reauthorize、Sign out、Add another account 收进 Manage account 折叠区，View ChatGPT usage 保持可见）→ 底部数据模式（live 显示 ● Live mode / Local workspace；fixture 仍为黄色警告）。页面 URL、标题与按钮文字不变。改动：app.py、gridlens/ui/common.py、gridlens/ui/account.py。完整离线回归 380 passed、9 deselected；Ruff/format 通过；重启 8501 live 应用后在浏览器确认新布局，并点击 ② Review 链接确认页面切换与高亮正常（只查看，未搜索、提取或登录）。
+
 ## T06 — 实现 Tavily 搜索适配器
 
 **优先级/状态：** P0 / done

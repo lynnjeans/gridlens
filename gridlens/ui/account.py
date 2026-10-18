@@ -74,7 +74,7 @@ def _load_catalog(container: Container, handle: SessionHandle):
 
 
 def render_account(container: Container):
-    st.subheader("ChatGPT connection")
+    st.caption("CHATGPT ACCOUNT")
     if container.settings.mode != "live":
         st.caption("Development mode uses synthetic answers. Sign-in is available in live mode.")
         st.button("Continue with ChatGPT", disabled=True, use_container_width=True)
@@ -141,11 +141,15 @@ def render_account(container: Container):
                 placeholder="Choose a model",
                 key=f"account_model_picker_{_key(handle)}",
             )
-        if st.button("Refresh models", use_container_width=True):
-            _reset_catalog()
-            st.rerun()
 
-    left, right = st.columns(2)
+    # Rarely used actions stay folded so the account and model pickers stand out.
+    manage = st.expander("Manage account")
+    if container.sessions.plan_usage_enabled(handle) and manage.button(
+        "Refresh models", use_container_width=True
+    ):
+        _reset_catalog()
+        st.rerun()
+    left, right = manage.columns(2)
     if left.button("Reauthorize", key="account_reauth", use_container_width=True):
         _sign_in(container, handle.registration_id)
     if right.button("Sign out", use_container_width=True):
@@ -159,6 +163,6 @@ def render_account(container: Container):
             )
         st.session_state["account_notice"] = ("success", message)
         st.rerun()
-    if st.button("Add another account", use_container_width=True):
+    if manage.button("Add another account", use_container_width=True):
         _sign_in(container)
     st.link_button("View ChatGPT usage", USAGE_URL)

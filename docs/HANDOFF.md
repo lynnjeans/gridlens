@@ -76,7 +76,7 @@ Knowledge Base 与 Ask 已接通（fixture 可完整使用；live 生成需登�
 | --- | --- |
 | `.venv/bin/python -m pytest -q` | 380 passed，9 deselected（live/local_model）（2026-10-14，元数据自动预填第一层后） |
 | `.venv/bin/ruff check .` | All checks passed |
-| `.venv/bin/ruff format --check .` | 108 files already formatted |
+| `.venv/bin/ruff format --check .` | 110 files already formatted（2026-10-18，侧栏布局调整后；pytest 仍为 380 passed） |
 | `.venv/bin/python -m pip check` | No broken requirements found |
 | `.venv/bin/python -m gridlens.cli doctor` | 离线 JSON：mode、extras、模型 revision、数据目录可写、schema 是否最新、待恢复运行、凭证目录权限（不含密钥） |
 | `.venv/bin/python -m pytest -m local_model -q` | 4 passed（禁网；需本机已 prepare-model；含 live 装配端到端入库） |

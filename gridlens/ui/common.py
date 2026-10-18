@@ -17,19 +17,27 @@ def version_label(status: str) -> str:
     return VERSION_LABELS.get(status, status)
 
 
-def sidebar(container: Container):
+WORKFLOW_MARKS = ("①", "②", "③", "④")
+
+
+def sidebar(container: Container, pages: list):
+    """Brand, the numbered workflow pages, the account, then the data mode at the bottom."""
     with st.sidebar:
         st.title("GridLens")
-        st.caption("Evidence for grid research")
-        if container.settings.mode == "fixture":
-            st.warning("Development mode · synthetic data only")
-        else:
-            st.info("Live mode · local workspace")
+        st.caption("Find. Verify. Know.")
+        st.caption("RESEARCH WORKFLOW")
+        for mark, page in zip(WORKFLOW_MARKS, pages, strict=True):
+            st.page_link(page, label=f"{mark}  {page.title}")
         st.divider()
         from gridlens.ui.account import render_account
 
         render_account(container)
         st.divider()
+        if container.settings.mode == "fixture":
+            st.warning("Development mode · synthetic data only")
+        else:
+            st.markdown(":green[●] **Live mode**")
+            st.caption("Local workspace")
         st.caption("Searches, text extraction and sign-in run only when you ask")
 
 

@@ -1013,3 +1013,18 @@ site get the host as publisher (e.g. the EPOC submission on mbie.govt.nz), marke
 domain"; a PDF creation date is not always the publication date. Checks: **380 passed,
 9 deselected**; Ruff, format and pip check passed. Not run: the user's own use of the button in
 live; layer 2 (AI suggestions) not started.
+
+## Sidebar layout and tagline (T05/T36) — 2026-10-18
+
+The user sent a sketch for the sidebar and asked for the tagline "Find. Verify. Know.". The
+built-in page menu is now hidden (`st.navigation(position="hidden")`) and the sidebar draws its
+own: GridLens and the tagline at the top, a RESEARCH WORKFLOW label with numbered links
+① Discover … ④ Ask & Gaps (`st.page_link`, current page highlighted), then CHATGPT ACCOUNT with
+the Account and Model pickers visible and Refresh models, Reauthorize, Sign out and Add another
+account folded into a "Manage account" expander (View ChatGPT usage stays visible), and the data
+mode at the bottom (live: "● Live mode" / "Local workspace"; fixture keeps its yellow warning).
+Page URLs, titles and button labels are unchanged. Files: app.py, gridlens/ui/common.py,
+gridlens/ui/account.py. Checks: **380 passed, 9 deselected**; Ruff and format passed. Restarted
+the 8501 live app and checked the new sidebar in the browser, including the ② Review link
+switching pages and moving the highlight (viewing only; no search, extraction or sign-in).
+Note: a restart clears the chosen model, so it has to be picked again after each restart.
