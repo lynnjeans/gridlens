@@ -132,8 +132,12 @@ def render_account(container: Container):
             st.info("No models are listed for this account. Refresh later.")
         else:
             names = {m["slug"]: m["display_name"] for m in catalog["models"]}
-            current_model = st.session_state.get("account_model")
-            st.session_state["account_model"] = st.selectbox(
+            # The last model chosen for this account survives restarts if it is still listed.
+            remembered = f"chatgpt_model:{handle.registration_id}"
+            current_model = st.session_state.get("account_model") or (
+                container.sources.get_preference(remembered)
+            )
+            chosen_model = st.selectbox(
                 "Model",
                 list(names),
                 index=list(names).index(current_model) if current_model in names else None,
@@ -141,6 +145,9 @@ def render_account(container: Container):
                 placeholder="Choose a model",
                 key=f"account_model_picker_{_key(handle)}",
             )
+            if chosen_model and chosen_model != container.sources.get_preference(remembered):
+                container.sources.save_preference(remembered, chosen_model)
+            st.session_state["account_model"] = chosen_model
 
     # Rarely used actions stay folded so the account and model pickers stand out.
     manage = st.expander("Manage account")

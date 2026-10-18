@@ -56,6 +56,16 @@ def _provider(container: Container):
     )
 
 
+def _missing_provider_hint(container: Container) -> str:
+    """Name only the step still missing: sign-in, plan permission or a model."""
+    handle = container.sessions.current()
+    if handle is None:
+        return FAILURES["AUTH_REQUIRED"]
+    if not container.sessions.plan_usage_enabled(handle):
+        return FAILURES["PLAN_PERMISSION_MISSING"] + " Reauthorize in the sidebar."
+    return "Choose a model in the sidebar to generate answers."
+
+
 def _location(locator: dict) -> str:
     if locator.get("kind") == "pdf":
         text = f"File page {locator.get('file_page')}"
@@ -156,7 +166,7 @@ def _ask_tab(container: Container):
         return
     provider = _provider(container)
     if provider is None:
-        st.info(FAILURES["AUTH_REQUIRED"] + " Without it, only scope checks can run.")
+        st.info(_missing_provider_hint(container) + " Without it, only scope checks can run.")
     with st.form("ask"):
         question = st.text_area(
             "Question",

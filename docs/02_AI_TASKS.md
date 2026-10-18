@@ -1635,6 +1635,8 @@ T31 真实验收步骤（由用户/团队执行，AI 不代为登录、批准或
 
 **真实验证（2026-10-12）：** 2026-10-12 用户在 live 侧栏从本人账户真实目录选择模型 `gpt-5.6-sol` 并用于生成（qa_records.model_id）。目录中模型数量未记录。
 
+**模型记忆与 Ask 提示（2026-10-18）：** 改进（用户反馈：已登录仍提示 Sign in with ChatGPT and choose a model）：原因是应用重启后模型选择丢失，Ask 页对“未选模型”也显示未登录提示。现在按实际缺少的一步提示：未登录→原提示；未授予 plan usage→权限提示并建议 Reauthorize；已登录未选模型→Choose a model in the sidebar to generate answers.。同时按账户记住上次选择的模型（SQLite app_state 偏好 chatgpt_model:<registration_id>，只存模型 slug，不含凭证），新会话或重启后若该模型仍在目录中则自动选中，不跨账户沿用。改动：gridlens/ui/account.py、gridlens/ui/ask.py、tests/ui/test_account.py（新增恢复模型测试）。完整离线回归 381 passed、9 deselected；Ruff/format 通过；重启 8501 live 应用后 Ask 页显示 Choose a model 提示（只查看，未选模型、未提问）。
+
 ## T37 — 实现 SerpApi 搜索适配器（可选搜索 provider）
 
 **优先级/状态：** P0 / done

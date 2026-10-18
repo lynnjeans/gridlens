@@ -106,6 +106,22 @@ def test_catalog_loads_once_per_account_and_switching_resets_choice(tmp_path):
     assert "token-a" not in page and "token-b" not in page
 
 
+def test_chosen_model_is_restored_in_a_new_session(tmp_path):
+    a = seed(tmp_path, "a")
+    b = seed(tmp_path, "b")
+    SessionManager(FileCredentialStore(tmp_path / "auth")).select(a)
+    app, _ = account_app(tmp_path)
+    app.selectbox(key=f"account_model_picker_{a}:1").set_value("model-a").run()
+
+    restarted, _ = account_app(tmp_path)  # a fresh session, as after an app restart
+    assert not restarted.exception
+    assert restarted.session_state["test_choice"] == [a, "model-a"]
+
+    SessionManager(FileCredentialStore(tmp_path / "auth")).select(b)
+    other, _ = account_app(tmp_path)
+    assert other.session_state["test_choice"] is None  # never borrowed from another account
+
+
 def test_missing_plan_scope_disables_models(tmp_path):
     a = seed(tmp_path, "a", scopes="openid profile email offline_access")
     SessionManager(FileCredentialStore(tmp_path / "auth")).select(a)

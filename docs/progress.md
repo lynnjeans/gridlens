@@ -1038,3 +1038,16 @@ ACCOUNT labels use the accent (`:primary[...]`); the main area keeps its colours
 .streamlit/config.toml, gridlens/ui/common.py, gridlens/ui/account.py. Checks: **380 passed,
 9 deselected**; Ruff and format passed. Restarted the 8501 live app and checked the sidebar in the
 browser (viewing only).
+
+## Model remembered per account; Ask notice names the missing step (T36/T23) — 2026-10-18
+
+User report: the Ask page still said "Sign in with ChatGPT and choose a model" while signed in.
+Cause: a restart clears the chosen model, and the Ask page showed the sign-in notice for any
+missing piece. The notice now names the one step that is missing: sign-in, plan permission
+(with a Reauthorize hint) or "Choose a model in the sidebar to generate answers." The last model
+chosen for each account is also remembered (SQLite app_state preference
+`chatgpt_model:<registration_id>`, the model slug only, no credentials) and selected again in a
+new session if the account's catalog still lists it; it never carries over to another account.
+Files: gridlens/ui/account.py, gridlens/ui/ask.py, tests/ui/test_account.py (new restore test).
+Checks: **381 passed, 9 deselected**; Ruff and format passed. Restarted the 8501 live app; the
+Ask page showed the "Choose a model" notice (viewing only; no model chosen, nothing asked).
