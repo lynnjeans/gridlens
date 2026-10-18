@@ -34,6 +34,40 @@ def test_fixture_search_renders_candidate_and_rerun_is_idempotent(tmp_path):
         assert connection.execute("SELECT COUNT(*) FROM search_runs").fetchone()[0] == 1
 
 
+def test_results_show_review_state_and_disable_handled_sources(tmp_path):
+    from pathlib import Path
+
+    from gridlens.bootstrap import build_container
+    from gridlens.config import Settings
+
+    app = discover_app(tmp_path)
+    app.text_input[0].set_value("New Zealand grid connection")
+    button(app, "Search sources").click().run()
+    badges = lambda: str([m.value for m in app.markdown])  # noqa: E731
+    assert "In queue" not in badges()
+    assert not button(app, "Select for review").disabled
+
+    button(app, "Select for review").click().run()
+    assert not app.exception
+    assert any("Review queue" in item.value for item in app.success)
+    assert "In queue" in badges()
+    assert button(app, "In Review queue").disabled
+    assert not any(item.label == "Select for review" for item in app.button)
+
+    c = build_container(Settings(project_root=Path(tmp_path)))
+    (source,) = c.sources.review_queue()
+    preview = c.snapshots.capture(source["id"])
+    app.run()
+    assert "To review" in badges()
+    assert button(app, "Waiting in Review").disabled
+
+    c.review.approve(preview.version_id, preview.snapshot_sha256, "Researcher")
+    app.run()
+    assert "Approved" in badges()
+    assert button(app, "Already approved").disabled
+    assert c.sources.review_states([source["id"], "unknown"]) == {source["id"]: "approved"}
+
+
 def test_input_error_and_missing_live_key_are_distinct(tmp_path):
     app = discover_app(tmp_path)
     app.text_input[0].set_value("x")

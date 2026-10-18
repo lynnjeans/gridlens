@@ -13,6 +13,14 @@ SOURCE_TYPES = {
     "Paper": "paper",
     "Industry report": "industry_report",
 }
+# Review state of a result → (badge, badge colour, label of the disabled button).
+REVIEW_STATES = {
+    "queued": ("In queue", "blue", "In Review queue"),
+    "pending": ("To review", "orange", "Waiting in Review"),
+    "approved": ("Approved", "green", "Already approved"),
+    "rejected": ("Rejected", "red", "Already rejected"),
+    "revoked": ("Revoked", "gray", "Approval revoked"),
+}
 
 
 SNIPPET_LIMIT = 220
@@ -40,9 +48,19 @@ def _show_results(container: Container, result: SearchRunDetail):
     elif not result.candidates:
         empty_state("No candidates were found. Try a more specific research topic.")
     st.caption(f"{result.calls_used} search call(s) · {len(result.candidates)} unique candidate(s)")
+    if notice := st.session_state.pop("discover_notice", None):
+        st.success(notice)
+    ids = [candidate.source_id for candidate in result.candidates]
+    # Read on every view, so a source handled in Review shows its current state here.
+    states = container.sources.review_states(ids) if ids else {}
     for index, candidate in enumerate(result.candidates, start=1):
+        state = states.get(candidate.source_id)
         with st.container(border=True, gap="small"):
-            st.markdown(f"**{index}\\. {_plain(candidate.title)}**")
+            with st.container(horizontal=True, vertical_alignment="center", gap="small"):
+                st.markdown(f"**{index}\\. {_plain(candidate.title)}**")
+                if state:
+                    label, color, _ = REVIEW_STATES[state]
+                    st.badge(label, color=color)
             details = [
                 candidate.publisher or "Publisher unknown",
                 candidate.published_at or "Date unknown",
@@ -51,13 +69,20 @@ def _show_results(container: Container, result: SearchRunDetail):
             st.caption(f"{_plain(' · '.join(details))} — {_plain(snippet)}")
             with st.container(horizontal=True, vertical_alignment="center", gap="small"):
                 st.link_button("Open original", candidate.url)
-                selected = st.button(
-                    "Select for review", key=f"review-{result.run_id}-{candidate.source_id}"
-                )
+                key = f"review-{result.run_id}-{candidate.source_id}"
+                if state:
+                    # Already handled: say where it is instead of offering to add it again.
+                    st.button(REVIEW_STATES[state][2], key=key, disabled=True)
+                    selected = False
+                else:
+                    selected = st.button("Select for review", key=key)
                 st.caption(f":gray[{_plain(candidate.relevance_reason)}]")
             if selected:
                 container.sources.queue_for_review(candidate.source_id)
-                st.success("Added to the Review queue. Open Review to extract its text.")
+                st.session_state["discover_notice"] = (
+                    "Added to the Review queue. Open Review to extract its text."
+                )
+                st.rerun()
 
 
 def render(container: Container):

@@ -108,6 +108,26 @@ class SourceRepository:
             if source_id in queue:
                 self._save_review_queue(c, [item for item in queue if item != source_id])
 
+    def review_states(self, source_ids: list[str]) -> dict[str, str]:
+        """Where each source stands: its latest version's review status, else "queued".
+
+        Sources that were never selected or extracted are left out.
+        """
+        if not source_ids:
+            return {}
+        marks = ",".join("?" * len(source_ids))
+        with self.db.connect() as c:
+            queued = set(self._review_queue_ids(c))
+            states = {source_id: "queued" for source_id in source_ids if source_id in queued}
+            rows = c.execute(
+                f"SELECT source_id, review_status FROM document_versions "
+                f"WHERE source_id IN ({marks}) ORDER BY created_at, rowid",
+                source_ids,
+            )
+            for row in rows:  # later versions overwrite earlier ones
+                states[row["source_id"]] = row["review_status"]
+            return states
+
     def review_queue(self) -> list[dict]:
         """Queued sources in selection order that have not been captured yet."""
         with self.db.connect() as c:

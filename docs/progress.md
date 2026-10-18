@@ -1051,3 +1051,17 @@ new session if the account's catalog still lists it; it never carries over to an
 Files: gridlens/ui/account.py, gridlens/ui/ask.py, tests/ui/test_account.py (new restore test).
 Checks: **381 passed, 9 deselected**; Ruff and format passed. Restarted the 8501 live app; the
 Ask page showed the "Choose a model" notice (viewing only; no model chosen, nothing asked).
+
+## Discover shows each result's review state (T08) — 2026-10-19
+
+User request: when a topic is searched again, show which results are already handled. Each
+Discover result now carries a badge from its latest version's review status, read fresh on every
+view: In queue (selected, not extracted), To review, Approved, Rejected or Revoked. Handled results
+no longer offer "Select for review"; a disabled button says where they are (In Review queue,
+Waiting in Review, Already approved, Already rejected, Approval revoked). After "Select for
+review" the page reruns so the badge appears at once. New `SourceRepository.review_states`.
+Files: gridlens/repositories/sources.py, gridlens/ui/discover.py, tests/ui/test_discover.py (new
+state test). Checks: **382 passed, 9 deselected**; Ruff and format passed. Browser check in a
+temporary fixture data folder (data/fixture/ui-check, deleted afterwards): the badge and the
+disabled "In Review queue" button appeared after selecting. Restarted the 8501 live app (no live
+search run).

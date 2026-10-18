@@ -414,6 +414,9 @@
 
 **可读性改进（2026-10-14）：** 2026-10-14 可读性改进（用户反馈：检索输入与结果区分不明显、结果卡片过大滚动麻烦）：表单下方加分隔线和 `Search results` 标题；候选卡片改为紧凑格式：编号加粗标题一行，机构·日期—摘要（截断至 220 字符）一行灰色小字，Open original / Select for review 与相关性理由同一行；搜索返回的标题与摘要按字面显示（转义 Markdown）。合成数据实例浏览器走查确认版面与 Select for review 入队。完整离线回归 366 passed、9 deselected；Ruff/format/pip check 通过。未执行：用户在 live 应用中的查看。
 
+
+**结果审核状态（2026-10-19）：** 改进（用户要求：重复搜索时显示已处理来源的状态）：Discover 每条结果显示审核状态标签——In queue（已选、待提取）、To review（已提取、待审核）、Approved、Rejected、Revoked（取该来源最新版本的 review_status；无版本且在队列中为 In queue），每次显示时从 SQLite 重新读取。已处理的结果不再提供 Select for review，改为禁用按钮（In Review queue / Waiting in Review / Already approved / Already rejected / Approval revoked）；点击 Select for review 后立即刷新显示 In queue。新增 SourceRepository.review_states。改动：gridlens/repositories/sources.py、gridlens/ui/discover.py、tests/ui/test_discover.py（新增状态测试）。完整离线回归 382 passed、9 deselected；Ruff/format 通过；在临时 fixture 数据目录（data/fixture/ui-check，检查后已删除）的浏览器中确认 In queue 标签与禁用按钮；已重启 8501 live 应用（未在 live 搜索）。
+
 ## T09 — 实现有边界的公开 URL 获取
 
 **优先级/状态：** P0 / done
